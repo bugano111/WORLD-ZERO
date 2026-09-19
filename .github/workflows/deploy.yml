@@ -21,7 +21,7 @@ jobs:
           cache: npm
       - run: npm install
       - run: npm run build
-      - name: Verify BUILD 09 marker
+      - name: Verify current BUILD 11 marker
         run: grep -R "WORLD BUILD 11" dist/assets
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
