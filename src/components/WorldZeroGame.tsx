@@ -190,10 +190,10 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       let ti = -1, td = Infinity;
       TREES.forEach((tree, index) => {
         if (npc.harvested.has(index)) return;
-        const d = screenDistanceTo(tree);
+        const d = Math.hypot(tree.x - player.x, tree.z - player.z);
         if (d < td) { td = d; ti = index; }
       });
-      if (ti >= 0 && td < 105) {
+      if (ti >= 0 && td < 1.28) {
         playerWood += 1;
         onWoodChange(npc.wood + playerWood);
         gatherCooldown = .45;
@@ -202,10 +202,10 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       let ri = -1, rd = Infinity;
       ROCKS.forEach((rock, index) => {
         if (harvestedRocks.has(index)) return;
-        const d = screenDistanceTo(rock);
+        const d = Math.hypot(rock.x - player.x, rock.z - player.z);
         if (d < rd) { rd = d; ri = index; }
       });
-      if (ri >= 0 && rd < 82) {
+      if (ri >= 0 && rd < 1.12) {
         harvestedRocks.add(ri);
         playerStone += 1;
         onStoneChange(playerStone);
@@ -251,47 +251,36 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const speed = 4.1 * dt / Math.max(1, length);
         const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
-        const blocked = (x: number, z: number) => {
-          const oldX = player.x, oldZ = player.z;
-          player.x = x; player.z = z;
-          const footX = width * 0.5, footY = height * 0.69;
-          const treeHit = TREES.some((tree, index) => {
-            if (npc.harvested.has(index)) return false;
-            const p = project(tree);
-            return Math.abs(p.x - footX) < Math.max(13, 9 * p.scale) && Math.abs(p.y - footY) < 18;
-          });
-          const rockHit = ROCKS.some((rock, index) => {
-            if (harvestedRocks.has(index)) return false;
-            const p = project(rock);
-            return Math.abs(p.x - footX) < Math.max(22, 18 * p.scale) && Math.abs(p.y - footY) < 14;
-          });
-          player.x = oldX; player.z = oldZ;
-          return treeHit || rockHit;
-        };
-        if (!blocked(nextX, player.z)) player.x = nextX;
-        if (!blocked(player.x, nextZ)) player.z = nextZ;
+        const treeRadius = 0.92;
+        const rockRadius = 0.78;
+        const collides = (x: number, z: number) =>
+          TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - x, tree.z - z) < treeRadius) ||
+          ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - x, rock.z - z) < rockRadius);
+        // Resolve each axis separately so the player slides around solid objects.
+        if (!collides(nextX, player.z)) player.x = nextX;
+        if (!collides(player.x, nextZ)) player.z = nextZ;
+        // Safety push-out: if a fast frame ever places the player inside an object, eject immediately.
+        TREES.forEach((tree,index)=>{
+          if(npc.harvested.has(index)) return;
+          const dx=player.x-tree.x,dz=player.z-tree.z,d=Math.hypot(dx,dz);
+          if(d < treeRadius){ const q=Math.max(d,.001); player.x=tree.x+dx/q*treeRadius; player.z=tree.z+dz/q*treeRadius; }
+        });
+        ROCKS.forEach((rock,index)=>{
+          if(harvestedRocks.has(index)) return;
+          const dx=player.x-rock.x,dz=player.z-rock.z,d=Math.hypot(dx,dz);
+          if(d < rockRadius){ const q=Math.max(d,.001); player.x=rock.x+dx/q*rockRadius; player.z=rock.z+dz/q*rockRadius; }
+        });
       }
 
       gatherCooldown = Math.max(0, gatherCooldown - dt);
       let nearestTree = -1, nearestDistance = Infinity;
-      TREES.forEach((tree, index) => {
-        if (npc.harvested.has(index)) return;
-        const distance = screenDistanceTo(tree);
-        if (distance < nearestDistance) { nearestDistance = distance; nearestTree = index; }
-      });
+      TREES.forEach((tree,index)=>{ if(npc.harvested.has(index)) return; const d=Math.hypot(tree.x-player.x,tree.z-player.z); if(d<nearestDistance){nearestDistance=d;nearestTree=index;} });
       let nearestRock = -1, nearestRockDistance = Infinity;
-      ROCKS.forEach((rock, index) => {
-        if (harvestedRocks.has(index)) return;
-        const distance = screenDistanceTo(rock);
-        if (distance < nearestRockDistance) { nearestRockDistance = distance; nearestRock = index; }
-      });
+      ROCKS.forEach((rock,index)=>{ if(harvestedRocks.has(index)) return; const d=Math.hypot(rock.x-player.x,rock.z-player.z); if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=index;} });
       const nearResource: "wood" | "stone" | null =
-        nearestTree >= 0 && nearestDistance < 105 ? "wood" :
-        nearestRock >= 0 && nearestRockDistance < 82 ? "stone" : null;
-      if (nearResource !== lastNearResource) {
-        lastNearResource = nearResource;
-        onNearResource(nearResource);
-      }
+        nearestTree >= 0 && nearestDistance < 1.28 ? "wood" :
+        nearestRock >= 0 && nearestRockDistance < 1.12 ? "stone" : null;
+      if (nearResource !== lastNearResource) { lastNearResource = nearResource; onNearResource(nearResource); }
 
       const target = npc.phase === "toCamp" ? camp : TREES[npc.treeIndex];
       if ((npc.phase === "toTree" || npc.phase === "toCamp") && target) {
