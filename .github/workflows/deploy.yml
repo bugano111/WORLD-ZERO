@@ -22,7 +22,7 @@ jobs:
       - run: npm install
       - run: npm run build
       - name: Verify BUILD 09 marker
-        run: grep -R "WORLD BUILD 09" dist/assets
+        run: grep -R "WORLD BUILD 10" dist/assets
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
