@@ -131,6 +131,10 @@ function drawPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale: 
   ctx.stroke();
   ctx.fillStyle = npc ? COLORS.npc : COLORS.player;
   ctx.fillRect(x - 15 * scale, y - 65 * scale, 30 * scale, 41 * scale);
+  // arms give the character a stronger 3D silhouette
+  ctx.strokeStyle = COLORS.skin; ctx.lineWidth = 7 * scale; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(x-14*scale,y-58*scale); ctx.lineTo(x-21*scale,y-32*scale+stride*.25);
+  ctx.moveTo(x+14*scale,y-58*scale); ctx.lineTo(x+21*scale,y-32*scale-stride*.25); ctx.stroke();
   ctx.fillStyle = npc ? "#b98432" : "#9f4034";
   ctx.fillRect(x + 7 * scale, y - 65 * scale, 8 * scale, 41 * scale);
   ellipse(ctx, x, y - 78 * scale, 13 * scale, 15 * scale, COLORS.skin);
@@ -328,7 +332,10 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       skyGradient.addColorStop(1, "#dce9d7");
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, width, height * 0.48);
-      ellipse(ctx, width * 0.78, height * 0.12, 34, 34, "rgba(255,239,173,.72)");
+      ellipse(ctx, width * 0.78, height * 0.12, 38, 38, "rgba(255,239,173,.78)");
+      // soft layered clouds
+      const cloud=(cx:number,cy:number,s:number,a:number)=>{ ellipse(ctx,cx,cy,38*s,11*s,`rgba(255,255,255,${a})`); ellipse(ctx,cx-18*s,cy-7*s,19*s,13*s,`rgba(255,255,255,${a})`); ellipse(ctx,cx+12*s,cy-10*s,24*s,16*s,`rgba(255,255,255,${a})`); };
+      cloud(width*.18,height*.16,.72,.48); cloud(width*.58,height*.23,.5,.34);
       polygon(ctx, [[0,height*.43],[width*.18,height*.35],[width*.36,height*.43],[width*.55,height*.33],[width*.77,height*.43],[width,height*.36],[width,height*.5],[0,height*.5]], "#759365");
       polygon(ctx, [[0,height*.45],[width*.25,height*.39],[width*.47,height*.46],[width*.72,height*.38],[width,height*.45],[width,height*.53],[0,height*.53]], "#8faa72");
       const groundGradient = ctx.createLinearGradient(0, height * .43, 0, height);
@@ -349,8 +356,15 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const gh=4+((i*7)%8);
         ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx-3,gy-gh); ctx.moveTo(gx,gy); ctx.lineTo(gx+3,gy-gh*.8); ctx.stroke();
       }
+      // ground texture grows toward camera, reinforcing perspective
+      for(let i=0;i<28;i++){
+        const gx=(i*137+53)%Math.max(1,width), t=((i*47)%100)/100, gy=height*(.50+t*.48);
+        const sz=1.5+t*4.5;
+        ellipse(ctx,gx,gy,sz*1.8,sz*.55,i%3===0?"rgba(111,91,58,.24)":"rgba(38,86,43,.22)");
+      }
 
-      const objects: Array<{ depth: number; draw: () => void }> = [];
+      const mist=ctx.createLinearGradient(0,height*.38,0,height*.56); mist.addColorStop(0,"rgba(225,239,222,.42)"); mist.addColorStop(1,"rgba(225,239,222,0)"); ctx.fillStyle=mist; ctx.fillRect(0,height*.38,width,height*.2);
+            const objects: Array<{ depth: number; draw: () => void }> = [];
       const campProjection = project({ x: -3.7, z: -1.8 });
       objects.push({
         depth: campProjection.depth,
@@ -380,6 +394,9 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       });
       objects.sort((a, b) => a.depth - b.depth).forEach((object) => object.draw());
       drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 390, height / 720, 1.34), false, length > 0.05 ? time * 0.012 : 0);
+      const vignette=ctx.createRadialGradient(width*.5,height*.55,Math.min(width,height)*.25,width*.5,height*.55,Math.max(width,height)*.72);
+      vignette.addColorStop(.55,"rgba(0,0,0,0)"); vignette.addColorStop(1,"rgba(14,28,18,.16)");
+      ctx.fillStyle=vignette; ctx.fillRect(0,0,width,height);
 
       frame = requestAnimationFrame(render);
     };
