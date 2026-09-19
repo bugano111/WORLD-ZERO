@@ -85,49 +85,61 @@ function polygon(ctx: CanvasRenderingContext2D, points: Array<[number, number]>,
   ctx.fill();
 }
 
-function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
-  // contact shadow + exposed roots: the trunk visually grows out of the ground
-  ellipse(ctx,x+5*scale,y+4*scale,27*scale,7*scale,"rgba(18,31,18,.30)");
-  polygon(ctx,[[x-7*scale,y],[x-23*scale,y+4*scale],[x-5*scale,y-5*scale]],"#65442f");
-  polygon(ctx,[[x+6*scale,y],[x+23*scale,y+3*scale],[x+5*scale,y-6*scale]],"#503624");
+function drawTree(ctx: CanvasRenderingContext2D,x:number,y:number,s:number){
+  // physically grounded cast shadow
+  ctx.save();ctx.translate(x,y);ctx.scale(1,.28);
+  const sh=ctx.createRadialGradient(8*s,8*s,2,8*s,8*s,38*s);
+  sh.addColorStop(0,"rgba(10,18,10,.42)");sh.addColorStop(1,"rgba(10,18,10,0)");
+  ctx.fillStyle=sh;ctx.beginPath();ctx.arc(8*s,8*s,38*s,0,Math.PI*2);ctx.fill();ctx.restore();
 
-  // irregular tapered trunk with separate lit/mid/shadow faces
-  polygon(ctx,[[x-8*scale,y],[x-7*scale,y-34*scale],[x-10*scale,y-68*scale],[x-4*scale,y-91*scale],[x+3*scale,y-91*scale],[x+6*scale,y-65*scale],[x+8*scale,y-34*scale],[x+9*scale,y]],"#68452f");
-  polygon(ctx,[[x-8*scale,y],[x-7*scale,y-34*scale],[x-10*scale,y-68*scale],[x-4*scale,y-91*scale],[x,y-91*scale],[x-1*scale,y]],"#8b6040");
-  polygon(ctx,[[x+2*scale,y-91*scale],[x+6*scale,y-65*scale],[x+8*scale,y-34*scale],[x+9*scale,y],[x+2*scale,y]],"#493223");
+  // roots
+  [[-5,-1,-27,5],[5,-1,28,4],[-2,-2,-13,10]].forEach(r=>{
+    const g=ctx.createLinearGradient(x+r[0]*s,y,x+r[2]*s,y);
+    g.addColorStop(0,"#684832");g.addColorStop(1,"#3d2a20");
+    ctx.strokeStyle=g;ctx.lineWidth=5*s;ctx.lineCap="round";ctx.beginPath();
+    ctx.moveTo(x+r[0]*s,y+r[1]*s);ctx.lineTo(x+r[2]*s,y+r[3]*s);ctx.stroke();
+  });
 
-  // bark grooves
-  ctx.strokeStyle="rgba(55,34,23,.42)"; ctx.lineWidth=Math.max(1,1.4*scale);
-  [[-3,-12,0,-35],[3,-22,1,-48],[-4,-49,-2,-72],[4,-55,2,-79]].forEach(v=>{ctx.beginPath();ctx.moveTo(x+v[0]*scale,y+v[1]*scale);ctx.lineTo(x+v[2]*scale,y+v[3]*scale);ctx.stroke();});
+  // cylindrical tapered trunk, gradient gives actual volume
+  const tg=ctx.createLinearGradient(x-11*s,0,x+11*s,0);
+  tg.addColorStop(0,"#3b291f");tg.addColorStop(.24,"#755038");tg.addColorStop(.48,"#9a704d");
+  tg.addColorStop(.72,"#62432f");tg.addColorStop(1,"#30221b");
+  ctx.fillStyle=tg;ctx.beginPath();
+  ctx.moveTo(x-10*s,y);ctx.bezierCurveTo(x-8*s,y-38*s,x-11*s,y-73*s,x-5*s,y-101*s);
+  ctx.lineTo(x+4*s,y-101*s);ctx.bezierCurveTo(x+8*s,y-72*s,x+7*s,y-37*s,x+10*s,y);ctx.closePath();ctx.fill();
 
-  // real branch skeleton emerging from trunk
-  ctx.strokeStyle="#60402b"; ctx.lineCap="round";
-  ctx.lineWidth=5.5*scale; ctx.beginPath();
-  ctx.moveTo(x-2*scale,y-67*scale);ctx.lineTo(x-28*scale,y-91*scale);
-  ctx.moveTo(x+2*scale,y-72*scale);ctx.lineTo(x+30*scale,y-99*scale);
-  ctx.moveTo(x,y-84*scale);ctx.lineTo(x-9*scale,y-116*scale);ctx.stroke();
-  ctx.lineWidth=3*scale;ctx.beginPath();
-  ctx.moveTo(x-25*scale,y-89*scale);ctx.lineTo(x-42*scale,y-98*scale);
-  ctx.moveTo(x+27*scale,y-97*scale);ctx.lineTo(x+43*scale,y-111*scale);ctx.stroke();
+  // bark relief
+  ctx.strokeStyle="rgba(38,24,17,.42)";ctx.lineWidth=Math.max(1,1.15*s);
+  for(let i=0;i<7;i++){const yy=y-(12+i*12)*s,off=((i%3)-1)*3*s;ctx.beginPath();ctx.moveTo(x-5*s+off,yy);ctx.lineTo(x+2*s+off,yy-8*s);ctx.stroke();}
 
-  // asymmetric crown, layered back-to-front for depth
-  ellipse(ctx,x-19*scale,y-111*scale,29*scale,25*scale,"#244f30");
-  ellipse(ctx,x+24*scale,y-113*scale,31*scale,26*scale,"#285a34");
-  ellipse(ctx,x-38*scale,y-98*scale,23*scale,20*scale,"#326b3b");
-  ellipse(ctx,x+43*scale,y-101*scale,22*scale,20*scale,"#214b2d");
-  ellipse(ctx,x+2*scale,y-134*scale,34*scale,29*scale,"#397541");
-  ellipse(ctx,x-15*scale,y-143*scale,23*scale,20*scale,"#4b8650");
-  ellipse(ctx,x+19*scale,y-139*scale,25*scale,21*scale,"#36703f");
-  ellipse(ctx,x-25*scale,y-119*scale,16*scale,13*scale,"rgba(99,151,74,.55)");
-  ellipse(ctx,x+28*scale,y-119*scale,17*scale,14*scale,"rgba(20,61,34,.45)");
+  // woody branch structure
+  const branch=(x1:number,y1:number,x2:number,y2:number,w:number)=>{
+    const bg=ctx.createLinearGradient(x1,y1,x2,y2);bg.addColorStop(0,"#65452f");bg.addColorStop(1,"#493124");
+    ctx.strokeStyle=bg;ctx.lineWidth=w*s;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  };
+  branch(x-2*s,y-74*s,x-35*s,y-108*s,6);branch(x+2*s,y-79*s,x+38*s,y-113*s,6);
+  branch(x,y-94*s,x-10*s,y-137*s,5);branch(x-31*s,y-105*s,x-50*s,y-112*s,3);
+  branch(x+34*s,y-110*s,x+52*s,y-124*s,3);
+
+  // shaded foliage volumes: radial light from upper-left, dark undersides
+  const leaf=(cx:number,cy:number,rx:number,ry:number,light="#5d9655",dark="#173b27")=>{
+    const g=ctx.createRadialGradient(cx-rx*.35,cy-ry*.45,2,cx,cy,Math.max(rx,ry));
+    g.addColorStop(0,light);g.addColorStop(.42,"#356f43");g.addColorStop(1,dark);
+    ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.fill();
+  };
+  leaf(x-31*s,y-116*s,34*s,27*s);leaf(x+31*s,y-120*s,35*s,29*s,"#4f884d");
+  leaf(x-3*s,y-144*s,39*s,33*s,"#679d59");leaf(x-52*s,y-103*s,25*s,21*s,"#4c874c");
+  leaf(x+53*s,y-106*s,25*s,22*s,"#467f48");leaf(x-20*s,y-157*s,25*s,21*s,"#72a45e");
+  leaf(x+22*s,y-153*s,28*s,23*s,"#5b9552");
 }
 
-function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
-  ellipse(ctx,x+5*scale,y+4*scale,29*scale,8*scale,"rgba(20,30,22,.32)");
-  polygon(ctx,[[x-27*scale,y],[x-20*scale,y-25*scale],[x-5*scale,y-36*scale],[x+17*scale,y-31*scale],[x+29*scale,y-10*scale],[x+22*scale,y]],"#68726b");
-  polygon(ctx,[[x-20*scale,y-25*scale],[x-5*scale,y-36*scale],[x+17*scale,y-31*scale],[x+7*scale,y-17*scale],[x-10*scale,y-15*scale]],"#aab0a5");
-  polygon(ctx,[[x+7*scale,y-17*scale],[x+17*scale,y-31*scale],[x+29*scale,y-10*scale],[x+22*scale,y],[x+9*scale,y]],"#4e5953");
-  polygon(ctx,[[x-27*scale,y],[x-20*scale,y-25*scale],[x-10*scale,y-15*scale],[x-8*scale,y]],"#7d8780");
+function drawRock(ctx:CanvasRenderingContext2D,x:number,y:number,s:number){
+  ellipse(ctx,x+5*s,y+4*s,28*s,7*s,"rgba(15,22,16,.32)");
+  const g=ctx.createLinearGradient(x-25*s,y-34*s,x+26*s,y);
+  g.addColorStop(0,"#b6bbb2");g.addColorStop(.38,"#858d85");g.addColorStop(1,"#444d48");
+  ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(x-27*s,y);ctx.lineTo(x-20*s,y-24*s);ctx.lineTo(x-5*s,y-37*s);
+  ctx.lineTo(x+17*s,y-31*s);ctx.lineTo(x+29*s,y-9*s);ctx.lineTo(x+21*s,y);ctx.closePath();ctx.fill();
+  ctx.fillStyle="rgba(225,229,218,.25)";ctx.beginPath();ctx.moveTo(x-19*s,y-23*s);ctx.lineTo(x-5*s,y-36*s);ctx.lineTo(x+16*s,y-30*s);ctx.lineTo(x+5*s,y-18*s);ctx.closePath();ctx.fill();
 }
 
 function drawCamp(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
@@ -327,10 +339,10 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       groundGradient.addColorStop(1, "#4f743b");
       ctx.fillStyle = groundGradient;
       ctx.fillRect(0, height * .47, width, height * .57);
-      // Perspective ground bands.
-      polygon(ctx, [[0,height*.57],[width,height*.52],[width,height*.59],[0,height*.66]], "rgba(178,201,111,.30)");
-      polygon(ctx, [[0,height*.74],[width,height*.63],[width,height*.72],[0,height*.86]], "rgba(45,91,48,.24)");
-      polygon(ctx, [[0,height*.91],[width,height*.78],[width,height*.84],[0,height]], "rgba(183,205,112,.18)");
+      // Natural ground: subtle soil/grass variation instead of cartoon stripes.
+      const soil=ctx.createLinearGradient(0,height*.50,0,height);
+      soil.addColorStop(0,"rgba(151,151,91,.08)");soil.addColorStop(.65,"rgba(68,73,39,.08)");soil.addColorStop(1,"rgba(35,48,28,.15)");
+      ctx.fillStyle=soil;ctx.fillRect(0,height*.47,width,height*.53);
       // Small grass blades in foreground.
       ctx.strokeStyle = "rgba(39,84,43,.46)";
       ctx.lineWidth = 1.4;
