@@ -1,4 +1,4 @@
-name: WORLD ZERO STATIC PUBLISH VERIFY
+name: WORLD ZERO FULL BODY TOUCH VERIFY
 on:
   push:
     branches: [main]
