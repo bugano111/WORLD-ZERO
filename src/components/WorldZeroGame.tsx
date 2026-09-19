@@ -163,7 +163,7 @@ function drawPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale: 
   }
 }
 
-function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gatherApi }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onStoneChange: (stone: number) => void; onNearResource: (resource: "wood" | "stone" | "stick" | null) => void; gatherApi: RefObject<() => void> }) {
+function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNearResource, gatherApi }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onStoneChange: (stone: number) => void; onStickChange: (sticks: number) => void; onNearResource: (resource: "wood" | "stone" | "stick" | null) => void; gatherApi: RefObject<() => void> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -179,7 +179,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
     let height = 0;
     let frame = 0;
     let last = performance.now();
-    let playerWood = 0;
+    let playerBranches = 0;
+    let playerSticks = 0;
     let playerStone = 0;
     const harvestedSticks = new Set<number>();
     const harvestedRocks = new Set<number>();
@@ -193,10 +194,10 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       if(gatherCooldown>0)return;
       let ti=-1,td=Infinity;
       TREES.forEach((t,i)=>{if(harvestedTrees.has(i))return;const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<td){td=d;ti=i;}});
-      if(ti>=0&&td<1.62){playerWood++;onWoodChange(playerWood);gatherCooldown=.45;return;}
+      if(ti>=0&&td<1.62){playerBranches++;onWoodChange(playerBranches);gatherCooldown=.45;return;}
       let si=-1,sd=Infinity;
       STICKS.forEach((s,i)=>{if(harvestedSticks.has(i))return;const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<sd){sd=d;si=i;}});
-      if(si>=0&&sd<1.05){harvestedSticks.add(si);playerWood++;onWoodChange(playerWood);gatherCooldown=.35;return;}
+      if(si>=0&&sd<1.05){harvestedSticks.add(si);playerSticks++;onStickChange(playerSticks);gatherCooldown=.35;return;}
             let ri=-1,rd=Infinity;
       ROCKS.forEach((r,i)=>{if(harvestedRocks.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<rd){rd=d;ri=i;}});
       if(ri>=0&&rd<1.16){harvestedRocks.add(ri);playerStone++;onStoneChange(playerStone);gatherCooldown=.45;}
@@ -396,18 +397,20 @@ export function WorldZeroGame() {
   const input = useRef<InputState>({ joystick: { x: 0, y: 0 }, camera: 0 });
   const [wood, setWood] = useState(0);
   const [stone, setStone] = useState(0);
+  const [sticks, setSticks] = useState(0);
   const [actionFlash, setActionFlash] = useState("");
   const handleWoodChange = useCallback((amount: number) => setWood(amount), []);
   const [nearResource, setNearResource] = useState<"wood" | "stone" | "stick" | null>(null);
   const gatherApi = useRef<() => void>(() => {});
   const handleNearResource = useCallback((resource: "wood" | "stone" | "stick" | null) => setNearResource(resource), []);
   const handleStoneChange = useCallback((amount: number) => setStone(amount), []);
+  const handleStickChange = useCallback((amount: number) => setSticks(amount), []);
   return <main className="wz-game">
-    <WorldCanvas input={input} onWoodChange={handleWoodChange} onStoneChange={handleStoneChange} onNearResource={handleNearResource} gatherApi={gatherApi} />
+    <WorldCanvas input={input} onWoodChange={handleWoodChange} onStoneChange={handleStoneChange} onStickChange={handleStickChange} onNearResource={handleNearResource} gatherApi={gatherApi} />
     <div className="wz-hud">
       <header className="wz-statusbar">
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
-        <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span>Kámen: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
+        <div className="wz-day"><strong>Den 1</strong><span>Větve: {wood}</span><span>Klacky: {sticks}</span><span>Kameny: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
       {nearResource && <button type="button" className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); setActionFlash("SEBRÁNO"); window.setTimeout(() => setActionFlash(""), 300); }}>{nearResource === "stone" ? "SEBRAT KÁMEN" : nearResource === "stick" ? "SEBRAT KLACEK" : "ULOMIT VĚTEV"}</button>}{actionFlash && <div className="wz-action-flash">{actionFlash}</div>}
       <div className="wz-controls">
