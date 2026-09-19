@@ -380,6 +380,7 @@ export function WorldZeroGame() {
   const input = useRef<InputState>({ joystick: { x: 0, y: 0 }, camera: 0 });
   const [wood, setWood] = useState(0);
   const [stone, setStone] = useState(0);
+  const [actionFlash, setActionFlash] = useState("");
   const handleWoodChange = useCallback((amount: number) => setWood(amount), []);
   const [nearResource, setNearResource] = useState<"wood" | "stone" | null>(null);
   const gatherApi = useRef<() => void>(() => {});
@@ -392,7 +393,7 @@ export function WorldZeroGame() {
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
         <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span>Kámen: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
-      {nearResource && <button className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); }}>{nearResource === "stone" ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}
+      {nearResource && <button type="button" className="wz-gather" onClick={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); setActionFlash("SEBRÁNO"); window.setTimeout(() => setActionFlash(""), 450); }}>{nearResource === "stone" ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}{actionFlash && <div className="wz-action-flash">{actionFlash}</div>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
