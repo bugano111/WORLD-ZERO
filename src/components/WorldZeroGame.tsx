@@ -52,16 +52,22 @@ const ROCKS: Point[] = [
   { x: -5, z: -3 }, { x: 6, z: -5 }, { x: -9, z: 5 },
   { x: 4, z: 7 }, { x: 10, z: 10 },
 ];
+const LOOSE_STONES: Point[] = [
+  { x: -1.3, z: 3.6 }, { x: 3.8, z: 4.4 }, { x: -4.7, z: 6.3 }, { x: 6.1, z: 7.7 },
+];
 const STICKS: Point[] = [
   { x: -2.2, z: 4.2 }, { x: 2.8, z: 5.4 }, { x: -6.2, z: 7.1 },
   { x: 7.4, z: 3.5 }, { x: 1.2, z: -2.1 },
 ];
 
 function drawStick(ctx: CanvasRenderingContext2D,x:number,y:number,scale:number){
-  ellipse(ctx,x+3*scale,y+2*scale,15*scale,4*scale,"rgba(20,35,20,.24)");
-  ctx.strokeStyle="#755036"; ctx.lineWidth=Math.max(3,4*scale); ctx.lineCap="round";
-  ctx.beginPath(); ctx.moveTo(x-14*scale,y); ctx.lineTo(x+13*scale,y-8*scale); ctx.stroke();
-  ctx.lineWidth=Math.max(2,2.4*scale); ctx.beginPath(); ctx.moveTo(x+2*scale,y-5*scale); ctx.lineTo(x+8*scale,y-14*scale); ctx.stroke();
+  ellipse(ctx,x+2*scale,y+2*scale,14*scale,3.5*scale,"rgba(20,35,20,.24)");
+  ctx.strokeStyle="#66442d"; ctx.lineWidth=Math.max(2.4,3.4*scale); ctx.lineCap="round";
+  ctx.beginPath();ctx.moveTo(x-15*scale,y+1*scale);ctx.lineTo(x+14*scale,y-7*scale);ctx.stroke();
+  ctx.strokeStyle="#8a6240";ctx.lineWidth=Math.max(1,1.2*scale);
+  ctx.beginPath();ctx.moveTo(x-10*scale,y-1*scale);ctx.lineTo(x+9*scale,y-6*scale);ctx.stroke();
+  ctx.strokeStyle="#5c3d29";ctx.lineWidth=Math.max(1.6,2.1*scale);
+  ctx.beginPath();ctx.moveTo(x+1*scale,y-4*scale);ctx.lineTo(x+8*scale,y-13*scale);ctx.moveTo(x-5*scale,y-2*scale);ctx.lineTo(x-10*scale,y-9*scale);ctx.stroke();
 }
 
 function ellipse(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, color: string) {
@@ -80,22 +86,40 @@ function polygon(ctx: CanvasRenderingContext2D, points: Array<[number, number]>,
 }
 
 function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
-  ellipse(ctx, x + 8*scale, y + 5*scale, 30*scale, 9*scale, "rgba(20,35,20,.34)");
-  // tapered trunk with lit and shaded faces
-  polygon(ctx, [[x-8*scale,y],[x-5*scale,y-58*scale],[x+4*scale,y-58*scale],[x+9*scale,y]], "#6d4930");
-  polygon(ctx, [[x+2*scale,y],[x+4*scale,y-58*scale],[x+10*scale,y-51*scale],[x+9*scale,y]], "#4d3426");
-  polygon(ctx, [[x-8*scale,y],[x-5*scale,y-58*scale],[x+1*scale,y-58*scale],[x-1*scale,y]], "#916748");
-  // branches
-  ctx.strokeStyle="#65432d"; ctx.lineWidth=6*scale; ctx.lineCap="round";
-  ctx.beginPath(); ctx.moveTo(x,y-43*scale); ctx.lineTo(x-23*scale,y-70*scale); ctx.moveTo(x+2*scale,y-48*scale); ctx.lineTo(x+25*scale,y-76*scale); ctx.stroke();
-  // volumetric crown clusters
-  ellipse(ctx,x-25*scale,y-77*scale,30*scale,25*scale,"#2d6037");
-  ellipse(ctx,x+24*scale,y-80*scale,32*scale,27*scale,"#285632");
-  ellipse(ctx,x,y-99*scale,35*scale,31*scale,"#397444");
-  ellipse(ctx,x-10*scale,y-109*scale,22*scale,20*scale,"#4b8650");
-  ellipse(ctx,x+13*scale,y-104*scale,23*scale,21*scale,"#3b7042");
-  ellipse(ctx,x-29*scale,y-86*scale,13*scale,11*scale,"rgba(112,157,78,.55)");
-  ellipse(ctx,x+29*scale,y-72*scale,15*scale,12*scale,"rgba(22,67,37,.55)");
+  // contact shadow + exposed roots: the trunk visually grows out of the ground
+  ellipse(ctx,x+5*scale,y+4*scale,27*scale,7*scale,"rgba(18,31,18,.30)");
+  polygon(ctx,[[x-7*scale,y],[x-23*scale,y+4*scale],[x-5*scale,y-5*scale]],"#65442f");
+  polygon(ctx,[[x+6*scale,y],[x+23*scale,y+3*scale],[x+5*scale,y-6*scale]],"#503624");
+
+  // irregular tapered trunk with separate lit/mid/shadow faces
+  polygon(ctx,[[x-8*scale,y],[x-7*scale,y-34*scale],[x-10*scale,y-68*scale],[x-4*scale,y-91*scale],[x+3*scale,y-91*scale],[x+6*scale,y-65*scale],[x+8*scale,y-34*scale],[x+9*scale,y]],"#68452f");
+  polygon(ctx,[[x-8*scale,y],[x-7*scale,y-34*scale],[x-10*scale,y-68*scale],[x-4*scale,y-91*scale],[x,y-91*scale],[x-1*scale,y]],"#8b6040");
+  polygon(ctx,[[x+2*scale,y-91*scale],[x+6*scale,y-65*scale],[x+8*scale,y-34*scale],[x+9*scale,y],[x+2*scale,y]],"#493223");
+
+  // bark grooves
+  ctx.strokeStyle="rgba(55,34,23,.42)"; ctx.lineWidth=Math.max(1,1.4*scale);
+  [[-3,-12,0,-35],[3,-22,1,-48],[-4,-49,-2,-72],[4,-55,2,-79]].forEach(v=>{ctx.beginPath();ctx.moveTo(x+v[0]*scale,y+v[1]*scale);ctx.lineTo(x+v[2]*scale,y+v[3]*scale);ctx.stroke();});
+
+  // real branch skeleton emerging from trunk
+  ctx.strokeStyle="#60402b"; ctx.lineCap="round";
+  ctx.lineWidth=5.5*scale; ctx.beginPath();
+  ctx.moveTo(x-2*scale,y-67*scale);ctx.lineTo(x-28*scale,y-91*scale);
+  ctx.moveTo(x+2*scale,y-72*scale);ctx.lineTo(x+30*scale,y-99*scale);
+  ctx.moveTo(x,y-84*scale);ctx.lineTo(x-9*scale,y-116*scale);ctx.stroke();
+  ctx.lineWidth=3*scale;ctx.beginPath();
+  ctx.moveTo(x-25*scale,y-89*scale);ctx.lineTo(x-42*scale,y-98*scale);
+  ctx.moveTo(x+27*scale,y-97*scale);ctx.lineTo(x+43*scale,y-111*scale);ctx.stroke();
+
+  // asymmetric crown, layered back-to-front for depth
+  ellipse(ctx,x-19*scale,y-111*scale,29*scale,25*scale,"#244f30");
+  ellipse(ctx,x+24*scale,y-113*scale,31*scale,26*scale,"#285a34");
+  ellipse(ctx,x-38*scale,y-98*scale,23*scale,20*scale,"#326b3b");
+  ellipse(ctx,x+43*scale,y-101*scale,22*scale,20*scale,"#214b2d");
+  ellipse(ctx,x+2*scale,y-134*scale,34*scale,29*scale,"#397541");
+  ellipse(ctx,x-15*scale,y-143*scale,23*scale,20*scale,"#4b8650");
+  ellipse(ctx,x+19*scale,y-139*scale,25*scale,21*scale,"#36703f");
+  ellipse(ctx,x-25*scale,y-119*scale,16*scale,13*scale,"rgba(99,151,74,.55)");
+  ellipse(ctx,x+28*scale,y-119*scale,17*scale,14*scale,"rgba(20,61,34,.45)");
 }
 
 function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
@@ -175,6 +199,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
     const player = { x: 0, z: 2.5, yaw: 0 };
     const camp = { x: -3, z: -1 };
     const harvestedTrees = new Set<number>();
+    const branchCounts = new Map<number,number>();
     let width = 0;
     let height = 0;
     let frame = 0;
@@ -184,6 +209,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
     let playerStone = 0;
     const harvestedSticks = new Set<number>();
     const harvestedRocks = new Set<number>();
+    const harvestedLooseStones = new Set<number>();
     let gatherCooldown = 0;
     let lastNearResource: "wood" | "stone" | "stick" | null = null;
     const screenDistanceTo = (point: Point) => {
@@ -194,13 +220,17 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       if(gatherCooldown>0)return;
       let ti=-1,td=Infinity;
       TREES.forEach((t,i)=>{if(harvestedTrees.has(i))return;const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<td){td=d;ti=i;}});
-      if(ti>=0&&td<1.62){playerBranches++;onWoodChange(playerBranches);gatherCooldown=.45;return;}
+      if(ti>=0&&td<1.62){
+        const taken=branchCounts.get(ti)||0;
+        if(taken<3){branchCounts.set(ti,taken+1);playerBranches++;onWoodChange(playerBranches);gatherCooldown=.55;}
+        return;
+      }
       let si=-1,sd=Infinity;
       STICKS.forEach((s,i)=>{if(harvestedSticks.has(i))return;const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<sd){sd=d;si=i;}});
       if(si>=0&&sd<1.05){harvestedSticks.add(si);playerSticks++;onStickChange(playerSticks);gatherCooldown=.35;return;}
-            let ri=-1,rd=Infinity;
-      ROCKS.forEach((r,i)=>{if(harvestedRocks.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<rd){rd=d;ri=i;}});
-      if(ri>=0&&rd<1.16){harvestedRocks.add(ri);playerStone++;onStoneChange(playerStone);gatherCooldown=.45;}
+            let li=-1,ld=Infinity;
+      LOOSE_STONES.forEach((r,i)=>{if(harvestedLooseStones.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<ld){ld=d;li=i;}});
+      if(li>=0&&ld<1.05){harvestedLooseStones.add(li);playerStone++;onStoneChange(playerStone);gatherCooldown=.35;}
     };
     gatherApi.current = gatherNow;
 
@@ -269,11 +299,11 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       let nearestStick=-1,nearestStickDistance=Infinity;
       STICKS.forEach((s,i)=>{if(harvestedSticks.has(i))return;const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<nearestStickDistance){nearestStickDistance=d;nearestStick=i;}});
       let nearestRock=-1,nearestRockDistance=Infinity;
-      ROCKS.forEach((r,i)=>{if(harvestedRocks.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=i;}});
-      const nearResource:"wood"|"stone"|null=
+      LOOSE_STONES.forEach((r,i)=>{if(harvestedLooseStones.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=i;}});
+      const nearResource:"wood"|"stone"|"stick"|null=
         nearestTree>=0&&nearestDistance<1.62?"wood":
         nearestStick>=0&&nearestStickDistance<1.05?"stick":
-        nearestRock>=0&&nearestRockDistance<1.16?"stone":null;
+        nearestRock>=0&&nearestRockDistance<1.05?"stone":null;
       if(nearResource!==lastNearResource){lastNearResource=nearResource;onNearResource(nearResource);}
 
       // Worker disabled until settlement stage.
@@ -333,13 +363,18 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         const p=project(stick);
         if(p.visible) objects.push({depth:p.depth,draw:()=>drawStick(ctx,p.x,p.y,Math.min(1,p.scale))});
       });
-            ROCKS.forEach((rock, index) => {
+            LOOSE_STONES.forEach((stone,index)=>{
+        if(harvestedLooseStones.has(index)) return;
+        const p=project(stone);
+        if(p.visible) objects.push({depth:p.depth,draw:()=>drawRock(ctx,p.x,p.y,Math.min(.34,p.scale*.30))});
+      });
+      ROCKS.forEach((rock, index) => {
         if (harvestedRocks.has(index)) return;
         const p = project(rock);
         if(p.visible) objects.push({ depth: p.depth, draw: () => drawRock(ctx, p.x, p.y, Math.min(.95,p.scale * (0.68 + index % 2 * 0.10))) });
       });
       objects.sort((a, b) => b.depth - a.depth).forEach((object) => object.draw());
-      drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 390, height / 720, 1.34), false, length > 0.05 ? time * 0.012 : 0);
+      drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 420, height / 790, 1.18), false, length > 0.05 ? time * 0.012 : 0);
       const vignette=ctx.createRadialGradient(width*.5,height*.55,Math.min(width,height)*.25,width*.5,height*.55,Math.max(width,height)*.72);
       vignette.addColorStop(.55,"rgba(0,0,0,0)"); vignette.addColorStop(1,"rgba(14,28,18,.16)");
       ctx.fillStyle=vignette; ctx.fillRect(0,0,width,height);
@@ -355,7 +390,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       window.removeEventListener("resize", resize);
       gatherApi.current = () => {};
     };
-  }, [input, onWoodChange, onStoneChange, onNearResource, gatherApi]);
+  }, [input, onWoodChange, onStoneChange, onStickChange, onNearResource, gatherApi]);
 
   return <canvas ref={canvasRef} className="wz-world-canvas" aria-label="Herní svět WORLD ZERO" />;
 }
