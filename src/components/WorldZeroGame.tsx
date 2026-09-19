@@ -10,19 +10,19 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
  const mount=useRef<HTMLDivElement>(null);
  useEffect(()=>{
   const host=mount.current;if(!host)return;
-  const scene=new THREE.Scene();scene.background=new THREE.Color(0x9fc9dc);scene.fog=new THREE.FogExp2(0xb8d1c2,.018);
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc5df);scene.fog=new THREE.FogExp2(0xb9cabb,.013);
   const camera=new THREE.PerspectiveCamera(58,1,.1,180);
   const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.94;
   host.appendChild(renderer.domElement);
 
-  const hemi=new THREE.HemisphereLight(0xcce7ff,0x52613b,1.7);scene.add(hemi);
-  const sun=new THREE.DirectionalLight(0xfff0cf,3.2);sun.position.set(-22,32,18);sun.castShadow=true;
+  const hemi=new THREE.HemisphereLight(0xcbe3f0,0x3e4b32,1.25);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xffe4bd,2.55);sun.position.set(-22,32,18);sun.castShadow=true;
   sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;scene.add(sun);
-  const sky=new THREE.Mesh(new THREE.SphereGeometry(150,24,16),new THREE.MeshBasicMaterial({color:0xa8d3e6,side:THREE.BackSide,fog:false}));scene.add(sky);
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(150,24,16),new THREE.MeshBasicMaterial({color:0x91c8e3,side:THREE.BackSide,fog:false}));scene.add(sky);
   const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(2.2,18,12),new THREE.MeshBasicMaterial({color:0xffe6a8,fog:false}));sunDisc.position.set(-45,48,-70);scene.add(sunDisc);
-  const groundMat=new THREE.MeshStandardMaterial({color:0x5f8247,roughness:1,metalness:0});
+  const groundMat=new THREE.MeshStandardMaterial({color:0x526f3d,roughness:1,metalness:0});
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(120,120,40,40),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
   const pos=ground.geometry.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i);
@@ -34,8 +34,14 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   }
   ground.geometry.computeVertexNormals();scene.add(ground);
 
-  const mountainMat=new THREE.MeshStandardMaterial({color:0x667866,roughness:1});
-  for(const [x,z,s] of [[-35,-45,15],[2,-55,19],[34,-48,17]] as number[][]){const m=new THREE.Mesh(new THREE.ConeGeometry(s,s*1.25,7),mountainMat);m.position.set(x,s*.48,z);scene.add(m);}
+  const horizonMat=new THREE.MeshBasicMaterial({color:0xb8c9b4,transparent:true,opacity:.48,side:THREE.DoubleSide,fog:true});
+  const horizon=new THREE.Mesh(new THREE.CylinderGeometry(92,92,11,48,1,true),horizonMat);horizon.position.y=4.2;scene.add(horizon);
+  const mountainMat=new THREE.MeshStandardMaterial({color:0x596c5d,roughness:1});
+  for(const [x,z,s] of [[-38,-48,15],[0,-58,19],[37,-49,17],[-58,-34,12],[57,-35,13]] as number[][]){
+    const geo=new THREE.IcosahedronGeometry(s,2);const a=geo.attributes.position as THREE.BufferAttribute;
+    for(let i=0;i<a.count;i++){const vx=a.getX(i),vy=a.getY(i),vz=a.getZ(i);const n=1+.08*Math.sin(vx*.31+vz*.23)+.05*Math.cos(vy*.42);a.setXYZ(i,vx*n,vy*n*.68,vz*n);}
+    geo.computeVertexNormals();const m=new THREE.Mesh(geo,mountainMat);m.position.set(x,s*.28,z);m.rotation.y=x*.07;m.receiveShadow=true;scene.add(m);
+  }
   const player=new THREE.Group();
   const skin=new THREE.MeshStandardMaterial({color:0xc99470,roughness:.82}),shirt=new THREE.MeshStandardMaterial({color:0x9c4035,roughness:.9}),dark=new THREE.MeshStandardMaterial({color:0x26342d,roughness:.9});
   const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.30,.62,5,10),shirt);torso.position.y=1.12;torso.castShadow=true;player.add(torso);
@@ -59,9 +65,14 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     const twig=new THREE.Mesh(new THREE.CylinderGeometry(.045,.09,1.45,7),bark);twig.position.set(rx*1.75,ry+.55,rz*1.8);twig.rotation.z=rzrot*.8;twig.castShadow=true;g.add(twig);
    }
    const crownY=h+.15;
-   [[0,0,1.55],[-1.15,.15,1.15],[1.15,.1,1.25],[0,.75,1.2],[0,-.75,1.25],[-.55,0,1.3],[.55,.15,1.3]].forEach((a,j)=>{
-    const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(a[2]*(1+(i%3)*.05),2),leafMats[(i+j)%leafMats.length]);crown.position.set(a[0]*(1+(i%2)*.12),crownY+(j%2)*.48,a[1]);crown.scale.set(1+(j%3)*.10,.78+(j%2)*.13,1-(j%2)*.06);crown.rotation.set((j%2)*.12,(i+j)*.37,(j%3-1)*.08);crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
-   });
+   const clusters=18;
+   for(let j=0;j<clusters;j++){
+    const ang=j*2.399+i*.43,rad=.45+(j%5)*.38,rr=.62+(j%4)*.13;
+    const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(rr,2),leafMats[(i+j)%leafMats.length]);
+    crown.position.set(Math.cos(ang)*rad,crownY+(j%6)*.28-.35,Math.sin(ang)*rad*.82);
+    crown.scale.set(1.05+(j%3)*.08,.72+(j%4)*.06,.92+(j%2)*.08);
+    crown.rotation.set(j*.07,ang,j*.04);crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
+   }
    g.userData.kind="branch";interactives.push(g);obstacles.push({p:new THREE.Vector3(x,0,z),r:.95});scene.add(g);
   });
 
@@ -94,9 +105,16 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const logMat=new THREE.MeshStandardMaterial({color:0x513523,roughness:1});
   [[-6,6,.3],[8,7,-.22]].forEach(([x,z,rot])=>{const l=new THREE.Mesh(new THREE.CylinderGeometry(.24,.3,3.2,10),logMat);l.position.set(x,.28,z);l.rotation.z=Math.PI/2;l.rotation.y=rot;l.castShadow=true;scene.add(l);});
 
+  const litterMat=new THREE.MeshStandardMaterial({color:0x65523a,roughness:1,side:THREE.DoubleSide});
+  const pebbleMat=new THREE.MeshStandardMaterial({color:0x74766e,roughness:1});
+  for(let i=0;i<130;i++){
+    const x=((i*73)%127)/127*54-27,z=((i*41)%113)/113*54-27;
+    if(i%3===0){const q=new THREE.Mesh(new THREE.DodecahedronGeometry(.055+(i%5)*.012,0),pebbleMat);q.position.set(x,.055,z);q.scale.y=.55;scene.add(q);}
+    else {const q=new THREE.Mesh(new THREE.PlaneGeometry(.16+(i%4)*.025,.07),litterMat);q.rotation.x=-Math.PI/2;q.rotation.z=i*.83;q.position.set(x,.018,z);scene.add(q);}
+  }
   // Real 3D grass tufts
   const grassMat=new THREE.MeshStandardMaterial({color:0x466f3b,roughness:1,side:THREE.DoubleSide});
-  for(let i=0;i<260;i++){const x=((i*37)%101)/101*58-29,z=((i*61)%97)/97*58-29;const blade=new THREE.Mesh(new THREE.ConeGeometry(.045,.34,3),grassMat);blade.position.set(x,.17,z);scene.add(blade);}
+  for(let i=0;i<520;i++){const x=((i*37)%101)/101*58-29,z=((i*61)%97)/97*58-29;const blade=new THREE.Mesh(new THREE.ConeGeometry(.025,.24+(i%7)*.035,3),grassMat);blade.position.set(x,.17,z);scene.add(blade);}
 
   const makeAnimal=(kind:"horse"|"goat"|"deer",x:number,z:number,scale:number)=>{
     const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
