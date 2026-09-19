@@ -228,8 +228,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const speed = 4.1 * dt / Math.max(1, length);
         const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
-        const blockedByTree = TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - nextX, tree.z - nextZ) < 0.78);
-        const blockedByRock = ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - nextX, rock.z - nextZ) < 0.72);
+        const blockedByTree = TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - nextX, tree.z - nextZ) < 1.35);
+        const blockedByRock = ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - nextX, rock.z - nextZ) < 1.05);
         if (!blockedByTree && !blockedByRock) { player.x = nextX; player.z = nextZ; }
       }
 
