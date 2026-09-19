@@ -62,18 +62,21 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
 
   const oceanMat=new THREE.MeshPhysicalMaterial({color:0x376f87,roughness:.28,metalness:0,transparent:true,opacity:.72});
   const ocean=new THREE.Mesh(new THREE.CircleGeometry(620,96),oceanMat);ocean.rotation.x=-Math.PI/2;ocean.position.y=-8.4;scene.add(ocean);
+  // VOLUMETRIC MIST: layered transparent haze between forest depth planes.
+  const mistMat=new THREE.MeshBasicMaterial({color:0xdce5d8,transparent:true,opacity:.035,depthWrite:false,side:THREE.DoubleSide});
+  for(let i=0;i<18;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(55,16),mistMat);m.position.set(((i*17)%47)-23,6, -18-i*9);m.rotation.y=(i%5)*.17;scene.add(m);}
   const atmosphereMat=new THREE.MeshBasicMaterial({color:0xbfd8df,transparent:true,opacity:.11,side:THREE.BackSide,depthWrite:false});
   const atmosphere=new THREE.Mesh(new THREE.SphereGeometry(720,48,28),atmosphereMat);atmosphere.position.y=-PLANET_RADIUS+2;scene.add(atmosphere);
   const mountainMat=new THREE.MeshStandardMaterial({color:0x596c5d,roughness:1});
   for(const [x,z,s] of [[-38,-48,15],[0,-58,19],[37,-49,17],[-58,-34,12],[57,-35,13],[-24,28,7],[31,25,8],[-105,-92,24],[88,-118,31],[130,-55,26],[-138,-48,29],[72,112,22],[-82,126,25]] as number[][]){
-    const geo=new THREE.IcosahedronGeometry(s,2);const a=geo.attributes.position as THREE.BufferAttribute;
+    const geo=new THREE.PlaneGeometry(.46,.22);const a=geo.attributes.position as THREE.BufferAttribute;
     for(let i=0;i<a.count;i++){const vx=a.getX(i),vy=a.getY(i),vz=a.getZ(i);const n=1+.08*Math.sin(vx*.31+vz*.23)+.05*Math.cos(vy*.42);a.setXYZ(i,vx*n,vy*n*.68,vz*n);}
     geo.computeVertexNormals();const m=new THREE.Mesh(geo,mountainMat);m.position.set(x,s*.28,z);m.rotation.y=x*.07;m.receiveShadow=true;scene.add(m);
   }
   const player=new THREE.Group();
   const skin=new THREE.MeshPhysicalMaterial({color:0xb77b58,roughness:.68,clearcoat:.05});
-  const cloth=new THREE.MeshStandardMaterial({color:0x4b5547,roughness:.92});
-  const pants=new THREE.MeshStandardMaterial({color:0x343b39,roughness:.96});
+  const cloth=new THREE.MeshStandardMaterial({color:0x55584f,roughness:.92});
+  const pants=new THREE.MeshStandardMaterial({color:0x2f3130,roughness:.96});
   const boots=new THREE.MeshStandardMaterial({color:0x2a211c,roughness:1});
   const hairM=new THREE.MeshStandardMaterial({color:0x2d211b,roughness:1});
   const add=(geo:THREE.BufferGeometry,mat:THREE.Material,p:[number,number,number],s:[number,number,number]=[1,1,1])=>{const m=new THREE.Mesh(geo,mat);m.position.set(...p);m.scale.set(...s);m.castShadow=true;m.receiveShadow=true;player.add(m);return m};
@@ -103,10 +106,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     const shin=add(new THREE.CapsuleGeometry(.068,.34,7,11),skin,[sx*.135,.22,0]);
     add(new THREE.BoxGeometry(.17,.115,.34),boots,[sx*.135,.065,-.085]);
   }
-  scene.add(player);player.visible=false;
+  scene.add(player);player.visible=true;
 
   const obstacles:{p:THREE.Vector3;r:number}[]=[];const interactives:THREE.Object3D[]=[];
-  const bark=new THREE.MeshStandardMaterial({map:barkTex,color:0x9a7658,roughness:1});
+  const bark=new THREE.MeshStandardMaterial({map:barkTex,color:0x5f4b3b,roughness:1});
   const leafMats=[0x315b31,0x3d6a36,0x456f39,0x294b2c].map(v=>new THREE.MeshStandardMaterial({color:v,roughness:.9,side:THREE.DoubleSide}));
   const cyl=(a:THREE.Vector3,b:THREE.Vector3,r0:number,r1:number)=>{
     const d=new THREE.Vector3().subVectors(b,a),len=d.length(),m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,len,10),bark);
@@ -172,6 +175,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const soilMat2=new THREE.MeshStandardMaterial({color:0x514638,roughness:1});
   for(let i=0;i<260;i++){const x=((i*83)%251)/251*170-85,z=((i*47)%239)/239*170-85,r=.35+(i%11)*.13;
     const p=new THREE.Mesh(new THREE.CircleGeometry(r,10),i%3?mossMat:soilMat2);p.rotation.x=-Math.PI/2;p.position.set(x,terrainY(x,z)+.012,z);p.scale.set(1.8,.7,1);p.receiveShadow=true;scene.add(p);}
+  // LEAF LITTER CARPET
+  const dryLeafMat=new THREE.MeshStandardMaterial({color:0x6a5538,roughness:1,side:THREE.DoubleSide});
+  const dryLeafGeo=new THREE.PlaneGeometry(.10,.055),leafCarpet=new THREE.InstancedMesh(dryLeafGeo,dryLeafMat,5000),ld=new THREE.Object3D();
+  for(let i=0;i<5000;i++){const x=((i*67)%701)/701*120-60,z=((i*131)%709)/709*120-60;ld.position.set(x,terrainY(x,z)+.018,z);ld.rotation.set(-Math.PI/2,(i*.77)%6.28,0);ld.updateMatrix();leafCarpet.setMatrixAt(i,ld.matrix);}scene.add(leafCarpet);
   const litterMat=new THREE.MeshStandardMaterial({color:0x65523a,roughness:1,side:THREE.DoubleSide});
   const pebbleMat=new THREE.MeshStandardMaterial({color:0x74766e,roughness:1});
   for(let i=0;i<130;i++){
@@ -204,7 +211,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const fernLeaf=new THREE.PlaneGeometry(.55,.09);
   for(let i=0;i<170;i++){const x=((i*79)%181)/181*130-65,z=((i*53)%173)/173*130-65,fg=new THREE.Group();for(let q=0;q<7;q++){const fr=new THREE.Mesh(fernLeaf,fernMat);const a=q*Math.PI*2/7;fr.position.set(Math.cos(a)*.25,.18,Math.sin(a)*.25);fr.rotation.set(-.55,a,0);fg.add(fr);}fg.position.set(x,terrainY(x,z),z);scene.add(fg);}
   const shrubMat=new THREE.MeshStandardMaterial({color:0x365d35,roughness:1});
-  for(let i=0;i<85;i++){const x=((i*83)%131)/131*110-55,z=((i*57)%127)/127*110-55;const s=.25+(i%6)*.07;const b=new THREE.Mesh(new THREE.IcosahedronGeometry(s,1),shrubMat);b.position.set(x,terrainY(x,z)+s*.65,z);b.scale.set(1.35,.75,1);b.castShadow=true;scene.add(b);}
+  for(let i=0;i<85;i++){const x=((i*83)%131)/131*110-55,z=((i*57)%127)/127*110-55;const s=.25+(i%6)*.07;const b=new THREE.Mesh(new THREE.PlaneGeometry(.46,.22),shrubMat);b.position.set(x,terrainY(x,z)+s*.65,z);b.scale.set(1.35,.75,1);b.castShadow=true;scene.add(b);}
   const flowerMats=[0xd9d0a8,0xc9b5d4,0xe0c68d].map(v=>new THREE.MeshStandardMaterial({color:v,roughness:.9}));
   for(let i=0;i<75;i++){const x=((i*97)%137)/137*70-35,z=((i*71)%139)/139*70-35;const stem=new THREE.Mesh(new THREE.CylinderGeometry(.008,.012,.25,5),new THREE.MeshStandardMaterial({color:0x4d713e}));stem.position.set(x,terrainY(x,z)+.12,z);scene.add(stem);const fl=new THREE.Mesh(new THREE.SphereGeometry(.045,6,5),flowerMats[i%3]);fl.position.set(x,terrainY(x,z)+.27,z);scene.add(fl);}
   const plantMat=new THREE.MeshStandardMaterial({color:0x73924b,roughness:1,side:THREE.DoubleSide});
@@ -244,10 +251,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    if(player.children[7])player.children[7].rotation.x=walk;if(player.children[9])player.children[9].rotation.x=-walk;
    chooseTarget();
    animals.forEach((a,i)=>{const ph=now*.00018+a.userData.phase;a.position.x+=Math.sin(ph+i)*dt*.18;a.position.z+=Math.cos(ph*.83+i)*dt*.15;a.rotation.y=Math.atan2(Math.sin(ph+i),Math.cos(ph*.83+i));});
-   const eye=1.68;
-   const bob=len>.04?Math.sin(now*.009)*.012:0;camera.position.set(player.position.x,player.position.y+eye+bob,player.position.z);
-   const look=new THREE.Vector3(Math.sin(yaw),-.055,-Math.cos(yaw));
-   camera.lookAt(camera.position.clone().add(look.multiplyScalar(12)));
+   const eye=1.68,bob=len>.04?Math.sin(now*.009)*.012:0;
+   const dist=4.6,camX=player.position.x-Math.sin(yaw)*dist,camZ=player.position.z+Math.cos(yaw)*dist;
+   camera.position.lerp(new THREE.Vector3(camX,Math.max(terrainY(camX,camZ)+1.45,player.position.y+2.15+bob),camZ),.14);
+   camera.lookAt(player.position.x,player.position.y+1.35,player.position.z);
    renderer.render(scene,camera);requestAnimationFrame(clock);
   };
   const resize=()=>{const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};resize();addEventListener("resize",resize);
@@ -279,7 +286,7 @@ export function WorldZeroGame(){
  useEffect(()=>{if(counts.leaves>=3&&!knowledge.includes("fiber")){setFiber(1);learn("fiber","Z rostlin jsi získal pevná vlákna. Lze jimi svazovat materiály.");}},[counts.leaves]);
  const labels:Record<Kind,string>={branch:"ULOMIT VĚTEV",stick:"SEBRAT KLACEK",stone:"SEBRAT KÁMEN",leaf:"SEBRAT LISTÍ"};
  return <main className="wz-game"><World3D input={input} onCounts={setCounts} onTarget={setTarget} gatherApi={gatherApi}/>
-  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 04 · CINEMATIC EARTH</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
+  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 05 · REAL WORLD REBUILD</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
   <div style={{position:"absolute",top:96,left:12,right:12,textAlign:"center",pointerEvents:"none",zIndex:5}}><span style={{display:"inline-block",background:"rgba(15,18,14,.72)",color:"#f3efdc",padding:"7px 10px",borderRadius:9,fontSize:12}}>{survivalMsg}</span></div>
   {flint>0&&fiber>0&&counts.branches>0&&!knowledge.includes("tool")&&<button className="wz-gather" style={{bottom:116}} onPointerDown={e=>{e.preventDefault();learn("tool","První technologický objev: svázaný kamenný nástroj. Teď může začít skutečné opracování dřeva.");}}>SPOJIT KÁMEN + VĚTEV + VLÁKNO</button>}
   {target&&<button className="wz-gather" onPointerDown={e=>{e.preventDefault();e.stopPropagation();gatherApi.current();setFlash("SEBRÁNO");setTimeout(()=>setFlash(""),260)}}>{labels[target]}</button>}{flash&&<div className="wz-action-flash">{flash}</div>}
