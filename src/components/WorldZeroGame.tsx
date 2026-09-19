@@ -50,7 +50,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   tl.load("https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_diff_1k.jpg",(t)=>{prep(t);t.colorSpace=THREE.SRGBColorSpace;groundMat.map=t;groundMat.needsUpdate=true;});
   tl.load("https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_nor_gl_1k.jpg",(t)=>{prep(t);groundMat.normalMap=t;groundMat.normalScale.set(1.25,1.25);groundMat.needsUpdate=true;});
   tl.load("https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_rough_1k.jpg",(t)=>{prep(t);groundMat.roughnessMap=t;groundMat.needsUpdate=true;});
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(1800,1800,220,220),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(5000,5000,240,240),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
   const pos=ground.geometry.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i);
     pos.setZ(i,terrainY(x,y);
@@ -75,6 +75,14 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   // SNOW CAPS 06
   const snowMat=new THREE.MeshStandardMaterial({color:0xd9ded8,roughness:.92});
   [[-150,-190,44],[40,-230,58],[170,-205,49],[-250,-240,64]].forEach(([x,z,h])=>{const m=new THREE.Mesh(new THREE.ConeGeometry(h*.72,h,9),mountainMat);m.position.set(x,terrainY(x,z)+h/2,z);scene.add(m);const s=new THREE.Mesh(new THREE.ConeGeometry(h*.28,h*.24,9),snowMat);s.position.set(x,terrainY(x,z)+h*.88,z);scene.add(s);});
+  // OPEN PLANET LANDMARKS — kilometre-scale scenery visible immediately.
+  const lakeMat=new THREE.MeshPhysicalMaterial({color:0x315f73,roughness:.12,metalness:0,transparent:true,opacity:.86,clearcoat:1});
+  const lake=new THREE.Mesh(new THREE.CircleGeometry(95,96),lakeMat);lake.rotation.x=-Math.PI/2;lake.scale.set(2.1,1,.72);lake.position.set(115,terrainY(115,-125)-.25,-125);scene.add(lake);
+  const distantRock=new THREE.MeshStandardMaterial({color:0x59605b,roughness:1});
+  const distantSnow=new THREE.MeshStandardMaterial({color:0xe3e5df,roughness:.9});
+  for(let i=0;i<18;i++){const a=-1.2+i*.14,r=420+(i%4)*45,x=Math.sin(a)*r,z=-Math.cos(a)*r,h=75+(i%7)*18;
+    const m=new THREE.Mesh(new THREE.ConeGeometry(h*.62,h,10),distantRock);m.position.set(x,terrainY(x,z)+h/2,z);scene.add(m);
+    const cap=new THREE.Mesh(new THREE.ConeGeometry(h*.23,h*.22,10),distantSnow);cap.position.set(x,terrainY(x,z)+h*.89,z);scene.add(cap);}
   const mountainMat=new THREE.MeshStandardMaterial({color:0x596c5d,roughness:1});
   for(const [x,z,s] of [[-38,-48,15],[0,-58,19],[37,-49,17],[-58,-34,12],[57,-35,13],[-24,28,7],[31,25,8],[-105,-92,24],[88,-118,31],[130,-55,26],[-138,-48,29],[72,112,22],[-82,126,25]] as number[][]){
     const geo=new THREE.PlaneGeometry(.46,.22);const a=geo.attributes.position as THREE.BufferAttribute;
@@ -276,6 +284,8 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    const dist=4.6,camX=player.position.x-Math.sin(yaw)*dist,camZ=player.position.z+Math.cos(yaw)*dist;
    camera.position.lerp(new THREE.Vector3(camX,Math.max(terrainY(camX,camZ)+1.45,player.position.y+2.15+bob),camZ),.14);
    camera.lookAt(player.position.x,player.position.y+1.35,player.position.z);
+   ground.position.x=player.position.x;ground.position.z=player.position.z;
+   ocean.position.x=player.position.x;ocean.position.z=player.position.z;
    renderer.render(scene,camera);requestAnimationFrame(clock);
   };
   const resize=()=>{const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};resize();addEventListener("resize",resize);
@@ -307,7 +317,7 @@ export function WorldZeroGame(){
  useEffect(()=>{if(counts.leaves>=3&&!knowledge.includes("fiber")){setFiber(1);learn("fiber","Z rostlin jsi získal pevná vlákna. Lze jimi svazovat materiály.");}},[counts.leaves]);
  const labels:Record<Kind,string>={branch:"ULOMIT VĚTEV",stick:"SEBRAT KLACEK",stone:"SEBRAT KÁMEN",leaf:"SEBRAT LISTÍ"};
  return <main className="wz-game"><World3D input={input} onCounts={setCounts} onTarget={setTarget} gatherApi={gatherApi}/>
-  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 08 · FOREST REBUILD</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
+  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 09 · OPEN PLANET</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
   <div style={{position:"absolute",top:96,left:12,right:12,textAlign:"center",pointerEvents:"none",zIndex:5}}><span style={{display:"inline-block",background:"rgba(15,18,14,.72)",color:"#f3efdc",padding:"7px 10px",borderRadius:9,fontSize:12}}>{survivalMsg}</span></div>
   {flint>0&&fiber>0&&counts.branches>0&&!knowledge.includes("tool")&&<button className="wz-gather" style={{bottom:116}} onPointerDown={e=>{e.preventDefault();learn("tool","První technologický objev: svázaný kamenný nástroj. Teď může začít skutečné opracování dřeva.");}}>SPOJIT KÁMEN + VĚTEV + VLÁKNO</button>}
   {target&&<button className="wz-gather" onPointerDown={e=>{e.preventDefault();e.stopPropagation();gatherApi.current();setFlash("SEBRÁNO");setTimeout(()=>setFlash(""),260)}}>{labels[target]}</button>}{flash&&<div className="wz-action-flash">{flash}</div>}
