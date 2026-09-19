@@ -200,17 +200,19 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
     };
 
     const project = (point: Point) => {
-      const dx = point.x - player.x;
-      const dz = point.z - player.z;
-      const cosine = Math.cos(player.yaw);
-      const sine = Math.sin(player.yaw);
-      const side = dx * cosine - dz * sine;
-      const depth = dx * sine + dz * cosine;
+      const dx=point.x-player.x, dz=point.z-player.z;
+      const cosine=Math.cos(player.yaw), sine=Math.sin(player.yaw);
+      const side=dx*cosine-dz*sine;
+      const forward=-(dx*sine+dz*cosine);
+      const cameraDepth=forward+7.5;
+      const visible=cameraDepth>1.0;
+      const perspective=visible ? Math.min(2.15, 7.5/cameraDepth) : 0;
       return {
-        x: width * 0.5 + side * Math.min(width * 0.078, 38),
-        y: height * 0.535 + depth * Math.min(height * 0.031, 26),
-        scale: Math.max(0.38, Math.min(1.52, 0.78 + depth * 0.042)),
-        depth,
+        x: width*.5 + side*46*perspective,
+        y: height*.60 + (1-perspective)*height*.18,
+        scale: Math.max(.28,Math.min(1.65,perspective)),
+        depth: cameraDepth,
+        visible,
       };
     };
 
@@ -257,24 +259,24 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       // Worker disabled until settlement stage.
 
       // Atmosphere + layered terrain for stronger depth.
-      const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.48);
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.44);
       skyGradient.addColorStop(0, "#79b9d8");
       skyGradient.addColorStop(0.72, "#b8dbe3");
       skyGradient.addColorStop(1, "#dce9d7");
       ctx.fillStyle = skyGradient;
-      ctx.fillRect(0, 0, width, height * 0.48);
+      ctx.fillRect(0, 0, width, height * 0.44);
       ellipse(ctx, width * 0.78, height * 0.12, 38, 38, "rgba(255,239,173,.78)");
       // soft layered clouds
       const cloud=(cx:number,cy:number,s:number,a:number)=>{ ellipse(ctx,cx,cy,38*s,11*s,`rgba(255,255,255,${a})`); ellipse(ctx,cx-18*s,cy-7*s,19*s,13*s,`rgba(255,255,255,${a})`); ellipse(ctx,cx+12*s,cy-10*s,24*s,16*s,`rgba(255,255,255,${a})`); };
       cloud(width*.18,height*.16,.72,.48); cloud(width*.58,height*.23,.5,.34);
       polygon(ctx, [[0,height*.43],[width*.18,height*.35],[width*.36,height*.43],[width*.55,height*.33],[width*.77,height*.43],[width,height*.36],[width,height*.5],[0,height*.5]], "#759365");
       polygon(ctx, [[0,height*.45],[width*.25,height*.39],[width*.47,height*.46],[width*.72,height*.38],[width,height*.45],[width,height*.53],[0,height*.53]], "#8faa72");
-      const groundGradient = ctx.createLinearGradient(0, height * .43, 0, height);
+      const groundGradient = ctx.createLinearGradient(0, height * .47, 0, height);
       groundGradient.addColorStop(0, "#8eaa62");
       groundGradient.addColorStop(.55, "#688d48");
       groundGradient.addColorStop(1, "#4f743b");
       ctx.fillStyle = groundGradient;
-      ctx.fillRect(0, height * .43, width, height * .57);
+      ctx.fillRect(0, height * .47, width, height * .57);
       // Perspective ground bands.
       polygon(ctx, [[0,height*.57],[width,height*.52],[width,height*.59],[0,height*.66]], "rgba(178,201,111,.30)");
       polygon(ctx, [[0,height*.74],[width,height*.63],[width,height*.72],[0,height*.86]], "rgba(45,91,48,.24)");
@@ -297,21 +299,21 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       const mist=ctx.createLinearGradient(0,height*.38,0,height*.56); mist.addColorStop(0,"rgba(225,239,222,.42)"); mist.addColorStop(1,"rgba(225,239,222,0)"); ctx.fillStyle=mist; ctx.fillRect(0,height*.38,width,height*.2);
             const objects: Array<{ depth: number; draw: () => void }> = [];
       const campProjection = project({ x: -3.7, z: -1.8 });
-      objects.push({
+      if(campProjection.visible) objects.push({
         depth: campProjection.depth,
         draw: () => drawCamp(ctx, campProjection.x, campProjection.y, campProjection.scale * 0.78),
       });
       TREES.forEach((tree, index) => {
         if (harvestedTrees.has(index)) return;
         const p = project(tree);
-        objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
+        if(p.visible) objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
       });
       ROCKS.forEach((rock, index) => {
         if (harvestedRocks.has(index)) return;
         const p = project(rock);
-        objects.push({ depth: p.depth, draw: () => drawRock(ctx, p.x, p.y, p.scale * (0.72 + index % 2 * 0.12)) });
+        if(p.visible) objects.push({ depth: p.depth, draw: () => drawRock(ctx, p.x, p.y, p.scale * (0.72 + index % 2 * 0.12)) });
       });
-      objects.sort((a, b) => a.depth - b.depth).forEach((object) => object.draw());
+      objects.sort((a, b) => b.depth - a.depth).forEach((object) => object.draw());
       drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 390, height / 720, 1.34), false, length > 0.05 ? time * 0.012 : 0);
       const vignette=ctx.createRadialGradient(width*.5,height*.55,Math.min(width,height)*.25,width*.5,height*.55,Math.max(width,height)*.72);
       vignette.addColorStop(.55,"rgba(0,0,0,0)"); vignette.addColorStop(1,"rgba(14,28,18,.16)");
