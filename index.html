@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>WORLD ZERO</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#7fc6e8;font-family:system-ui,sans-serif;touch-action:none}canvas{display:block;width:100%;height:100%}
+#hud{position:fixed;top:max(10px,env(safe-area-inset-top));left:12px;color:#fff;background:#0009;padding:9px 12px;border-radius:12px;font-weight:700;font-size:13px;line-height:1.45;pointer-events:none}
+#diag{color:#8cff9a}.cam{position:fixed;right:16px;bottom:max(25px,env(safe-area-inset-bottom));display:flex;gap:10px}
+button{width:58px;height:58px;border:1px solid #ffffff88;border-radius:50%;background:#111a;color:#fff;font-size:24px;font-weight:800}
+#joy{position:fixed;left:18px;bottom:max(22px,env(safe-area-inset-bottom));width:120px;height:120px;border-radius:50%;background:#ffffff25;border:2px solid #ffffff66}
+#knob{position:absolute;left:38px;top:38px;width:44px;height:44px;border-radius:50%;background:#ffffffaa}
+</style></head>
+<body><canvas id="c"></canvas>
+<div id="hud">WORLD ZERO<br>Divočina · Den 1<br>Dřevo: <span id="wood">0</span><br><span id="diag">renderer OK</span></div>
+<div id="joy"><div id="knob"></div></div><div class="cam"><button id="cl">‹</button><button id="cr">›</button></div>
+<script>
+(()=>{const c=document.getElementById('c'),x=c.getContext('2d');let W,H,dpr,cam=0,wood=0,last=performance.now();
+const player={x:0,z:2},camp={x:-3,z:-1};const trees=[[-7,-8],[-2,-10],[4,-8],[8,-4],[-8,0],[6,2],[-5,6],[3,7],[9,8]].map((p,i)=>({x:p[0],z:p[1],cut:false}));
+const rocks=[[-4,-5],[5,-6],[8,1],[-7,4]].map(p=>({x:p[0],z:p[1]}));
+const npc={x:-3,z:-1,target:0,phase:'go',wait:0};
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0)}addEventListener('resize',resize);resize();
+function proj(px,pz){let dx=px-player.x,dz=pz-player.z,cs=Math.cos(cam),sn=Math.sin(cam),rx=dx*cs-dz*sn,rz=dx*sn+dz*cs+13,s=430/Math.max(4,rz+8);return {x:W/2+rx*s,y:H*.52+(rz-13)*s*.25,s:s}}
+function tree(t){let p=proj(t.x,t.z),s=Math.max(7,p.s*.5);x.fillStyle='#69421f';x.fillRect(p.x-s*.12,p.y-s*.9,s*.24,s*.9);x.fillStyle='#236b32';x.beginPath();x.arc(p.x,p.y-s*1.05,s*.58,0,7);x.fill()}
+function rock(r){let p=proj(r.x,r.z),s=Math.max(6,p.s*.35);x.fillStyle='#777';x.beginPath();x.ellipse(p.x,p.y,s,s*.55,0,0,7);x.fill()}
+function person(px,pz,col){let p=proj(px,pz),s=Math.max(7,p.s*.34);x.fillStyle=col;x.beginPath();x.arc(p.x,p.y-s*1.5,s*.28,0,7);x.fill();x.fillRect(p.x-s*.22,p.y-s*1.2,s*.44,s*.8)}
+function draw(){x.fillStyle='#8ed0ef';x.fillRect(0,0,W,H);let g=x.createLinearGradient(0,H*.35,0,H);g.addColorStop(0,'#70a84b');g.addColorStop(1,'#3d7c36');x.fillStyle=g;x.fillRect(0,H*.35,W,H);
+let all=[];trees.filter(t=>!t.cut).forEach(t=>all.push({z:proj(t.x,t.z).y,f:()=>tree(t)}));rocks.forEach(r=>all.push({z:proj(r.x,r.z).y,f:()=>rock(r)}));
+all.push({z:proj(camp.x,camp.z).y,f:()=>{let p=proj(camp.x,camp.z);x.fillStyle='#e07824';x.beginPath();x.arc(p.x,p.y,9,0,7);x.fill()}});
+all.sort((a,b)=>a.z-b.z).forEach(o=>o.f());person(npc.x,npc.z,'#d8b36b');person(player.x,player.z,'#2455d8');
+requestAnimationFrame(loop)}
+function step(dt){let t=trees[npc.target];if(!t||t.cut){npc.target=trees.findIndex(q=>!q.cut);t=trees[npc.target];if(!t)return}
+let tx=npc.phase==='back'?camp.x:t.x,tz=npc.phase==='back'?camp.z:t.z,dx=tx-npc.x,dz=tz-npc.z,d=Math.hypot(dx,dz);
+if(npc.phase==='work'){npc.wait-=dt;if(npc.wait<=0){t.cut=true;wood++;document.getElementById('wood').textContent=wood;npc.phase='back'}return}
+if(d<.25){if(npc.phase==='go'){npc.phase='work';npc.wait=1.1}else{npc.target=trees.findIndex(q=>!q.cut);npc.phase='go'}return}
+let v=Math.min(d,1.8*dt);npc.x+=dx/d*v;npc.z+=dz/d*v}
+let joy={x:0,y:0,id:null},J=document.getElementById('joy'),K=document.getElementById('knob');
+function jp(e){joy.id=e.pointerId;J.setPointerCapture?.(e.pointerId);jm(e)}function jm(e){if(e.pointerId!==joy.id)return;let r=J.getBoundingClientRect(),dx=e.clientX-(r.left+60),dy=e.clientY-(r.top+60),m=Math.hypot(dx,dy)||1,q=Math.min(42,m);joy.x=dx/m*Math.min(1,m/42);joy.y=dy/m*Math.min(1,m/42);K.style.transform='translate('+dx/m*q+'px,'+dy/m*q+'px)'}function ju(e){if(e.pointerId!==joy.id)return;joy={x:0,y:0,id:null};K.style.transform=''}
+J.onpointerdown=jp;J.onpointermove=jm;J.onpointerup=J.onpointercancel=ju;
+document.getElementById('cl').onpointerdown=()=>cam-=.18;document.getElementById('cr').onpointerdown=()=>cam+=.18;
+function loop(now){let dt=Math.min(.05,(now-last)/1000);last=now;let cs=Math.cos(cam),sn=Math.sin(cam),vx=joy.x*cs+joy.y*sn,vz=-joy.x*sn+joy.y*cs;player.x+=vx*3*dt;player.z+=vz*3*dt;step(dt);draw()}requestAnimationFrame(loop);
+window.onerror=(m)=>document.getElementById('diag').textContent='ERR '+m;
+})();
+</script></body></html>
