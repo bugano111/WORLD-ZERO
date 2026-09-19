@@ -165,7 +165,6 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
     let last = performance.now();
     let playerWood = 0;
     let playerStone = 0;
-    const treeHits = new Map<number, number>();
     const harvestedRocks = new Set<number>();
     let gatherCooldown = 0;
     let lastNearResource: "wood" | "stone" | null = null;
@@ -177,16 +176,10 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const d = Math.hypot(tree.x - player.x, tree.z - player.z);
         if (d < td) { td = d; ti = index; }
       });
-      if (ti >= 0 && td < 2.8) {
-        const hits = (treeHits.get(ti) || 0) + 1;
-        treeHits.set(ti, hits);
-        gatherCooldown = .28;
-        if (hits >= 3) {
-          npc.harvested.add(ti);
-          treeHits.delete(ti);
-          playerWood += 3;
-          onWoodChange(npc.wood + playerWood);
-        }
+      if (ti >= 0 && td < 1.35) {
+        playerWood += 1;
+        onWoodChange(npc.wood + playerWood);
+        gatherCooldown = .45;
         return;
       }
       let ri = -1, rd = Infinity;
@@ -261,8 +254,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         if (distance < nearestRockDistance) { nearestRockDistance = distance; nearestRock = index; }
       });
       const nearResource: "wood" | "stone" | null =
-        nearestTree >= 0 && nearestDistance < 2.8 ? "wood" :
-        nearestRock >= 0 && nearestRockDistance < 2.45 ? "stone" : null;
+        nearestTree >= 0 && nearestDistance < 1.35 ? "wood" :
+        nearestRock >= 0 && nearestRockDistance < 1.15 ? "stone" : null;
       if (nearResource !== lastNearResource) {
         lastNearResource = nearResource;
         onNearResource(nearResource);
@@ -317,7 +310,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       TREES.forEach((tree, index) => {
         if (npc.harvested.has(index)) return;
         const p = project(tree);
-        const hit = treeHits.get(index) || 0; const shake = hit > 0 ? Math.sin(time * 0.045) * (4 - hit) : 0; objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x + shake, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
+        objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
       });
       ROCKS.forEach((rock, index) => {
         if (harvestedRocks.has(index)) return;
@@ -405,7 +398,7 @@ export function WorldZeroGame() {
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
         <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span>Kámen: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
-      {nearResource && <button type="button" className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); setActionFlash("SEBRÁNO"); window.setTimeout(() => setActionFlash(""), 300); }}>{nearResource === "stone" ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}{actionFlash && <div className="wz-action-flash">{actionFlash}</div>}
+      {nearResource && <button type="button" className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); setActionFlash("SEBRÁNO"); window.setTimeout(() => setActionFlash(""), 300); }}>{nearResource === "stone" ? "SEBRAT KÁMEN" : "ULOMIT VĚTEV"}</button>}{actionFlash && <div className="wz-action-flash">{actionFlash}</div>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
