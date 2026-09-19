@@ -165,6 +165,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
     let last = performance.now();
     let playerWood = 0;
     let playerStone = 0;
+    const treeHits = new Map<number, number>();
     const harvestedRocks = new Set<number>();
     let gatherCooldown = 0;
     let lastNearResource: "wood" | "stone" | null = null;
@@ -177,7 +178,16 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         if (d < td) { td = d; ti = index; }
       });
       if (ti >= 0 && td < 2.8) {
-        npc.harvested.add(ti); playerWood += 1; onWoodChange(npc.wood + playerWood); gatherCooldown = .55; return;
+        const hits = (treeHits.get(ti) || 0) + 1;
+        treeHits.set(ti, hits);
+        gatherCooldown = .28;
+        if (hits >= 3) {
+          npc.harvested.add(ti);
+          treeHits.delete(ti);
+          playerWood += 3;
+          onWoodChange(npc.wood + playerWood);
+        }
+        return;
       }
       let ri = -1, rd = Infinity;
       ROCKS.forEach((rock, index) => {
@@ -228,26 +238,11 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const speed = 4.1 * dt / Math.max(1, length);
         const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
-        const screenBlocked = (x: number, z: number) => {
-          const oldX = player.x, oldZ = player.z;
-          player.x = x; player.z = z;
-          const px = width * 0.5, py = height * 0.69;
-          const hitTree = TREES.some((tree, index) => {
-            if (npc.harvested.has(index)) return false;
-            const p = project(tree);
-            const trunkHalf = Math.max(13, 10 * p.scale);
-            return Math.abs(p.x - px) < trunkHalf + 11 && Math.abs(p.y - py) < 28;
-          });
-          const hitRock = ROCKS.some((rock, index) => {
-            if (harvestedRocks.has(index)) return false;
-            const p = project(rock);
-            return Math.abs(p.x - px) < Math.max(24, 24 * p.scale) && Math.abs(p.y - py) < 24;
-          });
-          player.x = oldX; player.z = oldZ;
-          return hitTree || hitRock;
-        };
-        if (!screenBlocked(nextX, player.z)) player.x = nextX;
-        if (!screenBlocked(player.x, nextZ)) player.z = nextZ;
+        const blocked = (x: number, z: number) =>
+          TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - x, tree.z - z) < 0.72) ||
+          ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - x, rock.z - z) < 0.62);
+        if (!blocked(nextX, player.z)) player.x = nextX;
+        if (!blocked(player.x, nextZ)) player.z = nextZ;
       }
 
       gatherCooldown = Math.max(0, gatherCooldown - dt);
@@ -322,7 +317,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       TREES.forEach((tree, index) => {
         if (npc.harvested.has(index)) return;
         const p = project(tree);
-        objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
+        const hit = treeHits.get(index) || 0; const shake = hit > 0 ? Math.sin(time * 0.045) * (4 - hit) : 0; objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x + shake, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
       });
       ROCKS.forEach((rock, index) => {
         if (harvestedRocks.has(index)) return;
