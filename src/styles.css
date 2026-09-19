@@ -19,3 +19,6 @@ body { position:fixed; inset:0; overscroll-behavior:none; touch-action:none; fon
 .wz-camera-button { width:58px; height:58px; padding:0; border:1px solid rgba(255,255,255,.6); border-radius:50%; background:rgba(15,30,20,.72); color:white; font-size:30px; font-weight:700; touch-action:none; -webkit-tap-highlight-color:transparent; }
 .wz-fallback { position:fixed; inset:0; display:grid; place-items:center; padding:20px; background:#18291d; color:white; text-align:center; }
 @media (orientation:landscape) and (max-height:540px){.wz-joystick{width:96px;height:96px}.wz-joystick-knob{left:30px;top:30px;width:36px;height:36px}.wz-camera-button{width:50px;height:50px}}
+
+.wz-gather { position:absolute; left:50%; bottom:24%; transform:translateX(-50%); z-index:30; pointer-events:auto; padding:12px 18px; border:1px solid rgba(255,255,255,.7); border-radius:10px; background:rgba(20,35,30,.86); color:#fff; font-size:16px; font-weight:800; box-shadow:0 5px 18px rgba(0,0,0,.28); touch-action:none; }
+.wz-gather:active { transform:translateX(-50%) scale(.96); }
