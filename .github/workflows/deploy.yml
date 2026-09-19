@@ -1,4 +1,4 @@
-name: Deploy WORLD ZERO LIVE
+name: Deploy WORLD ZERO LIVE VERIFIED
 on:
   push:
     branches: [main]
