@@ -177,14 +177,14 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       const p = project(point);
       return Math.hypot(p.x - width * 0.5, p.y - height * 0.69);
     };
-    const gatherNow = () => {
+    const gatherNow=()=>{
       if(gatherCooldown>0)return;
       let ti=-1,td=Infinity;
-      TREES.forEach((tree,index)=>{if(harvestedTrees.has(index))return;const p=project(tree),d=Math.hypot(p.x-width*.5,p.y-height*.70);if(d<td){td=d;ti=index;}});
-      if(ti>=0&&td<48){playerWood++;onWoodChange(playerWood);gatherCooldown=.45;return;}
+      TREES.forEach((t,i)=>{if(harvestedTrees.has(i))return;const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<td){td=d;ti=i;}});
+      if(ti>=0&&td<1.62){playerWood++;onWoodChange(playerWood);gatherCooldown=.45;return;}
       let ri=-1,rd=Infinity;
-      ROCKS.forEach((rock,index)=>{if(harvestedRocks.has(index))return;const p=project(rock),d=Math.hypot(p.x-width*.5,p.y-height*.70);if(d<rd){rd=d;ri=index;}});
-      if(ri>=0&&rd<45){harvestedRocks.add(ri);playerStone++;onStoneChange(playerStone);gatherCooldown=.45;}
+      ROCKS.forEach((r,i)=>{if(harvestedRocks.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<rd){rd=d;ri=i;}});
+      if(ri>=0&&rd<1.16){harvestedRocks.add(ri);playerStone++;onStoneChange(playerStone);gatherCooldown=.45;}
     };
     gatherApi.current = gatherNow;
 
@@ -204,14 +204,17 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       const cosine=Math.cos(player.yaw), sine=Math.sin(player.yaw);
       const side=dx*cosine-dz*sine;
       const forward=-(dx*sine+dz*cosine);
-      const cameraDepth=forward+7.5;
-      const visible=cameraDepth>1.0;
-      const perspective=visible ? Math.min(2.15, 7.5/cameraDepth) : 0;
+      const near=2.0, far=24.0;
+      const visible=forward>-1.25 && forward<far;
+      const depth=Math.max(near,forward+5.5);
+      const perspective=Math.max(.30,Math.min(1.55,6.2/depth));
+      const horizon=height*.47;
+      const groundY=horizon + Math.max(18, height*.23*perspective);
       return {
-        x: width*.5 + side*46*perspective,
-        y: height*.60 + (1-perspective)*height*.18,
-        scale: Math.max(.28,Math.min(1.65,perspective)),
-        depth: cameraDepth,
+        x: width*.5 + side*42*perspective,
+        y: Math.min(height*.88,groundY),
+        scale: perspective,
+        depth,
         visible,
       };
     };
@@ -227,33 +230,37 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const speed = 4.1 * dt / Math.max(1, length);
         const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
-        const screenHit = (x:number,z:number) => {
-          const ox=player.x, oz=player.z; player.x=x; player.z=z;
-          const fx=width*.5, fy=height*.70;
-          let hit=false;
-          for(let i=0;i<TREES.length&&!hit;i++){
+        const TREE_R=1.35, ROCK_R=.92;
+        const blocked=(x:number,z:number)=>{
+          for(let i=0;i<TREES.length;i++){
             if(harvestedTrees.has(i)) continue;
-            const p=project(TREES[i]);
-            const trunkHalf=Math.max(10,8*p.scale);
-            hit=Math.abs(p.x-fx)<trunkHalf+11 && Math.abs(p.y-fy)<18;
+            if(Math.hypot(x-TREES[i].x,z-TREES[i].z)<TREE_R) return true;
           }
-          for(let i=0;i<ROCKS.length&&!hit;i++){
+          for(let i=0;i<ROCKS.length;i++){
             if(harvestedRocks.has(i)) continue;
-            const p=project(ROCKS[i]);
-            hit=Math.abs(p.x-fx)<Math.max(24,22*p.scale) && Math.abs(p.y-fy)<17;
+            if(Math.hypot(x-ROCKS[i].x,z-ROCKS[i].z)<ROCK_R) return true;
           }
-          player.x=ox; player.z=oz; return hit;
+          return false;
         };
-        if(!screenHit(nextX,player.z)) player.x=nextX;
-        if(!screenHit(player.x,nextZ)) player.z=nextZ;
+        if(!blocked(nextX,player.z)) player.x=nextX;
+        if(!blocked(player.x,nextZ)) player.z=nextZ;
+        // Hard safety: never allow player to remain inside a trunk/rock.
+        const pushOut=(p:Point,r:number)=>{
+          let dx=player.x-p.x,dz=player.z-p.z,d=Math.hypot(dx,dz);
+          if(d<r){if(d<.001){dx=1;dz=0;d=1;} player.x=p.x+dx/d*r; player.z=p.z+dz/d*r;}
+        };
+        TREES.forEach((t,i)=>{if(!harvestedTrees.has(i))pushOut(t,TREE_R);});
+        ROCKS.forEach((r,i)=>{if(!harvestedRocks.has(i))pushOut(r,ROCK_R);});
       }
 
       gatherCooldown = Math.max(0, gatherCooldown - dt);
-      let nearestTree=-1, nearestDistance=Infinity;
-      TREES.forEach((tree,index)=>{if(harvestedTrees.has(index))return;const p=project(tree),d=Math.hypot(p.x-width*.5,(p.y)-(height*.70));if(d<nearestDistance){nearestDistance=d;nearestTree=index;}});
+      let nearestTree=-1,nearestDistance=Infinity;
+      TREES.forEach((t,i)=>{if(harvestedTrees.has(i))return;const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<nearestDistance){nearestDistance=d;nearestTree=i;}});
       let nearestRock=-1,nearestRockDistance=Infinity;
-      ROCKS.forEach((rock,index)=>{if(harvestedRocks.has(index))return;const p=project(rock),d=Math.hypot(p.x-width*.5,p.y-height*.70);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=index;}});
-      const nearResource:"wood"|"stone"|null=nearestTree>=0&&nearestDistance<48?"wood":nearestRock>=0&&nearestRockDistance<45?"stone":null;
+      ROCKS.forEach((r,i)=>{if(harvestedRocks.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=i;}});
+      const nearResource:"wood"|"stone"|null=
+        nearestTree>=0&&nearestDistance<1.62?"wood":
+        nearestRock>=0&&nearestRockDistance<1.16?"stone":null;
       if(nearResource!==lastNearResource){lastNearResource=nearResource;onNearResource(nearResource);}
 
       // Worker disabled until settlement stage.
@@ -298,7 +305,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
 
       const mist=ctx.createLinearGradient(0,height*.38,0,height*.56); mist.addColorStop(0,"rgba(225,239,222,.42)"); mist.addColorStop(1,"rgba(225,239,222,0)"); ctx.fillStyle=mist; ctx.fillRect(0,height*.38,width,height*.2);
             const objects: Array<{ depth: number; draw: () => void }> = [];
-      const campProjection = project({ x: -3.7, z: -1.8 });
+      const campProjection = project(camp);
       if(campProjection.visible) objects.push({
         depth: campProjection.depth,
         draw: () => drawCamp(ctx, campProjection.x, campProjection.y, campProjection.scale * 0.78),
