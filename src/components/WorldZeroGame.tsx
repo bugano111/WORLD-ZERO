@@ -163,15 +163,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
 
     const player = { x: 0, z: 2.5, yaw: 0 };
     const camp = { x: -3, z: -1 };
-    const npc = {
-      x: camp.x,
-      z: camp.z,
-      phase: "toTree" as "toTree" | "working" | "toCamp" | "idle",
-      treeIndex: 0,
-      workTime: 0,
-      wood: 0,
-      harvested: new Set<number>(),
-    };
+    const harvestedTrees = new Set<number>();
     let width = 0;
     let height = 0;
     let frame = 0;
@@ -188,7 +180,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
     const gatherNow = () => {
       if(gatherCooldown>0)return;
       let ti=-1,td=Infinity;
-      TREES.forEach((tree,index)=>{if(npc.harvested.has(index))return;const p=project(tree),d=Math.hypot(p.x-width*.5,p.y-height*.70);if(d<td){td=d;ti=index;}});
+      TREES.forEach((tree,index)=>{if(harvestedTrees.has(index))return;const p=project(tree),d=Math.hypot(p.x-width*.5,p.y-height*.70);if(d<td){td=d;ti=index;}});
       if(ti>=0&&td<48){playerWood++;onWoodChange(playerWood);gatherCooldown=.45;return;}
       let ri=-1,rd=Infinity;
       ROCKS.forEach((rock,index)=>{if(harvestedRocks.has(index))return;const p=project(rock),d=Math.hypot(p.x-width*.5,p.y-height*.70);if(d<rd){rd=d;ri=index;}});
@@ -238,7 +230,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
           const fx=width*.5, fy=height*.70;
           let hit=false;
           for(let i=0;i<TREES.length&&!hit;i++){
-            if(npc.harvested.has(i)) continue;
+            if(harvestedTrees.has(i)) continue;
             const p=project(TREES[i]);
             const trunkHalf=Math.max(10,8*p.scale);
             hit=Math.abs(p.x-fx)<trunkHalf+11 && Math.abs(p.y-fy)<18;
@@ -256,7 +248,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
 
       gatherCooldown = Math.max(0, gatherCooldown - dt);
       let nearestTree=-1, nearestDistance=Infinity;
-      TREES.forEach((tree,index)=>{if(npc.harvested.has(index))return;const p=project(tree),d=Math.hypot(p.x-width*.5,(p.y)-(height*.70));if(d<nearestDistance){nearestDistance=d;nearestTree=index;}});
+      TREES.forEach((tree,index)=>{if(harvestedTrees.has(index))return;const p=project(tree),d=Math.hypot(p.x-width*.5,(p.y)-(height*.70));if(d<nearestDistance){nearestDistance=d;nearestTree=index;}});
       let nearestRock=-1,nearestRockDistance=Infinity;
       ROCKS.forEach((rock,index)=>{if(harvestedRocks.has(index))return;const p=project(rock),d=Math.hypot(p.x-width*.5,p.y-height*.70);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=index;}});
       const nearResource:"wood"|"stone"|null=nearestTree>=0&&nearestDistance<48?"wood":nearestRock>=0&&nearestRockDistance<45?"stone":null;
@@ -310,7 +302,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         draw: () => drawCamp(ctx, campProjection.x, campProjection.y, campProjection.scale * 0.78),
       });
       TREES.forEach((tree, index) => {
-        if (npc.harvested.has(index)) return;
+        if (harvestedTrees.has(index)) return;
         const p = project(tree);
         objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
       });
