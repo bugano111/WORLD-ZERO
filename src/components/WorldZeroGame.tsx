@@ -140,7 +140,7 @@ function drawPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale: 
   }
 }
 
-function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onNearTree: (near: boolean) => void }) {
+function WorldCanvas({ input, onWoodChange, onStoneChange, onNearTree, onNearRock }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onStoneChange: (stone: number) => void; onNearTree: (near: boolean) => void; onNearRock: (near: boolean) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -165,8 +165,11 @@ function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<Inp
     let frame = 0;
     let last = performance.now();
     let playerWood = 0;
+    let playerStone = 0;
+    const harvestedRocks = new Set<number>();
     let gatherCooldown = 0;
     let wasNearTree = false;
+    let wasNearRock = false;
 
     const resize = () => {
       width = Math.max(1, window.innerWidth);
@@ -219,11 +222,27 @@ function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<Inp
       });
       const isNearTree = nearestTree >= 0 && nearestDistance < 2.35;
       if (isNearTree !== wasNearTree) { wasNearTree = isNearTree; onNearTree(isNearTree); }
-      if (input.current.gather && isNearTree && gatherCooldown <= 0) {
-        npc.harvested.add(nearestTree);
-        playerWood += 1;
-        onWoodChange(npc.wood + playerWood);
-        gatherCooldown = 0.55;
+      let nearestRock = -1;
+      let nearestRockDistance = Infinity;
+      ROCKS.forEach((rock, index) => {
+        if (harvestedRocks.has(index)) return;
+        const distance = Math.hypot(rock.x - player.x, rock.z - player.z);
+        if (distance < nearestRockDistance) { nearestRockDistance = distance; nearestRock = index; }
+      });
+      const isNearRock = nearestRock >= 0 && nearestRockDistance < 2.15;
+      if (isNearRock !== wasNearRock) { wasNearRock = isNearRock; onNearRock(isNearRock); }
+      if (input.current.gather && gatherCooldown <= 0) {
+        if (isNearTree) {
+          npc.harvested.add(nearestTree);
+          playerWood += 1;
+          onWoodChange(npc.wood + playerWood);
+          gatherCooldown = 0.55;
+        } else if (isNearRock) {
+          harvestedRocks.add(nearestRock);
+          playerStone += 1;
+          onStoneChange(playerStone);
+          gatherCooldown = 0.65;
+        }
         input.current.gather = false;
       }
 
@@ -279,6 +298,7 @@ function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<Inp
         objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
       });
       ROCKS.forEach((rock, index) => {
+        if (harvestedRocks.has(index)) return;
         const p = project(rock);
         objects.push({ depth: p.depth, draw: () => drawRock(ctx, p.x, p.y, p.scale * (0.72 + index % 2 * 0.12)) });
       });
@@ -307,7 +327,7 @@ function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<Inp
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
     };
-  }, [input, onWoodChange, onNearTree]);
+  }, [input, onWoodChange, onStoneChange, onNearTree, onNearRock]);
 
   return <canvas ref={canvasRef} className="wz-world-canvas" aria-label="Herní svět WORLD ZERO" />;
 }
@@ -348,17 +368,21 @@ function CameraButton({ direction, input, label, children }: { direction: number
 export function WorldZeroGame() {
   const input = useRef<InputState>({ joystick: { x: 0, y: 0 }, camera: 0, gather: false });
   const [wood, setWood] = useState(0);
+  const [stone, setStone] = useState(0);
   const handleWoodChange = useCallback((amount: number) => setWood(amount), []);
   const [nearTree, setNearTree] = useState(false);
+  const [nearRock, setNearRock] = useState(false);
   const handleNearTree = useCallback((near: boolean) => setNearTree(near), []);
+  const handleNearRock = useCallback((near: boolean) => setNearRock(near), []);
+  const handleStoneChange = useCallback((amount: number) => setStone(amount), []);
   return <main className="wz-game">
-    <WorldCanvas input={input} onWoodChange={handleWoodChange} onNearTree={handleNearTree} />
+    <WorldCanvas input={input} onWoodChange={handleWoodChange} onStoneChange={handleStoneChange} onNearTree={handleNearTree} onNearRock={handleNearRock} />
     <div className="wz-hud">
       <header className="wz-statusbar">
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
-        <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span><i className="is-ready" />renderer OK</span></div>
+        <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span>Kámen: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
-      {nearTree && <button className="wz-gather" onPointerDown={() => { input.current.gather = true; }}>SBÍRAT</button>}
+      {(nearTree || nearRock) && <button className="wz-gather" onPointerDown={() => { input.current.gather = true; }}>{nearRock && !nearTree ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
