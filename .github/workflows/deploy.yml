@@ -1,4 +1,4 @@
-name: WORLD ZERO STATIC PUBLISH
+name: WORLD ZERO STATIC PUBLISH VERIFY
 on:
   push:
     branches: [main]
