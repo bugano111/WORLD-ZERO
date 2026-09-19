@@ -14,6 +14,7 @@ type InputState = {
 };
 
 type Point = { x: number; z: number };
+const terrainHeight=(x:number,z:number)=>0.32*Math.sin(x*.31)+0.22*Math.cos(z*.27)+0.10*Math.sin((x+z)*.61);
 
 function safelyCapturePointer(element: HTMLElement, pointerId: number) {
   try {
@@ -164,39 +165,31 @@ function drawCamp(ctx: CanvasRenderingContext2D, x: number, y: number, scale: nu
   ], "#ee8b37");
 }
 
-function drawPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number, npc: boolean, walking: number) {
-  const stride = Math.sin(walking) * 4 * scale;
-  ellipse(ctx, x, y + 3 * scale, 20 * scale, 6 * scale, COLORS.shadow);
-  ctx.strokeStyle = COLORS.trousers;
-  ctx.lineWidth = 7 * scale;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(x - 5 * scale, y - 25 * scale);
-  ctx.lineTo(x - 7 * scale + stride, y);
-  ctx.moveTo(x + 5 * scale, y - 25 * scale);
-  ctx.lineTo(x + 7 * scale - stride, y);
-  ctx.stroke();
-  ctx.fillStyle = npc ? COLORS.npc : COLORS.player;
-  ctx.fillRect(x - 15 * scale, y - 65 * scale, 30 * scale, 41 * scale);
-  // arms give the character a stronger 3D silhouette
-  ctx.strokeStyle = COLORS.skin; ctx.lineWidth = 7 * scale; ctx.lineCap = "round";
-  ctx.beginPath(); ctx.moveTo(x-14*scale,y-58*scale); ctx.lineTo(x-21*scale,y-32*scale+stride*.25);
-  ctx.moveTo(x+14*scale,y-58*scale); ctx.lineTo(x+21*scale,y-32*scale-stride*.25); ctx.stroke();
-  ctx.fillStyle = npc ? "#b98432" : "#9f4034";
-  ctx.fillRect(x + 7 * scale, y - 65 * scale, 8 * scale, 41 * scale);
-  ellipse(ctx, x, y - 78 * scale, 13 * scale, 15 * scale, COLORS.skin);
-  ellipse(ctx, x + 4 * scale, y - 80 * scale, 4 * scale, 10 * scale, "rgba(116,69,46,.18)");
-  if (npc) {
-    ctx.fillStyle = COLORS.hat;
-    ctx.fillRect(x - 16 * scale, y - 92 * scale, 32 * scale, 7 * scale);
-    ctx.strokeStyle = COLORS.bark;
-    ctx.lineWidth = 4 * scale;
-    ctx.beginPath();
-    ctx.moveTo(x + 16 * scale, y - 54 * scale);
-    ctx.lineTo(x + 30 * scale, y - 18 * scale);
-    ctx.stroke();
-    polygon(ctx, [[x + 22 * scale, y - 42 * scale], [x + 38 * scale, y - 50 * scale], [x + 36 * scale, y - 35 * scale]], COLORS.stoneLight);
-  }
+function drawPerson(ctx:CanvasRenderingContext2D,x:number,y:number,s:number,npc:boolean,walking:number){
+  const stride=Math.sin(walking)*5*s;
+  // contact shadow
+  ellipse(ctx,x,y+2*s,17*s,4.5*s,"rgba(18,25,18,.34)");
+  // legs with knees/feet
+  ctx.strokeStyle="#263832";ctx.lineWidth=6.5*s;ctx.lineCap="round";
+  ctx.beginPath();ctx.moveTo(x-5*s,y-29*s);ctx.lineTo(x-7*s+stride*.45,y-14*s);ctx.lineTo(x-8*s+stride,y-1*s);
+  ctx.moveTo(x+5*s,y-29*s);ctx.lineTo(x+7*s-stride*.45,y-14*s);ctx.lineTo(x+8*s-stride,y-1*s);ctx.stroke();
+  ctx.strokeStyle="#202b27";ctx.lineWidth=7*s;ctx.beginPath();ctx.moveTo(x-8*s+stride,y-1*s);ctx.lineTo(x-13*s+stride,y);
+  ctx.moveTo(x+8*s-stride,y-1*s);ctx.lineTo(x+13*s-stride,y);ctx.stroke();
+  // torso with shoulder/waist taper and directional shade
+  const tg=ctx.createLinearGradient(x-15*s,0,x+15*s,0);
+  tg.addColorStop(0,"#7e312d");tg.addColorStop(.42,npc?"#c08b34":"#c8563f");tg.addColorStop(1,"#762d29");
+  ctx.fillStyle=tg;ctx.beginPath();ctx.moveTo(x-14*s,y-66*s);ctx.lineTo(x+14*s,y-66*s);ctx.lineTo(x+10*s,y-29*s);ctx.lineTo(x-10*s,y-29*s);ctx.closePath();ctx.fill();
+  // articulated arms
+  ctx.strokeStyle=COLORS.skin;ctx.lineWidth=6*s;ctx.beginPath();
+  ctx.moveTo(x-13*s,y-61*s);ctx.lineTo(x-19*s,y-45*s+stride*.15);ctx.lineTo(x-17*s,y-30*s);
+  ctx.moveTo(x+13*s,y-61*s);ctx.lineTo(x+19*s,y-45*s-stride*.15);ctx.lineTo(x+17*s,y-30*s);ctx.stroke();
+  // neck + head with shaded volume
+  ctx.fillStyle=COLORS.skin;ctx.fillRect(x-5*s,y-73*s,10*s,9*s);
+  const hg=ctx.createRadialGradient(x-4*s,y-84*s,2*s,x,y-82*s,15*s);
+  hg.addColorStop(0,"#efc49c");hg.addColorStop(.6,COLORS.skin);hg.addColorStop(1,"#95684d");
+  ctx.fillStyle=hg;ctx.beginPath();ctx.ellipse(x,y-84*s,12*s,14*s,0,0,Math.PI*2);ctx.fill();
+  // hair, not helmet
+  ctx.fillStyle="#49352a";ctx.beginPath();ctx.ellipse(x-1*s,y-91*s,11*s,6*s,-.08,Math.PI,Math.PI*2);ctx.fill();
 }
 
 function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNearResource, gatherApi }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onStoneChange: (stone: number) => void; onStickChange: (sticks: number) => void; onNearResource: (resource: "wood" | "stone" | "stick" | null) => void; gatherApi: RefObject<() => void> }) {
@@ -259,16 +252,16 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
 
     const project = (point: Point) => {
       const dx=point.x-player.x, dz=point.z-player.z;
-      const side=dx;
-      const forward=-dz;
-      const visible=forward>-1.0 && forward<26;
+      const side=dx, forward=-dz;
+      const visible=forward>-1.0&&forward<26;
       const distance=Math.max(1.5,forward+3.5);
       const scale=Math.max(.24,Math.min(1.30,4.8/distance));
       const horizon=height*.47;
-      // true ground plane: far objects sit at horizon, near objects move toward bottom
       const groundFactor=Math.max(0,Math.min(1,(26-forward)/27));
-      const y=horizon + Math.pow(groundFactor,1.45)*height*.34;
-      return {x:width*.5+side*38*scale,y:Math.min(height*.84,y),scale,depth:distance,visible};
+      const elevation=(terrainHeight(point.x,point.z)-terrainHeight(player.x,player.z))*34*scale;
+      const y=horizon+Math.pow(groundFactor,1.45)*height*.34-elevation;
+      return {x:width*.5+side*38*scale,y:Math.min(height*.84,y),scale,depth:distance,visible,
+        haze:Math.max(0,Math.min(.62,(distance-8)/24))};
     };
 
     const render = (time: number) => {
@@ -346,7 +339,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       // Small grass blades in foreground.
       ctx.strokeStyle = "rgba(39,84,43,.46)";
       ctx.lineWidth = 1.4;
-      for (let i=0;i<34;i++) {
+      for (let i=0;i<62;i++) {
         const gx=(i*97 + 31)%Math.max(1,width), gy=height*(.56+((i*53)%41)/100);
         const gh=4+((i*7)%8);
         ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx-3,gy-gh); ctx.moveTo(gx,gy); ctx.lineTo(gx+3,gy-gh*.8); ctx.stroke();
@@ -385,7 +378,13 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         const p = project(rock);
         if(p.visible) objects.push({ depth: p.depth, draw: () => drawRock(ctx, p.x, p.y, Math.min(.95,p.scale * (0.68 + index % 2 * 0.10))) });
       });
-      objects.sort((a, b) => b.depth - a.depth).forEach((object) => object.draw());
+      objects.sort((a,b)=>b.depth-a.depth).forEach((object)=>{
+        ctx.save();
+        const fog=Math.max(0,Math.min(.48,(object.depth-9)/24));
+        ctx.globalAlpha=1-fog;
+        object.draw();
+        ctx.restore();
+      });
       drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 420, height / 790, 1.18), false, length > 0.05 ? time * 0.012 : 0);
       const vignette=ctx.createRadialGradient(width*.5,height*.55,Math.min(width,height)*.25,width*.5,height*.55,Math.max(width,height)*.72);
       vignette.addColorStop(.55,"rgba(0,0,0,0)"); vignette.addColorStop(1,"rgba(14,28,18,.16)");
