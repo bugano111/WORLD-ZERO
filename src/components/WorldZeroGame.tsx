@@ -44,7 +44,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     const valley=-1.1*Math.exp(-((x-2)*(x-2)+(z-5)*(z-5))/95);
     return curvature+continental+rolling+hill1+hill2+valley;
   };
-  const groundMat=new THREE.MeshStandardMaterial({map:grassTex,color:0x87926e,roughness:.98,metalness:0});
+  const groundMat=new THREE.MeshStandardMaterial({map:grassTex,color:0x687052,roughness:.98,metalness:0});
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(1800,1800,220,220),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
   const pos=ground.geometry.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i);
@@ -52,7 +52,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   }
   ground.geometry.computeVertexNormals();scene.add(ground);
   // WORLD SHELL: distant terrain continues beyond the playable patch instead of ending after a few metres.
-  const farMat=new THREE.MeshStandardMaterial({map:grassTex,color:0x73815f,roughness:1});
+  const farMat=new THREE.MeshStandardMaterial({map:grassTex,color:0x646b50,roughness:1});
   for(let ring=0;ring<4;ring++){
     const size=1800+ring*1300;
     const far=new THREE.Mesh(new THREE.RingGeometry(size*.32,size*.72,128,12),farMat);
@@ -112,6 +112,14 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     const d=new THREE.Vector3().subVectors(b,a),len=d.length(),m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r0,len,10),bark);
     m.position.copy(a).add(b).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());m.castShadow=true;m.receiveShadow=true;return m;
   };
+  // HERO TREE — immediate visual proof of the new world build.
+  const hero=new THREE.Group();hero.position.set(-6,terrainY(-6,-8),-8);
+  const ht=new THREE.Mesh(new THREE.CylinderGeometry(.55,.92,11,14),bark);ht.position.y=5.5;ht.castShadow=true;hero.add(ht);
+  const heroLeaf=new THREE.MeshStandardMaterial({color:0x315735,roughness:.92,side:THREE.DoubleSide});
+  for(let b=0;b<18;b++){const a=b*2.399,y=5.2+(b%7)*.75,len=3.2+(b%4)*.65;
+    const br=new THREE.Mesh(new THREE.CylinderGeometry(.08,.22,len,8),bark);br.position.set(Math.cos(a)*1.15,y,Math.sin(a)*1.15);br.rotation.z=Math.cos(a)*1.08;br.rotation.x=Math.sin(a)*.82;hero.add(br);
+    for(let q=0;q<15;q++){const lf=new THREE.Mesh(new THREE.PlaneGeometry(.34,.15),heroLeaf);const rr=1.8+(q%5)*.42;lf.position.set(Math.cos(a+q*.52)*rr,y+(q%4)*.35,Math.sin(a+q*.52)*rr);lf.rotation.set(q*.23,a+q*.52,q*.11);hero.add(lf);}
+  }scene.add(hero);
   const makeTree=(x:number,z:number,seed:number)=>{
     const g=new THREE.Group(),h=8.5+(seed%4)*.9,tips:THREE.Vector3[]=[];
     const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.27,.67,h*.58,16),bark);trunk.position.y=h*.29;trunk.castShadow=true;g.add(trunk);
@@ -137,6 +145,9 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     sg.position.set(x,terrainY(x,z),z);scene.add(sg);
   }
 
+  // SPAWN DETAIL
+  for(let i=0;i<22;i++){const a=i*2.399,r=5+(i%6)*2.2,x=Math.cos(a)*r,z=Math.sin(a)*r;
+    const rr=new THREE.Mesh(new THREE.DodecahedronGeometry(.25+(i%5)*.12,1),rockMat);rr.scale.set(1.4,.65,1);rr.position.set(x,terrainY(x,z)+.18,z);rr.rotation.set(i*.3,i*.7,0);rr.castShadow=true;scene.add(rr);}
   const makePickup=(kind:Kind,x:number,z:number)=>{
    let mesh:THREE.Mesh;
    if(kind==="stone"){mesh=new THREE.Mesh(new THREE.DodecahedronGeometry(.20,1),new THREE.MeshStandardMaterial({color:0x777b72,roughness:1}));mesh.position.y=.18;}
@@ -223,7 +234,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    const dt=Math.min(.033,(now-last)/1000);last=now;
    yaw+=input.current.camera*1.55*dt;
    const j=input.current.joystick,len=Math.min(1,Math.hypot(j.x,j.y));
-   if(len>.02){const fx=Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=Math.sin(yaw);const dx=(rx*j.x+fx*(-j.y))*4.2*dt,dz=(rz*j.x+fz*(-j.y))*3.0*dt;
+   if(len>.02){const fx=Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=Math.sin(yaw);const dx=(rx*j.x+fx*(-j.y))*2.8*dt,dz=(rz*j.x+fz*(-j.y))*3.0*dt;
     const nx=player.position.x+dx,nz=player.position.z+dz;
     player.position.x=nx;player.position.z=nz;
    }
@@ -234,7 +245,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    chooseTarget();
    animals.forEach((a,i)=>{const ph=now*.00018+a.userData.phase;a.position.x+=Math.sin(ph+i)*dt*.18;a.position.z+=Math.cos(ph*.83+i)*dt*.15;a.rotation.y=Math.atan2(Math.sin(ph+i),Math.cos(ph*.83+i));});
    const eye=1.68;
-   const bob=len>.04?Math.sin(now*.0105)*.025:0;camera.position.set(player.position.x,player.position.y+eye+bob,player.position.z);
+   const bob=len>.04?Math.sin(now*.009)*.012:0;camera.position.set(player.position.x,player.position.y+eye+bob,player.position.z);
    const look=new THREE.Vector3(Math.sin(yaw),-.055,-Math.cos(yaw));
    camera.lookAt(camera.position.clone().add(look.multiplyScalar(12)));
    renderer.render(scene,camera);requestAnimationFrame(clock);
@@ -268,7 +279,7 @@ export function WorldZeroGame(){
  useEffect(()=>{if(counts.leaves>=3&&!knowledge.includes("fiber")){setFiber(1);learn("fiber","Z rostlin jsi získal pevná vlákna. Lze jimi svazovat materiály.");}},[counts.leaves]);
  const labels:Record<Kind,string>={branch:"ULOMIT VĚTEV",stick:"SEBRAT KLACEK",stone:"SEBRAT KÁMEN",leaf:"SEBRAT LISTÍ"};
  return <main className="wz-game"><World3D input={input} onCounts={setCounts} onTarget={setTarget} gatherApi={gatherApi}/>
-  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 03 · PLANET REBUILD</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
+  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 04 · CINEMATIC EARTH</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
   <div style={{position:"absolute",top:96,left:12,right:12,textAlign:"center",pointerEvents:"none",zIndex:5}}><span style={{display:"inline-block",background:"rgba(15,18,14,.72)",color:"#f3efdc",padding:"7px 10px",borderRadius:9,fontSize:12}}>{survivalMsg}</span></div>
   {flint>0&&fiber>0&&counts.branches>0&&!knowledge.includes("tool")&&<button className="wz-gather" style={{bottom:116}} onPointerDown={e=>{e.preventDefault();learn("tool","První technologický objev: svázaný kamenný nástroj. Teď může začít skutečné opracování dřeva.");}}>SPOJIT KÁMEN + VĚTEV + VLÁKNO</button>}
   {target&&<button className="wz-gather" onPointerDown={e=>{e.preventDefault();e.stopPropagation();gatherApi.current();setFlash("SEBRÁNO");setTimeout(()=>setFlash(""),260)}}>{labels[target]}</button>}{flash&&<div className="wz-action-flash">{flash}</div>}
