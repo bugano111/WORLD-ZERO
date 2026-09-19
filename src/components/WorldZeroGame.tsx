@@ -226,7 +226,7 @@ function drawActionMarker(ctx:CanvasRenderingContext2D,x:number,y:number,label:s
   ctx.restore();
 }
 
-function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNearResource, gatherApi }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onStoneChange: (stone: number) => void; onStickChange: (sticks: number) => void; onNearResource: (resource: "wood" | "stone" | "stick" | null) => void; gatherApi: RefObject<() => void> }) {
+function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onLeafChange, onNearResource, gatherApi }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onStoneChange: (stone: number) => void; onStickChange: (sticks: number) => void; onLeafChange: (leaves: number) => void; onNearResource: (resource: "wood" | "stone" | "stick" | "leaf" | null) => void; gatherApi: RefObject<() => void> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -246,26 +246,28 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
     let playerBranches = 0;
     let playerSticks = 0;
     let playerStone = 0;
+    let playerLeaves = 0;
     const harvestedSticks = new Set<number>();
     const harvestedRocks = new Set<number>();
     const harvestedLooseStones = new Set<number>();
     let gatherCooldown = 0;
-    let lastNearResource: "wood" | "stone" | "stick" | null = null;
+    let lastNearResource: "wood" | "stone" | "stick" | "leaf" | null = null;
     const screenDistanceTo = (point: Point) => {
       const p = project(point);
       return Math.hypot(p.x - width * 0.5, p.y - height * 0.69);
     };
     const getTarget=()=>{
-      const hits:Array<{kind:"wood"|"stick"|"stone";index:number;d:number}>=[];
-      TREES.forEach((t,i)=>{const d=Math.hypot(t.x-player.x,t.z-player.z);if((branchCounts.get(i)||0)<3&&d<=1.45)hits.push({kind:"wood",index:i,d});});
-      STICKS.forEach((s,i)=>{if(!harvestedSticks.has(i)){const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<=1.05)hits.push({kind:"stick",index:i,d});}});
-      LOOSE_STONES.forEach((r,i)=>{if(!harvestedLooseStones.has(i)){const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<=1.05)hits.push({kind:"stone",index:i,d});}});
+      const hits:Array<{kind:"wood"|"stick"|"stone"|"leaf";index:number;d:number}>=[];
+      TREES.forEach((t,i)=>{const d=Math.hypot(t.x-player.x,t.z-player.z);if((branchCounts.get(i)||0)<3&&d<=1.62)hits.push({kind:(branchCounts.get(i)||0)<2?"wood":"leaf",index:i,d});});
+      STICKS.forEach((s,i)=>{if(!harvestedSticks.has(i)){const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<=1.18)hits.push({kind:"stick",index:i,d});}});
+      LOOSE_STONES.forEach((r,i)=>{if(!harvestedLooseStones.has(i)){const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<=1.18)hits.push({kind:"stone",index:i,d});}});
       hits.sort((a,b)=>a.d-b.d);return hits[0]||null;
     };
     const gatherNow=()=>{
       if(gatherCooldown>0)return;
       const hit=getTarget();if(!hit)return;
       if(hit.kind==="wood"){branchCounts.set(hit.index,(branchCounts.get(hit.index)||0)+1);playerBranches++;onWoodChange(playerBranches);}
+      else if(hit.kind==="leaf"){branchCounts.set(hit.index,3);playerLeaves+=3;onLeafChange(playerLeaves);}
       else if(hit.kind==="stick"){harvestedSticks.add(hit.index);playerSticks++;onStickChange(playerSticks);}
       else{harvestedLooseStones.add(hit.index);playerStone++;onStoneChange(playerStone);}
       gatherCooldown=.22;
@@ -343,7 +345,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       const target=getTarget();
       const nearResource:"wood"|"stick"|"stone"|null=target?.kind??null;
       if(target){
-        if(target.kind==="wood")nearestTree=target.index;
+        if(target.kind==="wood"||target.kind==="leaf")nearestTree=target.index;
         else if(target.kind==="stick")nearestStick=target.index;
         else nearestRock=target.index;
       }
@@ -421,7 +423,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       TREES.forEach((tree, index) => {
         if (harvestedTrees.has(index)) return;
         const p = project(tree);
-        if(p.visible) objects.push({ depth: p.depth, draw:()=>{ctx.save();const sway=Math.sin(time*.00055+index*1.7)*1.7*p.scale;ctx.translate((index%3-1)*2*p.scale+sway,0);drawTree(ctx,p.x,p.y,Math.min(2.42,p.scale*(1.68+index%4*.15)));ctx.restore();} });
+        if(p.visible) objects.push({ depth: p.depth, draw:()=>{ctx.save();const sway=Math.sin(time*.00055+index*1.7)*1.7*p.scale;ctx.translate((index%3-1)*2*p.scale+sway,0);drawTree(ctx,p.x,p.y,Math.min(2.62,p.scale*(1.78+index%5*.16)));ctx.restore();} });
       });
       BUSHES.forEach((b,index)=>{
         const p=project(b); if(p.visible) objects.push({depth:p.depth,draw:()=>drawBush(ctx,p.x,p.y,Math.min(1.15,p.scale*.9))});
@@ -453,7 +455,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       });
       if(nearResource){
         let target:Point|null=null,label="";
-        if(nearResource==="wood"&&nearestTree>=0){target=TREES[nearestTree];label="ULOMIT VĚTEV";}
+        if((nearResource==="wood"||nearResource==="leaf")&&nearestTree>=0){target=TREES[nearestTree];label=nearResource==="leaf"?"UTRHNOUT LISTÍ":"ULOMIT VĚTEV";}
         else if(nearResource==="stick"&&nearestStick>=0){target=STICKS[nearestStick];label="SEBRAT KLACEK";}
         else if(nearResource==="stone"&&nearestRock>=0){target=LOOSE_STONES[nearestRock];label="SEBRAT KÁMEN";}
         if(target){const mp=project(target);if(mp.visible){
@@ -478,7 +480,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       window.removeEventListener("resize", resize);
       gatherApi.current = () => {};
     };
-  }, [input, onWoodChange, onStoneChange, onStickChange, onNearResource, gatherApi]);
+  }, [input, onWoodChange, onStoneChange, onStickChange, onLeafChange, onNearResource, gatherApi]);
 
   return <canvas ref={canvasRef} className="wz-world-canvas" aria-label="Herní svět WORLD ZERO" />;
 }
@@ -521,21 +523,23 @@ export function WorldZeroGame() {
   const [wood, setWood] = useState(0);
   const [stone, setStone] = useState(0);
   const [sticks, setSticks] = useState(0);
+  const [leaves, setLeaves] = useState(0);
   const [actionFlash, setActionFlash] = useState("");
   const handleWoodChange = useCallback((amount: number) => setWood(amount), []);
-  const [nearResource, setNearResource] = useState<"wood" | "stone" | "stick" | null>(null);
+  const [nearResource, setNearResource] = useState<"wood" | "stone" | "stick" | "leaf" | null>(null);
   const gatherApi = useRef<() => void>(() => {});
-  const handleNearResource = useCallback((resource: "wood" | "stone" | "stick" | null) => setNearResource(resource), []);
+  const handleNearResource = useCallback((resource: "wood" | "stone" | "stick" | "leaf" | null) => setNearResource(resource), []);
   const handleStoneChange = useCallback((amount: number) => setStone(amount), []);
   const handleStickChange = useCallback((amount: number) => setSticks(amount), []);
+  const handleLeafChange = useCallback((amount: number) => setLeaves(amount), []);
   return <main className="wz-game">
-    <WorldCanvas input={input} onWoodChange={handleWoodChange} onStoneChange={handleStoneChange} onStickChange={handleStickChange} onNearResource={handleNearResource} gatherApi={gatherApi} />
+    <WorldCanvas input={input} onWoodChange={handleWoodChange} onStoneChange={handleStoneChange} onStickChange={handleStickChange} onLeafChange={handleLeafChange} onNearResource={handleNearResource} gatherApi={gatherApi} />
     <div className="wz-hud">
       <header className="wz-statusbar">
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
-        <div className="wz-day"><strong>Den 1</strong><span>Větve: {wood}</span><span>Klacky: {sticks}</span><span>Kameny: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
+        <div className="wz-day"><strong>Den 1</strong><span>Větve: {wood}</span><span>Klacky: {sticks}</span><span>Listí: {leaves}</span><span>Kameny: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
-      {nearResource && <button type="button" className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); setActionFlash("SEBRÁNO"); window.setTimeout(() => setActionFlash(""), 300); }}>{nearResource === "stone" ? "SEBRAT KÁMEN" : nearResource === "stick" ? "SEBRAT KLACEK" : "ULOMIT VĚTEV"}</button>}{actionFlash && <div className="wz-action-flash">{actionFlash}</div>}
+      {nearResource && <button type="button" className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); setActionFlash("SEBRÁNO"); window.setTimeout(() => setActionFlash(""), 300); }}>{nearResource === "stone" ? "SEBRAT KÁMEN" : nearResource === "stick" ? "SEBRAT KLACEK" : nearResource === "leaf" ? "UTRHNOUT LISTÍ" : "ULOMIT VĚTEV"}</button>}{actionFlash && <div className="wz-action-flash">{actionFlash}</div>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
