@@ -32,7 +32,7 @@ const COLORS = {
   stone: "#737b70",
   stoneLight: "#a4aa9e",
   skin: "#d7a57a",
-  player: "#c8563f",
+  player: "#2367c9",
   trousers: "#263e36",
   npc: "#d2a13f",
   hat: "#6f4c35",
@@ -121,8 +121,11 @@ function drawPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale: 
   ctx.lineTo(x + 7 * scale - stride, y);
   ctx.stroke();
   ctx.fillStyle = npc ? COLORS.npc : COLORS.player;
-  ctx.fillRect(x - 15 * scale, y - 65 * scale, 30 * scale, 41 * scale);
-  ellipse(ctx, x, y - 78 * scale, 13 * scale, 15 * scale, COLORS.skin);
+  ctx.fillRect(x - 18 * scale, y - 70 * scale, 36 * scale, 46 * scale);
+  ctx.strokeStyle = COLORS.skin; ctx.lineWidth = 7 * scale; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(x-17*scale,y-60*scale); ctx.lineTo(x-27*scale,y-35*scale); ctx.moveTo(x+17*scale,y-60*scale); ctx.lineTo(x+27*scale,y-35*scale); ctx.stroke();
+  ellipse(ctx, x, y - 88 * scale, 16 * scale, 18 * scale, COLORS.skin);
+  if (!npc) { ctx.fillStyle="#493326"; ctx.beginPath(); ctx.arc(x,y-96*scale,16*scale,Math.PI,Math.PI*2); ctx.fill(); }
   if (npc) {
     ctx.fillStyle = COLORS.hat;
     ctx.fillRect(x - 16 * scale, y - 92 * scale, 32 * scale, 7 * scale);
@@ -279,7 +282,7 @@ function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<Inp
         ),
       });
       objects.sort((a, b) => a.depth - b.depth).forEach((object) => object.draw());
-      drawPerson(ctx, width * 0.5, height * 0.69, Math.min(width / 430, height / 800, 1.18), false, length > 0.05 ? time * 0.012 : 0);
+      drawPerson(ctx, width * 0.5, height * 0.66, Math.max(1.25, Math.min(width / 300, height / 620, 1.65)), false, length > 0.05 ? time * 0.012 : 0);
 
       frame = requestAnimationFrame(render);
     };
