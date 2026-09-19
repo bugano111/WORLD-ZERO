@@ -147,7 +147,7 @@ function drawTree(ctx: CanvasRenderingContext2D,x:number,y:number,s:number){
   // shaded foliage volumes: radial light from upper-left, dark undersides
   const leaf=(cx:number,cy:number,rx:number,ry:number,light="#5d9655",dark="#173b27")=>{
     const g=ctx.createRadialGradient(cx-rx*.35,cy-ry*.45,2,cx,cy,Math.max(rx,ry));
-    g.addColorStop(0,light);g.addColorStop(.42,"#356f43");g.addColorStop(1,dark);
+    g.addColorStop(0,light);g.addColorStop(.30,"#477f48");g.addColorStop(.62,"#2b633b");g.addColorStop(1,dark);
     ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.fill();
   };
   leaf(x-31*s,y-116*s,34*s,27*s);leaf(x+31*s,y-120*s,35*s,29*s,"#4f884d");
@@ -257,10 +257,26 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onLeaf
       return Math.hypot(p.x - width * 0.5, p.y - height * 0.69);
     };
     const getTarget=()=>{
+      const footX=width*.5,footY=height*.70;
       const hits:Array<{kind:"wood"|"stick"|"stone"|"leaf";index:number;d:number}>=[];
-      TREES.forEach((t,i)=>{const d=Math.hypot(t.x-player.x,t.z-player.z);if((branchCounts.get(i)||0)<3&&d<=1.62)hits.push({kind:(branchCounts.get(i)||0)<2?"wood":"leaf",index:i,d});});
-      STICKS.forEach((s,i)=>{if(!harvestedSticks.has(i)){const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<=1.18)hits.push({kind:"stick",index:i,d});}});
-      LOOSE_STONES.forEach((r,i)=>{if(!harvestedLooseStones.has(i)){const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<=1.18)hits.push({kind:"stone",index:i,d});}});
+      const screenHit=(p:Point,maxPx:number)=>{
+        const q=project(p); if(!q.visible)return Infinity;
+        const dx=q.x-footX,dy=q.y-footY;
+        const d=Math.hypot(dx,dy);
+        return d<=maxPx?d:Infinity;
+      };
+      TREES.forEach((t,i)=>{
+        const d=screenHit(t,58);
+        if(Number.isFinite(d)&&(branchCounts.get(i)||0)<3)hits.push({kind:(branchCounts.get(i)||0)<2?"wood":"leaf",index:i,d});
+      });
+      STICKS.forEach((s,i)=>{
+        if(harvestedSticks.has(i))return;const d=screenHit(s,42);
+        if(Number.isFinite(d))hits.push({kind:"stick",index:i,d});
+      });
+      LOOSE_STONES.forEach((r,i)=>{
+        if(harvestedLooseStones.has(i))return;const d=screenHit(r,42);
+        if(Number.isFinite(d))hits.push({kind:"stone",index:i,d});
+      });
       hits.sort((a,b)=>a.d-b.d);return hits[0]||null;
     };
     const gatherNow=()=>{
@@ -315,29 +331,18 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onLeaf
         const worldZ=-moveX*sy+moveY*cy;
         const nextX=Math.max(-14,Math.min(14,player.x+worldX*speed));
         const nextZ=Math.max(-14,Math.min(14,player.z+worldZ*speed));
-        const PLAYER_R=.34, TREE_R=.78, ROCK_R=.64;
-        const blocked=(x:number,z:number)=>{
-          for(let i=0;i<TREES.length;i++){
-            if(harvestedTrees.has(i))continue;
-            if(Math.hypot(x-TREES[i].x,z-TREES[i].z)<PLAYER_R+TREE_R)return true;
-          }
-          for(let i=0;i<ROCKS.length;i++){
-            if(harvestedRocks.has(i))continue;
-            if(Math.hypot(x-ROCKS[i].x,z-ROCKS[i].z)<PLAYER_R+ROCK_R)return true;
-          }
+        const PLAYER_R=.34,TREE_R=.82,ROCK_R=.66;
+        const worldBlocked=(x:number,z:number)=>{
+          for(let i=0;i<TREES.length;i++)if(!harvestedTrees.has(i)&&Math.hypot(x-TREES[i].x,z-TREES[i].z)<PLAYER_R+TREE_R)return true;
+          for(let i=0;i<ROCKS.length;i++)if(!harvestedRocks.has(i)&&Math.hypot(x-ROCKS[i].x,z-ROCKS[i].z)<PLAYER_R+ROCK_R)return true;
           return false;
         };
-        if(!blocked(nextX,nextZ)){player.x=nextX;player.z=nextZ;}
+        const ox=player.x,oz=player.z;
+        if(!worldBlocked(nextX,nextZ)){player.x=nextX;player.z=nextZ;}
         else{
-          if(!blocked(nextX,player.z))player.x=nextX;
-          if(!blocked(player.x,nextZ))player.z=nextZ;
+          if(!worldBlocked(nextX,oz))player.x=nextX;
+          if(!worldBlocked(player.x,nextZ))player.z=nextZ;
         }
-        const pushOut=(p:Point,r:number)=>{
-          let dx=player.x-p.x,dz=player.z-p.z,d=Math.hypot(dx,dz),min=PLAYER_R+r;
-          if(d<min){if(d<.001){dx=1;dz=0;d=1;}player.x=p.x+dx/d*min;player.z=p.z+dz/d*min;}
-        };
-        TREES.forEach((t,i)=>{if(!harvestedTrees.has(i))pushOut(t,TREE_R);});
-        ROCKS.forEach((r,i)=>{if(!harvestedRocks.has(i))pushOut(r,ROCK_R);});
       }
 
       gatherCooldown = Math.max(0, gatherCooldown - dt);
@@ -420,10 +425,20 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onLeaf
         depth: campProjection.depth,
         draw: () => drawCamp(ctx, campProjection.x, campProjection.y, Math.min(.95,campProjection.scale * 0.72)),
       });
+      TREES.forEach((tree,index)=>{
+        if(harvestedTrees.has(index))return;
+        const p=project(tree);
+        if(p.visible){
+          const ss=Math.min(2.62,p.scale*(1.78+index%5*.16));
+          ctx.save();ctx.globalAlpha=.20;ctx.fillStyle="#182719";
+          ctx.translate(p.x,p.y+3);ctx.rotate(-.28);
+          ctx.beginPath();ctx.ellipse(32*ss,0,42*ss,7*ss,0,0,Math.PI*2);ctx.fill();ctx.restore();
+        }
+      });
       TREES.forEach((tree, index) => {
         if (harvestedTrees.has(index)) return;
         const p = project(tree);
-        if(p.visible) objects.push({ depth: p.depth, draw:()=>{ctx.save();const sway=Math.sin(time*.00055+index*1.7)*1.7*p.scale;ctx.translate((index%3-1)*2*p.scale+sway,0);drawTree(ctx,p.x,p.y,Math.min(2.62,p.scale*(1.78+index%5*.16)));ctx.restore();} });
+        if(p.visible) objects.push({ depth: p.depth, draw:()=>{ctx.save();const sway=Math.sin(time*.00038+index*1.7)*.32*p.scale;ctx.translate((index%3-1)*2*p.scale+sway,0);drawTree(ctx,p.x,p.y,Math.min(2.62,p.scale*(1.78+index%5*.16)));ctx.restore();} });
       });
       BUSHES.forEach((b,index)=>{
         const p=project(b); if(p.visible) objects.push({depth:p.depth,draw:()=>drawBush(ctx,p.x,p.y,Math.min(1.15,p.scale*.9))});
