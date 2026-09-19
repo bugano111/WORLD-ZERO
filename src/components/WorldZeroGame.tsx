@@ -245,6 +245,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearTree, onNearRoc
         }
         input.current.gather = false;
       }
+      if (input.current.gather && !isNearTree && !isNearRock) input.current.gather = false;
 
       const target = npc.phase === "toCamp" ? camp : TREES[npc.treeIndex];
       if ((npc.phase === "toTree" || npc.phase === "toCamp") && target) {
@@ -382,7 +383,7 @@ export function WorldZeroGame() {
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
         <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span>Kámen: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
-      {(nearTree || nearRock) && <button className="wz-gather" onPointerDown={() => { input.current.gather = true; }}>{nearRock && !nearTree ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}
+      {(nearTree || nearRock) && <button className="wz-gather" onClick={() => { input.current.gather = true; }}>{nearRock && !nearTree ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
