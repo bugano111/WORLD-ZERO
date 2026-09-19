@@ -259,9 +259,9 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       if(gatherCooldown>0)return;
       // Gather the same object the UI says is selected. No hidden priority conflicts.
       let candidates:Array<{kind:"wood"|"stick"|"stone";index:number;d:number}>=[];
-      TREES.forEach((t,i)=>{if(!harvestedTrees.has(i)){const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<1.82)candidates.push({kind:"wood",index:i,d});}});
-      STICKS.forEach((s,i)=>{if(!harvestedSticks.has(i)){const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<1.35)candidates.push({kind:"stick",index:i,d});}});
-      LOOSE_STONES.forEach((r,i)=>{if(!harvestedLooseStones.has(i)){const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<1.35)candidates.push({kind:"stone",index:i,d});}});
+      TREES.forEach((t,i)=>{if(!harvestedTrees.has(i)){const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<1.28)candidates.push({kind:"wood",index:i,d});}});
+      STICKS.forEach((s,i)=>{if(!harvestedSticks.has(i)){const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<.72)candidates.push({kind:"stick",index:i,d});}});
+      LOOSE_STONES.forEach((r,i)=>{if(!harvestedLooseStones.has(i)){const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<.72)candidates.push({kind:"stone",index:i,d});}});
       candidates.sort((a,b)=>a.d-b.d);
       const hit=candidates[0]; if(!hit)return;
       if(hit.kind==="wood"){
@@ -311,31 +311,26 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         const speed = 4.1 * dt / Math.max(1, length);
         const nextX = Math.max(-14, Math.min(14, player.x + moveX * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + moveY * speed));
-        const TREE_R=1.35, ROCK_R=.92;
+        const PLAYER_R=.34, TREE_R=.78, ROCK_R=.64;
         const blocked=(x:number,z:number)=>{
           for(let i=0;i<TREES.length;i++){
-            if(harvestedTrees.has(i)) continue;
-            if(Math.hypot(x-TREES[i].x,z-TREES[i].z)<TREE_R) return true;
+            if(harvestedTrees.has(i))continue;
+            if(Math.hypot(x-TREES[i].x,z-TREES[i].z)<PLAYER_R+TREE_R)return true;
           }
           for(let i=0;i<ROCKS.length;i++){
-            if(harvestedRocks.has(i)) continue;
-            if(Math.hypot(x-ROCKS[i].x,z-ROCKS[i].z)<ROCK_R) return true;
+            if(harvestedRocks.has(i))continue;
+            if(Math.hypot(x-ROCKS[i].x,z-ROCKS[i].z)<PLAYER_R+ROCK_R)return true;
           }
           return false;
         };
-        if(!blocked(nextX,nextZ)){
-          player.x=nextX; player.z=nextZ;
-        }else{
-          // natural sliding along a solid trunk/rock; same rule from every direction
-          const canX=!blocked(nextX,player.z);
-          const canZ=!blocked(player.x,nextZ);
-          if(canX) player.x=nextX;
-          if(canZ) player.z=nextZ;
+        if(!blocked(nextX,nextZ)){player.x=nextX;player.z=nextZ;}
+        else{
+          if(!blocked(nextX,player.z))player.x=nextX;
+          if(!blocked(player.x,nextZ))player.z=nextZ;
         }
-        // Hard safety: never allow player to remain inside a trunk/rock.
         const pushOut=(p:Point,r:number)=>{
-          let dx=player.x-p.x,dz=player.z-p.z,d=Math.hypot(dx,dz);
-          if(d<r){if(d<.001){dx=1;dz=0;d=1;} player.x=p.x+dx/d*r; player.z=p.z+dz/d*r;}
+          let dx=player.x-p.x,dz=player.z-p.z,d=Math.hypot(dx,dz),min=PLAYER_R+r;
+          if(d<min){if(d<.001){dx=1;dz=0;d=1;}player.x=p.x+dx/d*min;player.z=p.z+dz/d*min;}
         };
         TREES.forEach((t,i)=>{if(!harvestedTrees.has(i))pushOut(t,TREE_R);});
         ROCKS.forEach((r,i)=>{if(!harvestedRocks.has(i))pushOut(r,ROCK_R);});
@@ -349,9 +344,9 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       let nearestRock=-1,nearestRockDistance=Infinity;
       LOOSE_STONES.forEach((r,i)=>{if(harvestedLooseStones.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=i;}});
       const nearby:Array<{kind:"wood"|"stick"|"stone";score:number}>=[];
-      if(nearestTree>=0&&nearestDistance<1.82&&(branchCounts.get(nearestTree)||0)<3) nearby.push({kind:"wood",score:nearestDistance/1.82});
-      if(nearestStick>=0&&nearestStickDistance<1.35) nearby.push({kind:"stick",score:nearestStickDistance/1.35});
-      if(nearestRock>=0&&nearestRockDistance<1.35) nearby.push({kind:"stone",score:nearestRockDistance/1.35});
+      if(nearestTree>=0&&nearestDistance<1.28&&(branchCounts.get(nearestTree)||0)<3) nearby.push({kind:"wood",score:nearestDistance/1.28});
+      if(nearestStick>=0&&nearestStickDistance<.72) nearby.push({kind:"stick",score:nearestStickDistance/.72});
+      if(nearestRock>=0&&nearestRockDistance<.72) nearby.push({kind:"stone",score:nearestRockDistance/.72});
       nearby.sort((a,b)=>a.score-b.score);
       const nearResource:"wood"|"stick"|"stone"|null=nearby[0]?.kind??null;
       if(nearResource!==lastNearResource){lastNearResource=nearResource;onNearResource(nearResource);}
@@ -424,7 +419,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       TREES.forEach((tree, index) => {
         if (harvestedTrees.has(index)) return;
         const p = project(tree);
-        if(p.visible) objects.push({ depth: p.depth, draw: () => { ctx.save(); ctx.translate((index%3-1)*2*p.scale,0); drawTree(ctx,p.x,p.y,Math.min(2.15,p.scale*(1.48+index%4*.13))); ctx.restore(); } });
+        if(p.visible) objects.push({ depth: p.depth, draw: () => { ctx.save(); ctx.translate((index%3-1)*2*p.scale,0); drawTree(ctx,p.x,p.y,Math.min(2.35,p.scale*(1.62+index%4*.14))); ctx.restore(); } });
       });
       BUSHES.forEach((b,index)=>{
         const p=project(b); if(p.visible) objects.push({depth:p.depth,draw:()=>drawBush(ctx,p.x,p.y,Math.min(1.15,p.scale*.9))});
@@ -459,7 +454,11 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         if(nearResource==="wood"&&nearestTree>=0){target=TREES[nearestTree];label="ULOMIT VĚTEV";}
         else if(nearResource==="stick"&&nearestStick>=0){target=STICKS[nearestStick];label="SEBRAT KLACEK";}
         else if(nearResource==="stone"&&nearestRock>=0){target=LOOSE_STONES[nearestRock];label="SEBRAT KÁMEN";}
-        if(target){const mp=project(target);if(mp.visible)drawActionMarker(ctx,mp.x,mp.y-16*Math.max(.5,mp.scale),label);}
+        if(target){const mp=project(target);if(mp.visible){
+          ctx.save();ctx.strokeStyle="rgba(255,255,255,.48)";ctx.lineWidth=1.5;ctx.setLineDash([4,5]);
+          ctx.beginPath();ctx.moveTo(width*.5,height*.70-18);ctx.lineTo(mp.x,mp.y-8);ctx.stroke();ctx.restore();
+          drawActionMarker(ctx,mp.x,mp.y-16*Math.max(.5,mp.scale),label);
+        }}
       }
       drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 500, height / 900, .92), false, length > 0.05 ? time * 0.012 : 0);
       const vignette=ctx.createRadialGradient(width*.5,height*.55,Math.min(width,height)*.25,width*.5,height*.55,Math.max(width,height)*.72);
