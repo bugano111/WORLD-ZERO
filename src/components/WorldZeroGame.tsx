@@ -176,7 +176,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const d = Math.hypot(tree.x - player.x, tree.z - player.z);
         if (d < td) { td = d; ti = index; }
       });
-      if (ti >= 0 && td < 1.35) {
+      if (ti >= 0 && td < 1.15) {
         playerWood += 1;
         onWoodChange(npc.wood + playerWood);
         gatherCooldown = .45;
@@ -232,8 +232,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
         const blocked = (x: number, z: number) =>
-          TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - x, tree.z - z) < 0.72) ||
-          ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - x, rock.z - z) < 0.62);
+          TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - x, tree.z - z) < 0.88) ||
+          ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - x, rock.z - z) < 0.72);
         if (!blocked(nextX, player.z)) player.x = nextX;
         if (!blocked(player.x, nextZ)) player.z = nextZ;
       }
@@ -254,8 +254,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         if (distance < nearestRockDistance) { nearestRockDistance = distance; nearestRock = index; }
       });
       const nearResource: "wood" | "stone" | null =
-        nearestTree >= 0 && nearestDistance < 1.35 ? "wood" :
-        nearestRock >= 0 && nearestRockDistance < 1.15 ? "stone" : null;
+        nearestTree >= 0 && nearestDistance < 1.15 ? "wood" :
+        nearestRock >= 0 && nearestRockDistance < 0.98 ? "stone" : null;
       if (nearResource !== lastNearResource) {
         lastNearResource = nearResource;
         onNearResource(nearResource);
