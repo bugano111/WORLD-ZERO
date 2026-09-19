@@ -19,10 +19,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const grassTex=makeTexture("#526f3d","#283d25",1.3);grassTex.repeat.set(34,34);
   const barkTex=makeTexture("#65442d","#261a14",.8);barkTex.repeat.set(2,8);
   const rockTex=makeTexture("#777a72","#3f443f",1.1);rockTex.repeat.set(3,3);
-  const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc5df);scene.fog=new THREE.FogExp2(0xc0d0c2,.0065);
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc5df);scene.fog=new THREE.FogExp2(0xb8c8bd,.0038);
   const camera=new THREE.PerspectiveCamera(62,1,.1,180);
   const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.physicallyCorrectLights=true;renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.94;
   host.appendChild(renderer.domElement);
 
@@ -51,6 +51,14 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     pos.setZ(i,terrainY(x,y);
   }
   ground.geometry.computeVertexNormals();scene.add(ground);
+  // WORLD SHELL: distant terrain continues beyond the playable patch instead of ending after a few metres.
+  const farMat=new THREE.MeshStandardMaterial({map:grassTex,color:0x73815f,roughness:1});
+  for(let ring=0;ring<4;ring++){
+    const size=1800+ring*1300;
+    const far=new THREE.Mesh(new THREE.RingGeometry(size*.32,size*.72,128,12),farMat);
+    far.rotation.x=-Math.PI/2;far.position.y=-size*size/(8*6371000)-5-ring*2;far.receiveShadow=true;scene.add(far);
+  }
+
 
   const oceanMat=new THREE.MeshPhysicalMaterial({color:0x376f87,roughness:.28,metalness:0,transparent:true,opacity:.72});
   const ocean=new THREE.Mesh(new THREE.CircleGeometry(620,96),oceanMat);ocean.rotation.x=-Math.PI/2;ocean.position.y=-8.4;scene.add(ocean);
@@ -119,12 +127,13 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     g.position.set(x,terrainY(x,z),z);g.userData.tree=true;g.userData.branches=0;g.userData.kind="branch";interactives.push(g);obstacles.push({p:new THREE.Vector3(x,0,z),r:.75});scene.add(g);
   };
   [[-8,-9],[-3,-12],[5,-10],[10,-6],[-11,0],[11,2],[-8,8],[7,9],[1,13],[-14,-14],[14,-14]].forEach((p,i)=>makeTree(p[0],p[1],i));
-  const saplingMat=new THREE.MeshStandardMaterial({color:0x35633a,roughness:1});
-  for(let i=0;i<420;i++){
-    const a=i*2.399,r=20+(i%110)*2.65,x=Math.cos(a)*r,z=Math.sin(a)*r-7;
-    const sg=new THREE.Group();
-    const sh=7.5+(i%11)*1.15;const st=new THREE.Mesh(new THREE.CylinderGeometry(.10+sh*.012,.22+sh*.018,sh,10),bark);st.position.y=sh/2;st.castShadow=true;sg.add(st);
-    for(let k=0;k<5;k++){const cr=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15+(i%5)*.18,2),saplingMat);cr.position.set(Math.cos(k*1.25)*.42,sh-.15+k*.18,Math.sin(k*1.25)*.35);cr.scale.set(1,.72,1);cr.castShadow=true;sg.add(cr);}
+  const saplingMat=new THREE.MeshStandardMaterial({color:0x35633a,roughness:1,side:THREE.DoubleSide});
+  const sapLeaf=new THREE.PlaneGeometry(.20,.085);
+  for(let i=0;i<210;i++){
+    const a=i*2.399,r=18+(i%70)*2.65,x=Math.cos(a)*r,z=Math.sin(a)*r-7,sg=new THREE.Group(),sh=5.5+(i%10)*.72;
+    const st=new THREE.Mesh(new THREE.CylinderGeometry(.07,.19,sh,9),bark);st.position.y=sh/2;st.castShadow=true;sg.add(st);
+    for(let b=0;b<9;b++){const ba=b*2.399,by=sh*.48+b*.055;const br=new THREE.Mesh(new THREE.CylinderGeometry(.018,.055,1.25+(b%3)*.28,6),bark);br.position.set(Math.cos(ba)*.42,by,Math.sin(ba)*.42);br.rotation.z=Math.cos(ba)*1.02;br.rotation.x=Math.sin(ba)*.72;sg.add(br);
+      for(let q=0;q<5;q++){const lf=new THREE.Mesh(sapLeaf,saplingMat);lf.position.set(Math.cos(ba)*( .65+q*.12),by+(q%2)*.12,Math.sin(ba)*( .65+q*.12));lf.rotation.set(.25*q,ba,.12*q);sg.add(lf);}}
     sg.position.set(x,terrainY(x,z),z);scene.add(sg);
   }
 
@@ -148,6 +157,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const logMat=new THREE.MeshStandardMaterial({color:0x513523,roughness:1});
   [[-6,6,.3],[8,7,-.22]].forEach(([x,z,rot])=>{const l=new THREE.Mesh(new THREE.CylinderGeometry(.24,.3,3.2,10),logMat);l.position.set(x,terrainY(x,z)+.28,z);l.rotation.z=Math.PI/2;l.rotation.y=rot;l.castShadow=true;scene.add(l);});
 
+  const mossMat=new THREE.MeshStandardMaterial({color:0x43563a,roughness:1});
+  const soilMat2=new THREE.MeshStandardMaterial({color:0x514638,roughness:1});
+  for(let i=0;i<260;i++){const x=((i*83)%251)/251*170-85,z=((i*47)%239)/239*170-85,r=.35+(i%11)*.13;
+    const p=new THREE.Mesh(new THREE.CircleGeometry(r,10),i%3?mossMat:soilMat2);p.rotation.x=-Math.PI/2;p.position.set(x,terrainY(x,z)+.012,z);p.scale.set(1.8,.7,1);p.receiveShadow=true;scene.add(p);}
   const litterMat=new THREE.MeshStandardMaterial({color:0x65523a,roughness:1,side:THREE.DoubleSide});
   const pebbleMat=new THREE.MeshStandardMaterial({color:0x74766e,roughness:1});
   for(let i=0;i<130;i++){
@@ -155,10 +168,13 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     if(i%3===0){const q=new THREE.Mesh(new THREE.DodecahedronGeometry(.055+(i%5)*.012,0),pebbleMat);q.position.set(x,.055,z);q.scale.y=.55;scene.add(q);}
     else {const q=new THREE.Mesh(new THREE.PlaneGeometry(.16+(i%4)*.025,.07),litterMat);q.rotation.x=-Math.PI/2;q.rotation.z=i*.83;q.position.set(x,.018,z);scene.add(q);}
   }
-  // Grass = hundreds of blade clumps following the ground.
-  const grassMats=[0x426638,0x527442,0x627f49].map(v=>new THREE.MeshStandardMaterial({color:v,roughness:1,side:THREE.DoubleSide}));
-  const bladeGeo=new THREE.PlaneGeometry(.018,.30);
-  for(let i=0;i<1800;i++){const x=((i*37)%211)/211*180-90,z=((i*61)%197)/197*180-90,cl=new THREE.Group();for(let b=0;b<5;b++){const blade=new THREE.Mesh(bladeGeo,grassMats[(i+b)%3]);blade.position.set((b-2)*.024,.15+(b%2)*.025,Math.sin(b*2.1)*.025);blade.rotation.y=b*1.256;blade.rotation.z=(b-2)*.05;cl.add(blade);}cl.position.set(x,terrainY(x,z),z);scene.add(cl);}
+  // Instanced grass carpet: 18,000 individual blades, terrain-following and wind-leaned.
+  const bladeGeo=new THREE.PlaneGeometry(.018,.32);
+  bladeGeo.translate(0,.16,0);
+  const grassMat=new THREE.MeshStandardMaterial({color:0x4d713e,roughness:1,side:THREE.DoubleSide});
+  const grass=new THREE.InstancedMesh(bladeGeo,grassMat,18000);const dummy=new THREE.Object3D();
+  for(let i=0;i<18000;i++){const x=((i*73)%997)/997*210-105,z=((i*151)%991)/991*210-105;dummy.position.set(x,terrainY(x,z),z);dummy.rotation.set(0,(i*.618)%6.283,((i%9)-4)*.018);const s=.65+(i%13)*.045;dummy.scale.set(s,s,s);dummy.updateMatrix();grass.setMatrixAt(i,dummy.matrix);}
+  grass.instanceMatrix.needsUpdate=true;grass.frustumCulled=true;scene.add(grass);
 
   const makeAnimal=(kind:"horse"|"goat"|"deer",x:number,z:number,scale:number)=>{
     const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
@@ -207,7 +223,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    const dt=Math.min(.033,(now-last)/1000);last=now;
    yaw+=input.current.camera*1.55*dt;
    const j=input.current.joystick,len=Math.min(1,Math.hypot(j.x,j.y));
-   if(len>.02){const fx=Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=Math.sin(yaw);const dx=(rx*j.x+fx*(-j.y))*3.0*dt,dz=(rz*j.x+fz*(-j.y))*3.0*dt;
+   if(len>.02){const fx=Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=Math.sin(yaw);const dx=(rx*j.x+fx*(-j.y))*4.2*dt,dz=(rz*j.x+fz*(-j.y))*3.0*dt;
     const nx=player.position.x+dx,nz=player.position.z+dz;
     player.position.x=nx;player.position.z=nz;
    }
@@ -218,7 +234,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    chooseTarget();
    animals.forEach((a,i)=>{const ph=now*.00018+a.userData.phase;a.position.x+=Math.sin(ph+i)*dt*.18;a.position.z+=Math.cos(ph*.83+i)*dt*.15;a.rotation.y=Math.atan2(Math.sin(ph+i),Math.cos(ph*.83+i));});
    const eye=1.68;
-   camera.position.set(player.position.x,player.position.y+eye,player.position.z);
+   const bob=len>.04?Math.sin(now*.0105)*.025:0;camera.position.set(player.position.x,player.position.y+eye+bob,player.position.z);
    const look=new THREE.Vector3(Math.sin(yaw),-.055,-Math.cos(yaw));
    camera.lookAt(camera.position.clone().add(look.multiplyScalar(12)));
    renderer.render(scene,camera);requestAnimationFrame(clock);
@@ -252,7 +268,7 @@ export function WorldZeroGame(){
  useEffect(()=>{if(counts.leaves>=3&&!knowledge.includes("fiber")){setFiber(1);learn("fiber","Z rostlin jsi získal pevná vlákna. Lze jimi svazovat materiály.");}},[counts.leaves]);
  const labels:Record<Kind,string>={branch:"ULOMIT VĚTEV",stick:"SEBRAT KLACEK",stone:"SEBRAT KÁMEN",leaf:"SEBRAT LISTÍ"};
  return <main className="wz-game"><World3D input={input} onCounts={setCounts} onTarget={setTarget} gatherApi={gatherApi}/>
-  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · REAL 3D</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
+  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 02 · REAL 3D</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
   <div style={{position:"absolute",top:96,left:12,right:12,textAlign:"center",pointerEvents:"none",zIndex:5}}><span style={{display:"inline-block",background:"rgba(15,18,14,.72)",color:"#f3efdc",padding:"7px 10px",borderRadius:9,fontSize:12}}>{survivalMsg}</span></div>
   {flint>0&&fiber>0&&counts.branches>0&&!knowledge.includes("tool")&&<button className="wz-gather" style={{bottom:116}} onPointerDown={e=>{e.preventDefault();learn("tool","První technologický objev: svázaný kamenný nástroj. Teď může začít skutečné opracování dřeva.");}}>SPOJIT KÁMEN + VĚTEV + VLÁKNO</button>}
   {target&&<button className="wz-gather" onPointerDown={e=>{e.preventDefault();e.stopPropagation();gatherApi.current();setFlash("SEBRÁNO");setTimeout(()=>setFlash(""),260)}}>{labels[target]}</button>}{flash&&<div className="wz-action-flash">{flash}</div>}
