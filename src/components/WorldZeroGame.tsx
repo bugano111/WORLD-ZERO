@@ -199,7 +199,7 @@ function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<Inp
       last = time;
       player.yaw += input.current.camera * 1.7 * dt;
       const moveX = input.current.joystick.x;
-      const moveY = -input.current.joystick.y;
+      const moveY = input.current.joystick.y;
       const length = Math.hypot(moveX, moveY);
       if (length > 0.05) {
         const speed = 4.1 * dt / Math.max(1, length);
