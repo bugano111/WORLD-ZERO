@@ -214,6 +214,18 @@ function drawPerson(ctx:CanvasRenderingContext2D,x:number,y:number,s:number,npc:
   ctx.fillStyle="#49352a";ctx.beginPath();ctx.ellipse(x-1*s,y-91*s,11*s,6*s,-.08,Math.PI,Math.PI*2);ctx.fill();
 }
 
+function drawActionMarker(ctx:CanvasRenderingContext2D,x:number,y:number,label:string){
+  ctx.save();
+  ctx.font="700 12px system-ui,-apple-system,sans-serif";
+  const w=Math.max(66,ctx.measureText(label).width+24);
+  ctx.fillStyle="rgba(18,31,21,.88)";
+  ctx.beginPath();ctx.roundRect(x-w/2,y-34,w,27,13);ctx.fill();
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(label,x,y-20);
+  ctx.fillStyle="rgba(255,255,255,.95)";ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#294d31";ctx.font="900 13px system-ui";ctx.fillText("+",x,y+.5);
+  ctx.restore();
+}
+
 function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNearResource, gatherApi }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onStoneChange: (stone: number) => void; onStickChange: (sticks: number) => void; onNearResource: (resource: "wood" | "stone" | "stick" | null) => void; gatherApi: RefObject<() => void> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -247,17 +259,17 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       if(gatherCooldown>0)return;
       let ti=-1,td=Infinity;
       TREES.forEach((t,i)=>{if(harvestedTrees.has(i))return;const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<td){td=d;ti=i;}});
-      if(ti>=0&&td<1.62){
+      if(ti>=0&&td<1.82){
         const taken=branchCounts.get(ti)||0;
         if(taken<3){branchCounts.set(ti,taken+1);playerBranches++;onWoodChange(playerBranches);gatherCooldown=.55;}
         return;
       }
       let si=-1,sd=Infinity;
       STICKS.forEach((s,i)=>{if(harvestedSticks.has(i))return;const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<sd){sd=d;si=i;}});
-      if(si>=0&&sd<1.05){harvestedSticks.add(si);playerSticks++;onStickChange(playerSticks);gatherCooldown=.35;return;}
+      if(si>=0&&sd<1.35){harvestedSticks.add(si);playerSticks++;onStickChange(playerSticks);gatherCooldown=.35;return;}
             let li=-1,ld=Infinity;
       LOOSE_STONES.forEach((r,i)=>{if(harvestedLooseStones.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<ld){ld=d;li=i;}});
-      if(li>=0&&ld<1.05){harvestedLooseStones.add(li);playerStone++;onStoneChange(playerStone);gatherCooldown=.35;}
+      if(li>=0&&ld<1.35){harvestedLooseStones.add(li);playerStone++;onStoneChange(playerStone);gatherCooldown=.35;}
     };
     gatherApi.current = gatherNow;
 
@@ -309,8 +321,15 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
           }
           return false;
         };
-        if(!blocked(nextX,player.z)) player.x=nextX;
-        if(!blocked(player.x,nextZ)) player.z=nextZ;
+        if(!blocked(nextX,nextZ)){
+          player.x=nextX; player.z=nextZ;
+        }else{
+          // natural sliding along a solid trunk/rock; same rule from every direction
+          const canX=!blocked(nextX,player.z);
+          const canZ=!blocked(player.x,nextZ);
+          if(canX) player.x=nextX;
+          if(canZ) player.z=nextZ;
+        }
         // Hard safety: never allow player to remain inside a trunk/rock.
         const pushOut=(p:Point,r:number)=>{
           let dx=player.x-p.x,dz=player.z-p.z,d=Math.hypot(dx,dz);
@@ -328,9 +347,9 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       let nearestRock=-1,nearestRockDistance=Infinity;
       LOOSE_STONES.forEach((r,i)=>{if(harvestedLooseStones.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=i;}});
       const nearResource:"wood"|"stone"|"stick"|null=
-        nearestTree>=0&&nearestDistance<1.62?"wood":
-        nearestStick>=0&&nearestStickDistance<1.05?"stick":
-        nearestRock>=0&&nearestRockDistance<1.05?"stone":null;
+        nearestTree>=0&&nearestDistance<1.82?"wood":
+        nearestStick>=0&&nearestStickDistance<1.35?"stick":
+        nearestRock>=0&&nearestRockDistance<1.35?"stone":null;
       if(nearResource!==lastNearResource){lastNearResource=nearResource;onNearResource(nearResource);}
 
       // Worker disabled until settlement stage.
@@ -421,6 +440,13 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         object.draw();
         ctx.restore();
       });
+      if(nearResource){
+        let target:Point|null=null,label="";
+        if(nearResource==="wood"&&nearestTree>=0){target=TREES[nearestTree];label="ULOMIT VĚTEV";}
+        else if(nearResource==="stick"&&nearestStick>=0){target=STICKS[nearestStick];label="SEBRAT KLACEK";}
+        else if(nearResource==="stone"&&nearestRock>=0){target=LOOSE_STONES[nearestRock];label="SEBRAT KÁMEN";}
+        if(target){const mp=project(target);if(mp.visible)drawActionMarker(ctx,mp.x,mp.y-16*Math.max(.5,mp.scale),label);}
+      }
       drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 500, height / 900, .92), false, length > 0.05 ? time * 0.012 : 0);
       const vignette=ctx.createRadialGradient(width*.5,height*.55,Math.min(width,height)*.25,width*.5,height*.55,Math.max(width,height)*.72);
       vignette.addColorStop(.55,"rgba(0,0,0,0)"); vignette.addColorStop(1,"rgba(14,28,18,.16)");
