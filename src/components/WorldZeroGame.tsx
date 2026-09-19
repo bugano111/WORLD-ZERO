@@ -257,19 +257,21 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
     };
     const gatherNow=()=>{
       if(gatherCooldown>0)return;
-      let ti=-1,td=Infinity;
-      TREES.forEach((t,i)=>{if(harvestedTrees.has(i))return;const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<td){td=d;ti=i;}});
-      if(ti>=0&&td<1.82){
-        const taken=branchCounts.get(ti)||0;
-        if(taken<3){branchCounts.set(ti,taken+1);playerBranches++;onWoodChange(playerBranches);gatherCooldown=.55;}
-        return;
+      // Gather the same object the UI says is selected. No hidden priority conflicts.
+      let candidates:Array<{kind:"wood"|"stick"|"stone";index:number;d:number}>=[];
+      TREES.forEach((t,i)=>{if(!harvestedTrees.has(i)){const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<1.82)candidates.push({kind:"wood",index:i,d});}});
+      STICKS.forEach((s,i)=>{if(!harvestedSticks.has(i)){const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<1.35)candidates.push({kind:"stick",index:i,d});}});
+      LOOSE_STONES.forEach((r,i)=>{if(!harvestedLooseStones.has(i)){const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<1.35)candidates.push({kind:"stone",index:i,d});}});
+      candidates.sort((a,b)=>a.d-b.d);
+      const hit=candidates[0]; if(!hit)return;
+      if(hit.kind==="wood"){
+        const taken=branchCounts.get(hit.index)||0;
+        if(taken<3){branchCounts.set(hit.index,taken+1);playerBranches++;onWoodChange(playerBranches);gatherCooldown=.35;}
+      }else if(hit.kind==="stick"){
+        harvestedSticks.add(hit.index);playerSticks++;onStickChange(playerSticks);gatherCooldown=.25;
+      }else{
+        harvestedLooseStones.add(hit.index);playerStone++;onStoneChange(playerStone);gatherCooldown=.25;
       }
-      let si=-1,sd=Infinity;
-      STICKS.forEach((s,i)=>{if(harvestedSticks.has(i))return;const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<sd){sd=d;si=i;}});
-      if(si>=0&&sd<1.35){harvestedSticks.add(si);playerSticks++;onStickChange(playerSticks);gatherCooldown=.35;return;}
-            let li=-1,ld=Infinity;
-      LOOSE_STONES.forEach((r,i)=>{if(harvestedLooseStones.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<ld){ld=d;li=i;}});
-      if(li>=0&&ld<1.35){harvestedLooseStones.add(li);playerStone++;onStoneChange(playerStone);gatherCooldown=.35;}
     };
     gatherApi.current = gatherNow;
 
@@ -346,10 +348,12 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       STICKS.forEach((s,i)=>{if(harvestedSticks.has(i))return;const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<nearestStickDistance){nearestStickDistance=d;nearestStick=i;}});
       let nearestRock=-1,nearestRockDistance=Infinity;
       LOOSE_STONES.forEach((r,i)=>{if(harvestedLooseStones.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=i;}});
-      const nearResource:"wood"|"stone"|"stick"|null=
-        nearestTree>=0&&nearestDistance<1.82?"wood":
-        nearestStick>=0&&nearestStickDistance<1.35?"stick":
-        nearestRock>=0&&nearestRockDistance<1.35?"stone":null;
+      const nearby:Array<{kind:"wood"|"stick"|"stone";score:number}>=[];
+      if(nearestTree>=0&&nearestDistance<1.82&&(branchCounts.get(nearestTree)||0)<3) nearby.push({kind:"wood",score:nearestDistance/1.82});
+      if(nearestStick>=0&&nearestStickDistance<1.35) nearby.push({kind:"stick",score:nearestStickDistance/1.35});
+      if(nearestRock>=0&&nearestRockDistance<1.35) nearby.push({kind:"stone",score:nearestRockDistance/1.35});
+      nearby.sort((a,b)=>a.score-b.score);
+      const nearResource:"wood"|"stick"|"stone"|null=nearby[0]?.kind??null;
       if(nearResource!==lastNearResource){lastNearResource=nearResource;onNearResource(nearResource);}
 
       // Worker disabled until settlement stage.
@@ -388,6 +392,13 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         const gh=4+((i*7)%8);
         ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx-3,gy-gh); ctx.moveTo(gx,gy); ctx.lineTo(gx+3,gy-gh*.8); ctx.stroke();
       }
+      // forest floor: leaf litter, grass, bare soil and tiny stones
+      for(let i=0;i<24;i++){
+        const lx=(i*211+29)%Math.max(1,width),ly=height*(.58+((i*43)%39)/100);
+        ctx.save();ctx.translate(lx,ly);ctx.rotate((i%7)*.41);
+        ctx.fillStyle=i%3===0?"rgba(111,82,43,.30)":"rgba(71,93,45,.25)";
+        ctx.fillRect(-3,-1,6,2);ctx.restore();
+      }
       // natural forest-floor detail: grass, bare soil and tiny stones
       for(let i=0;i<18;i++){
         const gx=(i*173+81)%Math.max(1,width),gy=height*(.61+((i*37)%36)/100);
@@ -400,6 +411,9 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         ellipse(ctx,gx,gy,sz*1.8,sz*.55,i%3===0?"rgba(111,91,58,.24)":"rgba(38,86,43,.22)");
       }
 
+      const horizonGlow=ctx.createLinearGradient(0,height*.39,0,height*.60);
+      horizonGlow.addColorStop(0,"rgba(235,244,220,.30)");horizonGlow.addColorStop(.48,"rgba(210,226,191,.13)");horizonGlow.addColorStop(1,"rgba(210,226,191,0)");
+      ctx.fillStyle=horizonGlow;ctx.fillRect(0,height*.38,width,height*.23);
       const mist=ctx.createLinearGradient(0,height*.38,0,height*.56); mist.addColorStop(0,"rgba(225,239,222,.42)"); mist.addColorStop(1,"rgba(225,239,222,0)"); ctx.fillStyle=mist; ctx.fillRect(0,height*.38,width,height*.2);
             const objects: Array<{ depth: number; draw: () => void }> = [];
       const campProjection = project(camp);
@@ -410,7 +424,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       TREES.forEach((tree, index) => {
         if (harvestedTrees.has(index)) return;
         const p = project(tree);
-        if(p.visible) objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, Math.min(2.05, p.scale * (1.42 + index % 4 * 0.12))) });
+        if(p.visible) objects.push({ depth: p.depth, draw: () => { ctx.save(); ctx.translate((index%3-1)*2*p.scale,0); drawTree(ctx,p.x,p.y,Math.min(2.15,p.scale*(1.48+index%4*.13))); ctx.restore(); } });
       });
       BUSHES.forEach((b,index)=>{
         const p=project(b); if(p.visible) objects.push({depth:p.depth,draw:()=>drawBush(ctx,p.x,p.y,Math.min(1.15,p.scale*.9))});
