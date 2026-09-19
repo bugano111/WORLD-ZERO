@@ -204,19 +204,14 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       const cosine=Math.cos(player.yaw), sine=Math.sin(player.yaw);
       const side=dx*cosine-dz*sine;
       const forward=-(dx*sine+dz*cosine);
-      const near=2.0, far=24.0;
-      const visible=forward>-1.25 && forward<far;
-      const depth=Math.max(near,forward+5.5);
-      const perspective=Math.max(.30,Math.min(1.55,6.2/depth));
+      const visible=forward>-1.0 && forward<26;
+      const distance=Math.max(1.5,forward+3.5);
+      const scale=Math.max(.24,Math.min(1.30,4.8/distance));
       const horizon=height*.47;
-      const groundY=horizon + Math.max(18, height*.23*perspective);
-      return {
-        x: width*.5 + side*42*perspective,
-        y: Math.min(height*.88,groundY),
-        scale: perspective,
-        depth,
-        visible,
-      };
+      // true ground plane: far objects sit at horizon, near objects move toward bottom
+      const groundFactor=Math.max(0,Math.min(1,(26-forward)/27));
+      const y=horizon + Math.pow(groundFactor,1.45)*height*.34;
+      return {x:width*.5+side*38*scale,y:Math.min(height*.84,y),scale,depth:distance,visible};
     };
 
     const render = (time: number) => {
@@ -308,17 +303,17 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       const campProjection = project(camp);
       if(campProjection.visible) objects.push({
         depth: campProjection.depth,
-        draw: () => drawCamp(ctx, campProjection.x, campProjection.y, campProjection.scale * 0.78),
+        draw: () => drawCamp(ctx, campProjection.x, campProjection.y, Math.min(.95,campProjection.scale * 0.72)),
       });
       TREES.forEach((tree, index) => {
         if (harvestedTrees.has(index)) return;
         const p = project(tree);
-        if(p.visible) objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, p.scale * (0.9 + index % 3 * 0.08)) });
+        if(p.visible) objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, Math.min(1.12, p.scale * (0.82 + index % 3 * 0.06))) });
       });
       ROCKS.forEach((rock, index) => {
         if (harvestedRocks.has(index)) return;
         const p = project(rock);
-        if(p.visible) objects.push({ depth: p.depth, draw: () => drawRock(ctx, p.x, p.y, p.scale * (0.72 + index % 2 * 0.12)) });
+        if(p.visible) objects.push({ depth: p.depth, draw: () => drawRock(ctx, p.x, p.y, Math.min(.95,p.scale * (0.68 + index % 2 * 0.10))) });
       });
       objects.sort((a, b) => b.depth - a.depth).forEach((object) => object.draw());
       drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 390, height / 720, 1.34), false, length > 0.05 ? time * 0.012 : 0);
