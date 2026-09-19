@@ -21,8 +21,8 @@ jobs:
           cache: npm
       - run: npm install
       - run: npm run build
-      - name: Verify current GENESIS 1 marker
-        run: grep -R "WORLD ZERO · GENESIS 1" dist/assets
+      - name: Verify GENESIS REBUILD marker
+        run: grep -R "GENESIS REBUILD" dist/assets
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
