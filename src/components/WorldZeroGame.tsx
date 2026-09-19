@@ -11,7 +11,7 @@ import {
 type InputState = {
   joystick: { x: number; y: number };
   camera: number;
-  gather: boolean;
+  gatherSeq: number;
 };
 
 type Point = { x: number; z: number };
@@ -170,6 +170,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearTree, onNearRoc
     let gatherCooldown = 0;
     let wasNearTree = false;
     let wasNearRock = false;
+    let handledGatherSeq = 0;
 
     const resize = () => {
       width = Math.max(1, window.innerWidth);
@@ -231,7 +232,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearTree, onNearRoc
       });
       const isNearRock = nearestRock >= 0 && nearestRockDistance < 2.15;
       if (isNearRock !== wasNearRock) { wasNearRock = isNearRock; onNearRock(isNearRock); }
-      if (input.current.gather && gatherCooldown <= 0) {
+      if (input.current.gatherSeq !== handledGatherSeq && gatherCooldown <= 0) {
         if (isNearTree) {
           npc.harvested.add(nearestTree);
           playerWood += 1;
@@ -243,9 +244,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearTree, onNearRoc
           onStoneChange(playerStone);
           gatherCooldown = 0.65;
         }
-        input.current.gather = false;
+        handledGatherSeq = input.current.gatherSeq;
       }
-      if (input.current.gather && !isNearTree && !isNearRock) input.current.gather = false;
 
       const target = npc.phase === "toCamp" ? camp : TREES[npc.treeIndex];
       if ((npc.phase === "toTree" || npc.phase === "toCamp") && target) {
@@ -367,7 +367,7 @@ function CameraButton({ direction, input, label, children }: { direction: number
 }
 
 export function WorldZeroGame() {
-  const input = useRef<InputState>({ joystick: { x: 0, y: 0 }, camera: 0, gather: false });
+  const input = useRef<InputState>({ joystick: { x: 0, y: 0 }, camera: 0, gatherSeq: 0 });
   const [wood, setWood] = useState(0);
   const [stone, setStone] = useState(0);
   const handleWoodChange = useCallback((amount: number) => setWood(amount), []);
@@ -383,7 +383,7 @@ export function WorldZeroGame() {
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
         <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span>Kámen: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
-      {(nearTree || nearRock) && <button className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); input.current.gather = true; }} onTouchStart={(event) => { event.stopPropagation(); input.current.gather = true; }}>{nearRock && !nearTree ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}
+      {(nearTree || nearRock) && <button className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); input.current.gatherSeq += 1; }} onTouchStart={(event) => { event.stopPropagation(); input.current.gatherSeq += 1; }}>{nearRock && !nearTree ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
