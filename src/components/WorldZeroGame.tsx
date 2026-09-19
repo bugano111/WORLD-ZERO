@@ -255,23 +255,20 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       const p = project(point);
       return Math.hypot(p.x - width * 0.5, p.y - height * 0.69);
     };
+    const getTarget=()=>{
+      const hits:Array<{kind:"wood"|"stick"|"stone";index:number;d:number}>=[];
+      TREES.forEach((t,i)=>{const d=Math.hypot(t.x-player.x,t.z-player.z);if((branchCounts.get(i)||0)<3&&d<=1.45)hits.push({kind:"wood",index:i,d});});
+      STICKS.forEach((s,i)=>{if(!harvestedSticks.has(i)){const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<=1.05)hits.push({kind:"stick",index:i,d});}});
+      LOOSE_STONES.forEach((r,i)=>{if(!harvestedLooseStones.has(i)){const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<=1.05)hits.push({kind:"stone",index:i,d});}});
+      hits.sort((a,b)=>a.d-b.d);return hits[0]||null;
+    };
     const gatherNow=()=>{
       if(gatherCooldown>0)return;
-      // Gather the same object the UI says is selected. No hidden priority conflicts.
-      let candidates:Array<{kind:"wood"|"stick"|"stone";index:number;d:number}>=[];
-      TREES.forEach((t,i)=>{if(!harvestedTrees.has(i)){const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<1.28)candidates.push({kind:"wood",index:i,d});}});
-      STICKS.forEach((s,i)=>{if(!harvestedSticks.has(i)){const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<.72)candidates.push({kind:"stick",index:i,d});}});
-      LOOSE_STONES.forEach((r,i)=>{if(!harvestedLooseStones.has(i)){const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<.72)candidates.push({kind:"stone",index:i,d});}});
-      candidates.sort((a,b)=>a.d-b.d);
-      const hit=candidates[0]; if(!hit)return;
-      if(hit.kind==="wood"){
-        const taken=branchCounts.get(hit.index)||0;
-        if(taken<3){branchCounts.set(hit.index,taken+1);playerBranches++;onWoodChange(playerBranches);gatherCooldown=.35;}
-      }else if(hit.kind==="stick"){
-        harvestedSticks.add(hit.index);playerSticks++;onStickChange(playerSticks);gatherCooldown=.25;
-      }else{
-        harvestedLooseStones.add(hit.index);playerStone++;onStoneChange(playerStone);gatherCooldown=.25;
-      }
+      const hit=getTarget();if(!hit)return;
+      if(hit.kind==="wood"){branchCounts.set(hit.index,(branchCounts.get(hit.index)||0)+1);playerBranches++;onWoodChange(playerBranches);}
+      else if(hit.kind==="stick"){harvestedSticks.add(hit.index);playerSticks++;onStickChange(playerSticks);}
+      else{harvestedLooseStones.add(hit.index);playerStone++;onStoneChange(playerStone);}
+      gatherCooldown=.22;
     };
     gatherApi.current = gatherNow;
 
@@ -286,31 +283,36 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     };
 
-    const project = (point: Point) => {
-      const dx=point.x-player.x, dz=point.z-player.z;
-      const side=dx, forward=-dz;
-      const visible=forward>-1.0&&forward<26;
-      const distance=Math.max(1.5,forward+3.5);
-      const scale=Math.max(.24,Math.min(1.30,4.8/distance));
-      const horizon=height*.47;
-      const groundFactor=Math.max(0,Math.min(1,(26-forward)/27));
-      const elevation=(terrainHeight(point.x,point.z)-terrainHeight(player.x,player.z))*34*scale;
-      const y=horizon+Math.pow(groundFactor,1.45)*height*.34-elevation;
-      return {x:width*.5+side*38*scale,y:Math.min(height*.84,y),scale,depth:distance,visible,
-        haze:Math.max(0,Math.min(.62,(distance-8)/24))};
+    const project=(point:Point)=>{
+      const dx=point.x-player.x,dz=point.z-player.z;
+      const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw);
+      // Rotate camera coordinates, never the actual world/object coordinates.
+      const side=dx*cy-dz*sy;
+      const forward=-(dx*sy+dz*cy);
+      const visible=forward>-1.15&&forward<28;
+      const distance=Math.max(1.45,forward+3.6);
+      const scale=Math.max(.22,Math.min(1.34,4.9/distance));
+      const horizon=height*.465;
+      const gf=Math.max(0,Math.min(1,(28-forward)/29));
+      const elevation=(terrainHeight(point.x,point.z)-terrainHeight(player.x,player.z))*35*scale;
+      const y=horizon+Math.pow(gf,1.5)*height*.345-elevation;
+      return{x:width*.5+side*39*scale,y:Math.min(height*.86,y),scale,depth:distance,visible};
     };
 
     const render = (time: number) => {
       const dt = Math.min((time - last) / 1000, 0.05);
       last = time;
-      // World objects stay fixed in world space; no fake orbiting/rotating scenery.
+      player.yaw += input.current.camera * 1.45 * dt;
       const moveX = input.current.joystick.x;
       const moveY = input.current.joystick.y;
       const length = Math.hypot(moveX, moveY);
       if (length > 0.05) {
         const speed = 4.1 * dt / Math.max(1, length);
-        const nextX = Math.max(-14, Math.min(14, player.x + moveX * speed));
-        const nextZ = Math.max(-14, Math.min(14, player.z + moveY * speed));
+        const cy=Math.cos(player.yaw),sy=Math.sin(player.yaw);
+        const worldX=moveX*cy+moveY*sy;
+        const worldZ=-moveX*sy+moveY*cy;
+        const nextX=Math.max(-14,Math.min(14,player.x+worldX*speed));
+        const nextZ=Math.max(-14,Math.min(14,player.z+worldZ*speed));
         const PLAYER_R=.34, TREE_R=.78, ROCK_R=.64;
         const blocked=(x:number,z:number)=>{
           for(let i=0;i<TREES.length;i++){
@@ -337,18 +339,14 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       }
 
       gatherCooldown = Math.max(0, gatherCooldown - dt);
-      let nearestTree=-1,nearestDistance=Infinity;
-      TREES.forEach((t,i)=>{if(harvestedTrees.has(i))return;const d=Math.hypot(t.x-player.x,t.z-player.z);if(d<nearestDistance){nearestDistance=d;nearestTree=i;}});
-      let nearestStick=-1,nearestStickDistance=Infinity;
-      STICKS.forEach((s,i)=>{if(harvestedSticks.has(i))return;const d=Math.hypot(s.x-player.x,s.z-player.z);if(d<nearestStickDistance){nearestStickDistance=d;nearestStick=i;}});
-      let nearestRock=-1,nearestRockDistance=Infinity;
-      LOOSE_STONES.forEach((r,i)=>{if(harvestedLooseStones.has(i))return;const d=Math.hypot(r.x-player.x,r.z-player.z);if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=i;}});
-      const nearby:Array<{kind:"wood"|"stick"|"stone";score:number}>=[];
-      if(nearestTree>=0&&nearestDistance<1.28&&(branchCounts.get(nearestTree)||0)<3) nearby.push({kind:"wood",score:nearestDistance/1.28});
-      if(nearestStick>=0&&nearestStickDistance<.72) nearby.push({kind:"stick",score:nearestStickDistance/.72});
-      if(nearestRock>=0&&nearestRockDistance<.72) nearby.push({kind:"stone",score:nearestRockDistance/.72});
-      nearby.sort((a,b)=>a.score-b.score);
-      const nearResource:"wood"|"stick"|"stone"|null=nearby[0]?.kind??null;
+      let nearestTree=-1,nearestStick=-1,nearestRock=-1;
+      const target=getTarget();
+      const nearResource:"wood"|"stick"|"stone"|null=target?.kind??null;
+      if(target){
+        if(target.kind==="wood")nearestTree=target.index;
+        else if(target.kind==="stick")nearestStick=target.index;
+        else nearestRock=target.index;
+      }
       if(nearResource!==lastNearResource){lastNearResource=nearResource;onNearResource(nearResource);}
 
       // Worker disabled until settlement stage.
@@ -394,6 +392,10 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         ctx.fillStyle=i%3===0?"rgba(111,82,43,.30)":"rgba(71,93,45,.25)";
         ctx.fillRect(-3,-1,6,2);ctx.restore();
       }
+      // soft moving cloud shadows make the terrain respond to the same sky light
+      ctx.save();ctx.globalAlpha=.055;ctx.fillStyle="#1d3323";
+      const shx=((time*.008)% (width+240))-120;
+      ctx.beginPath();ctx.ellipse(shx,height*.72,150,34,-.12,0,Math.PI*2);ctx.ellipse(shx+190,height*.61,110,25,.08,0,Math.PI*2);ctx.fill();ctx.restore();
       // natural forest-floor detail: grass, bare soil and tiny stones
       for(let i=0;i<18;i++){
         const gx=(i*173+81)%Math.max(1,width),gy=height*(.61+((i*37)%36)/100);
@@ -419,7 +421,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       TREES.forEach((tree, index) => {
         if (harvestedTrees.has(index)) return;
         const p = project(tree);
-        if(p.visible) objects.push({ depth: p.depth, draw: () => { ctx.save(); ctx.translate((index%3-1)*2*p.scale,0); drawTree(ctx,p.x,p.y,Math.min(2.35,p.scale*(1.62+index%4*.14))); ctx.restore(); } });
+        if(p.visible) objects.push({ depth: p.depth, draw:()=>{ctx.save();const sway=Math.sin(time*.00055+index*1.7)*1.7*p.scale;ctx.translate((index%3-1)*2*p.scale+sway,0);drawTree(ctx,p.x,p.y,Math.min(2.42,p.scale*(1.68+index%4*.15)));ctx.restore();} });
       });
       BUSHES.forEach((b,index)=>{
         const p=project(b); if(p.visible) objects.push({depth:p.depth,draw:()=>drawBush(ctx,p.x,p.y,Math.min(1.15,p.scale*.9))});
