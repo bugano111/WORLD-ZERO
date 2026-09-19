@@ -56,7 +56,7 @@ export function WorldZeroGame(){
   for(let i=0;i<6500;i++){const a=i*2.399,r=8+(i%240)*2.2,x=Math.cos(a)*r,z=Math.sin(a)*r;dummy.position.set(x,H(x,z),z);dummy.rotation.y=(i*.73)%6.28;dummy.scale.y=.55+(i%9)*.08;dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix)}scene.add(inst);
 
   let yaw=0,last=performance.now();const clock=(now:number)=>{const dt=Math.min(.04,(now-last)/1000);last=now;const j=input.current;
-   yaw+=j.look*dt*1.5;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),right=new THREE.Vector3(forward.z,0,-forward.x);
+   yaw-=j.look*dt*1.5;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),right=new THREE.Vector3(forward.z,0,-forward.x);
    human.position.addScaledVector(forward,-j.y*dt*7);human.position.addScaledVector(right,j.x*dt*7);human.position.y=H(human.position.x,human.position.z);
    const moving=Math.abs(j.x)+Math.abs(j.y)>.1,t=now*.008;if(moving){la.rotation.x=Math.sin(t)*.7;ra.rotation.x=-Math.sin(t)*.7;ll.rotation.x=-Math.sin(t)*.55;rl.rotation.x=Math.sin(t)*.55}else{la.rotation.x=ra.rotation.x=ll.rotation.x=rl.rotation.x=0}
    const back=forward.clone().multiplyScalar(10.5);camera.position.set(human.position.x-back.x,human.position.y+5.8,human.position.z-back.z);camera.lookAt(human.position.x,human.position.y+1.65,human.position.z);
