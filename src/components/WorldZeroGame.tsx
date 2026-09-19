@@ -69,28 +69,30 @@ function polygon(ctx: CanvasRenderingContext2D, points: Array<[number, number]>,
 }
 
 function drawTree(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
-  ellipse(ctx, x, y + 2 * scale, 19 * scale, 6 * scale, COLORS.shadow);
-  ctx.fillStyle = COLORS.bark;
-  ctx.fillRect(x - 6 * scale, y - 49 * scale, 12 * scale, 51 * scale);
-  ctx.fillStyle = "#8d6748";
-  ctx.fillRect(x - 4 * scale, y - 48 * scale, 3 * scale, 48 * scale);
-  polygon(ctx, [[x, y - 118 * scale], [x - 34 * scale, y - 49 * scale], [x + 34 * scale, y - 49 * scale]], COLORS.leavesLight);
-  polygon(ctx, [[x - 8*scale,y-108*scale],[x-28*scale,y-53*scale],[x-5*scale,y-53*scale]], "#5d8b4a");
-  polygon(ctx, [[x, y - 91 * scale], [x - 45 * scale, y - 20 * scale], [x + 45 * scale, y - 20 * scale]], COLORS.leaves);
-  polygon(ctx, [[x+7*scale,y-82*scale],[x+42*scale,y-20*scale],[x+18*scale,y-20*scale]], "#244b2d");
+  ellipse(ctx, x + 8*scale, y + 5*scale, 30*scale, 9*scale, "rgba(20,35,20,.34)");
+  // tapered trunk with lit and shaded faces
+  polygon(ctx, [[x-8*scale,y],[x-5*scale,y-58*scale],[x+4*scale,y-58*scale],[x+9*scale,y]], "#6d4930");
+  polygon(ctx, [[x+2*scale,y],[x+4*scale,y-58*scale],[x+10*scale,y-51*scale],[x+9*scale,y]], "#4d3426");
+  polygon(ctx, [[x-8*scale,y],[x-5*scale,y-58*scale],[x+1*scale,y-58*scale],[x-1*scale,y]], "#916748");
+  // branches
+  ctx.strokeStyle="#65432d"; ctx.lineWidth=6*scale; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(x,y-43*scale); ctx.lineTo(x-23*scale,y-70*scale); ctx.moveTo(x+2*scale,y-48*scale); ctx.lineTo(x+25*scale,y-76*scale); ctx.stroke();
+  // volumetric crown clusters
+  ellipse(ctx,x-25*scale,y-77*scale,30*scale,25*scale,"#2d6037");
+  ellipse(ctx,x+24*scale,y-80*scale,32*scale,27*scale,"#285632");
+  ellipse(ctx,x,y-99*scale,35*scale,31*scale,"#397444");
+  ellipse(ctx,x-10*scale,y-109*scale,22*scale,20*scale,"#4b8650");
+  ellipse(ctx,x+13*scale,y-104*scale,23*scale,21*scale,"#3b7042");
+  ellipse(ctx,x-29*scale,y-86*scale,13*scale,11*scale,"rgba(112,157,78,.55)");
+  ellipse(ctx,x+29*scale,y-72*scale,15*scale,12*scale,"rgba(22,67,37,.55)");
 }
 
 function drawRock(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
-  ellipse(ctx, x, y + 2 * scale, 22 * scale, 6 * scale, COLORS.shadow);
-  polygon(ctx, [
-    [x - 22 * scale, y], [x - 15 * scale, y - 21 * scale],
-    [x + 7 * scale, y - 28 * scale], [x + 23 * scale, y - 10 * scale],
-    [x + 17 * scale, y],
-  ], COLORS.stone);
-  polygon(ctx, [
-    [x - 15 * scale, y - 21 * scale], [x + 7 * scale, y - 28 * scale],
-    [x + 14 * scale, y - 16 * scale], [x - 8 * scale, y - 13 * scale],
-  ], COLORS.stoneLight);
+  ellipse(ctx,x+5*scale,y+4*scale,29*scale,8*scale,"rgba(20,30,22,.32)");
+  polygon(ctx,[[x-27*scale,y],[x-20*scale,y-25*scale],[x-5*scale,y-36*scale],[x+17*scale,y-31*scale],[x+29*scale,y-10*scale],[x+22*scale,y]],"#68726b");
+  polygon(ctx,[[x-20*scale,y-25*scale],[x-5*scale,y-36*scale],[x+17*scale,y-31*scale],[x+7*scale,y-17*scale],[x-10*scale,y-15*scale]],"#aab0a5");
+  polygon(ctx,[[x+7*scale,y-17*scale],[x+17*scale,y-31*scale],[x+29*scale,y-10*scale],[x+22*scale,y],[x+9*scale,y]],"#4e5953");
+  polygon(ctx,[[x-27*scale,y],[x-20*scale,y-25*scale],[x-10*scale,y-15*scale],[x-8*scale,y]],"#7d8780");
 }
 
 function drawCamp(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) {
@@ -227,9 +229,9 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       const side = dx * cosine - dz * sine;
       const depth = dx * sine + dz * cosine;
       return {
-        x: width * 0.5 + side * Math.min(width * 0.07, 34),
-        y: height * 0.57 + depth * Math.min(height * 0.026, 22),
-        scale: Math.max(0.48, Math.min(1.28, 0.84 + depth * 0.025)),
+        x: width * 0.5 + side * Math.min(width * 0.078, 38),
+        y: height * 0.535 + depth * Math.min(height * 0.031, 26),
+        scale: Math.max(0.38, Math.min(1.52, 0.78 + depth * 0.042)),
         depth,
       };
     };
@@ -377,7 +379,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         ),
       });
       objects.sort((a, b) => a.depth - b.depth).forEach((object) => object.draw());
-      drawPerson(ctx, width * 0.5, height * 0.69, Math.min(width / 430, height / 800, 1.18), false, length > 0.05 ? time * 0.012 : 0);
+      drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 390, height / 720, 1.34), false, length > 0.05 ? time * 0.012 : 0);
 
       frame = requestAnimationFrame(render);
     };
