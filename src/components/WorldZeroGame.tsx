@@ -53,6 +53,28 @@ const ROCKS: Point[] = [
   { x: -5, z: -3 }, { x: 6, z: -5 }, { x: -9, z: 5 },
   { x: 4, z: 7 }, { x: 10, z: 10 },
 ];
+const BUSHES: Point[]=[
+  {x:-4,z:-7},{x:3,z:-8},{x:8,z:-3},{x:-7,z:3},{x:5,z:5},{x:-2,z:10}
+];
+const LOGS: Point[]=[{x:-6,z:6},{x:8,z:7}];
+
+function drawBush(ctx:CanvasRenderingContext2D,x:number,y:number,s:number){
+  ellipse(ctx,x+3*s,y+2*s,24*s,5*s,"rgba(15,29,16,.28)");
+  const leaf=(cx:number,cy:number,r:number)=>{
+    const g=ctx.createRadialGradient(cx-r*.3,cy-r*.4,1,cx,cy,r);
+    g.addColorStop(0,"#68965a");g.addColorStop(.45,"#3f7545");g.addColorStop(1,"#1d452c");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  };
+  leaf(x-13*s,y-13*s,15*s);leaf(x+11*s,y-15*s,17*s);leaf(x,y-25*s,18*s);
+}
+function drawLog(ctx:CanvasRenderingContext2D,x:number,y:number,s:number){
+  ellipse(ctx,x+2*s,y+3*s,31*s,6*s,"rgba(15,24,15,.3)");
+  ctx.save();ctx.translate(x,y-7*s);ctx.rotate(-.18);
+  const g=ctx.createLinearGradient(0,-8*s,0,8*s);g.addColorStop(0,"#8b6242");g.addColorStop(.5,"#5e402d");g.addColorStop(1,"#34251d");
+  ctx.fillStyle=g;ctx.fillRect(-34*s,-7*s,68*s,14*s);
+  ellipse(ctx,34*s,0,8*s,8*s,"#b28a61");ellipse(ctx,34*s,0,5*s,5*s,"#72553d");
+  ctx.restore();
+}
 const LOOSE_STONES: Point[] = [
   { x: -1.3, z: 3.6 }, { x: 3.8, z: 4.4 }, { x: -4.7, z: 6.3 }, { x: 6.1, z: 7.7 },
 ];
@@ -320,7 +342,10 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       skyGradient.addColorStop(1, "#dce9d7");
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, width, height * 0.44);
-      ellipse(ctx, width * 0.78, height * 0.12, 38, 38, "rgba(255,239,173,.78)");
+      const sunGlow=ctx.createRadialGradient(width*.78,height*.12,8,width*.78,height*.12,85);
+      sunGlow.addColorStop(0,"rgba(255,248,196,.95)");sunGlow.addColorStop(.35,"rgba(255,238,165,.42)");sunGlow.addColorStop(1,"rgba(255,238,165,0)");
+      ctx.fillStyle=sunGlow;ctx.fillRect(width*.78-90,height*.12-90,180,180);
+      ellipse(ctx,width*.78,height*.12,27,27,"rgba(255,245,194,.92)");
       // soft layered clouds
       const cloud=(cx:number,cy:number,s:number,a:number)=>{ ellipse(ctx,cx,cy,38*s,11*s,`rgba(255,255,255,${a})`); ellipse(ctx,cx-18*s,cy-7*s,19*s,13*s,`rgba(255,255,255,${a})`); ellipse(ctx,cx+12*s,cy-10*s,24*s,16*s,`rgba(255,255,255,${a})`); };
       cloud(width*.18,height*.16,.72,.48); cloud(width*.58,height*.23,.5,.34);
@@ -344,6 +369,11 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         const gh=4+((i*7)%8);
         ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx-3,gy-gh); ctx.moveTo(gx,gy); ctx.lineTo(gx+3,gy-gh*.8); ctx.stroke();
       }
+      // natural forest-floor detail: grass, bare soil and tiny stones
+      for(let i=0;i<18;i++){
+        const gx=(i*173+81)%Math.max(1,width),gy=height*(.61+((i*37)%36)/100);
+        ellipse(ctx,gx,gy,2+(i%3),1.2+(i%2),"rgba(92,91,66,.35)");
+      }
       // ground texture grows toward camera, reinforcing perspective
       for(let i=0;i<28;i++){
         const gx=(i*137+53)%Math.max(1,width), t=((i*47)%100)/100, gy=height*(.50+t*.48);
@@ -361,7 +391,13 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
       TREES.forEach((tree, index) => {
         if (harvestedTrees.has(index)) return;
         const p = project(tree);
-        if(p.visible) objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, Math.min(1.12, p.scale * (0.82 + index % 3 * 0.06))) });
+        if(p.visible) objects.push({ depth: p.depth, draw: () => drawTree(ctx, p.x, p.y, Math.min(2.05, p.scale * (1.42 + index % 4 * 0.12))) });
+      });
+      BUSHES.forEach((b,index)=>{
+        const p=project(b); if(p.visible) objects.push({depth:p.depth,draw:()=>drawBush(ctx,p.x,p.y,Math.min(1.15,p.scale*.9))});
+      });
+      LOGS.forEach((l,index)=>{
+        const p=project(l); if(p.visible) objects.push({depth:p.depth,draw:()=>drawLog(ctx,p.x,p.y,Math.min(1.1,p.scale*.85))});
       });
       STICKS.forEach((stick,index)=>{
         if(harvestedSticks.has(index)) return;
@@ -385,7 +421,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onStickChange, onNear
         object.draw();
         ctx.restore();
       });
-      drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 420, height / 790, 1.18), false, length > 0.05 ? time * 0.012 : 0);
+      drawPerson(ctx, width * 0.5, height * 0.70, Math.min(width / 500, height / 900, .92), false, length > 0.05 ? time * 0.012 : 0);
       const vignette=ctx.createRadialGradient(width*.5,height*.55,Math.min(width,height)*.25,width*.5,height*.55,Math.max(width,height)*.72);
       vignette.addColorStop(.55,"rgba(0,0,0,0)"); vignette.addColorStop(1,"rgba(14,28,18,.16)");
       ctx.fillStyle=vignette; ctx.fillRect(0,0,width,height);
