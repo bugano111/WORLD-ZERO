@@ -228,12 +228,26 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const speed = 4.1 * dt / Math.max(1, length);
         const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
-        const blocked = (x: number, z: number) =>
-          TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - x, tree.z - z) < 1.65) ||
-          ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - x, rock.z - z) < 1.2);
-        // Resolve X/Z separately: solid objects stop the player but still allow sliding around them.
-        if (!blocked(nextX, player.z)) player.x = nextX;
-        if (!blocked(player.x, nextZ)) player.z = nextZ;
+        const screenBlocked = (x: number, z: number) => {
+          const oldX = player.x, oldZ = player.z;
+          player.x = x; player.z = z;
+          const px = width * 0.5, py = height * 0.69;
+          const hitTree = TREES.some((tree, index) => {
+            if (npc.harvested.has(index)) return false;
+            const p = project(tree);
+            const trunkHalf = Math.max(13, 10 * p.scale);
+            return Math.abs(p.x - px) < trunkHalf + 11 && Math.abs(p.y - py) < 28;
+          });
+          const hitRock = ROCKS.some((rock, index) => {
+            if (harvestedRocks.has(index)) return false;
+            const p = project(rock);
+            return Math.abs(p.x - px) < Math.max(24, 24 * p.scale) && Math.abs(p.y - py) < 24;
+          });
+          player.x = oldX; player.z = oldZ;
+          return hitTree || hitRock;
+        };
+        if (!screenBlocked(nextX, player.z)) player.x = nextX;
+        if (!screenBlocked(player.x, nextZ)) player.z = nextZ;
       }
 
       gatherCooldown = Math.max(0, gatherCooldown - dt);
