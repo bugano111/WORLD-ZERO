@@ -365,3 +365,5 @@
   }
 }
 .wz-gather{pointer-events:auto;position:absolute;right:max(22px,env(safe-area-inset-right));bottom:calc(132px + env(safe-area-inset-bottom));z-index:8;min-width:108px;height:58px;border:2px solid rgba(255,255,255,.72);border-radius:18px;background:rgba(45,92,45,.88);color:#fff;font-weight:900;font-size:16px;letter-spacing:.08em;box-shadow:0 6px 18px rgba(0,0,0,.28);touch-action:none;-webkit-tap-highlight-color:transparent}.wz-gather:active{transform:scale(.95);background:rgba(60,120,54,.96)}
+
+.wz-action-flash{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);pointer-events:none;padding:10px 16px;border-radius:10px;background:rgba(20,35,20,.82);color:#fff;font-weight:900;font-size:18px;z-index:30}.wz-gather{pointer-events:auto!important;z-index:30!important;cursor:pointer;-webkit-user-select:none;user-select:none}
