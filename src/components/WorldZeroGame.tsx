@@ -11,6 +11,7 @@ import {
 type InputState = {
   joystick: { x: number; y: number };
   camera: number;
+  gather: boolean;
 };
 
 type Point = { x: number; z: number };
@@ -139,7 +140,7 @@ function drawPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale: 
   }
 }
 
-function WorldCanvas({ input, onWoodChange }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void }) {
+function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<InputState>; onWoodChange: (wood: number) => void; onNearTree: (near: boolean) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -163,6 +164,9 @@ function WorldCanvas({ input, onWoodChange }: { input: RefObject<InputState>; on
     let height = 0;
     let frame = 0;
     let last = performance.now();
+    let playerWood = 0;
+    let gatherCooldown = 0;
+    let wasNearTree = false;
 
     const resize = () => {
       width = Math.max(1, window.innerWidth);
@@ -205,6 +209,24 @@ function WorldCanvas({ input, onWoodChange }: { input: RefObject<InputState>; on
         player.z = Math.max(-14, Math.min(14, player.z));
       }
 
+      gatherCooldown = Math.max(0, gatherCooldown - dt);
+      let nearestTree = -1;
+      let nearestDistance = Infinity;
+      TREES.forEach((tree, index) => {
+        if (npc.harvested.has(index)) return;
+        const distance = Math.hypot(tree.x - player.x, tree.z - player.z);
+        if (distance < nearestDistance) { nearestDistance = distance; nearestTree = index; }
+      });
+      const isNearTree = nearestTree >= 0 && nearestDistance < 2.35;
+      if (isNearTree !== wasNearTree) { wasNearTree = isNearTree; onNearTree(isNearTree); }
+      if (input.current.gather && isNearTree && gatherCooldown <= 0) {
+        npc.harvested.add(nearestTree);
+        playerWood += 1;
+        onWoodChange(npc.wood + playerWood);
+        gatherCooldown = 0.55;
+        input.current.gather = false;
+      }
+
       const target = npc.phase === "toCamp" ? camp : TREES[npc.treeIndex];
       if ((npc.phase === "toTree" || npc.phase === "toCamp") && target) {
         const dx = target.x - npc.x;
@@ -232,7 +254,7 @@ function WorldCanvas({ input, onWoodChange }: { input: RefObject<InputState>; on
         if (npc.workTime >= 1.1) {
           npc.harvested.add(npc.treeIndex);
           npc.wood += 1;
-          onWoodChange(npc.wood);
+          onWoodChange(npc.wood + playerWood);
           npc.phase = "toCamp";
         }
       }
@@ -285,7 +307,7 @@ function WorldCanvas({ input, onWoodChange }: { input: RefObject<InputState>; on
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
     };
-  }, [input, onWoodChange]);
+  }, [input, onWoodChange, onNearTree]);
 
   return <canvas ref={canvasRef} className="wz-world-canvas" aria-label="Herní svět WORLD ZERO" />;
 }
@@ -324,16 +346,19 @@ function CameraButton({ direction, input, label, children }: { direction: number
 }
 
 export function WorldZeroGame() {
-  const input = useRef<InputState>({ joystick: { x: 0, y: 0 }, camera: 0 });
+  const input = useRef<InputState>({ joystick: { x: 0, y: 0 }, camera: 0, gather: false });
   const [wood, setWood] = useState(0);
   const handleWoodChange = useCallback((amount: number) => setWood(amount), []);
+  const [nearTree, setNearTree] = useState(false);
+  const handleNearTree = useCallback((near: boolean) => setNearTree(near), []);
   return <main className="wz-game">
-    <WorldCanvas input={input} onWoodChange={handleWoodChange} />
+    <WorldCanvas input={input} onWoodChange={handleWoodChange} onNearTree={handleNearTree} />
     <div className="wz-hud">
       <header className="wz-statusbar">
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
         <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
+      {nearTree && <button className="wz-gather" onPointerDown={() => { input.current.gather = true; }}>SBÍRAT</button>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
