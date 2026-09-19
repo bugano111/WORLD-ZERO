@@ -50,7 +50,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   tl.load("https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_diff_1k.jpg",(t)=>{prep(t);t.colorSpace=THREE.SRGBColorSpace;groundMat.map=t;groundMat.needsUpdate=true;});
   tl.load("https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_nor_gl_1k.jpg",(t)=>{prep(t);groundMat.normalMap=t;groundMat.normalScale.set(1.25,1.25);groundMat.needsUpdate=true;});
   tl.load("https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_rough_1k.jpg",(t)=>{prep(t);groundMat.roughnessMap=t;groundMat.needsUpdate=true;});
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(5000,5000,240,240),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(12000,12000,280,280),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
   const pos=ground.geometry.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i);
     pos.setZ(i,terrainY(x,y);
@@ -75,9 +75,16 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   // SNOW CAPS 06
   const snowMat=new THREE.MeshStandardMaterial({color:0xd9ded8,roughness:.92});
   [[-150,-190,44],[40,-230,58],[170,-205,49],[-250,-240,64]].forEach(([x,z,h])=>{const m=new THREE.Mesh(new THREE.ConeGeometry(h*.72,h,9),mountainMat);m.position.set(x,terrainY(x,z)+h/2,z);scene.add(m);const s=new THREE.Mesh(new THREE.ConeGeometry(h*.28,h*.24,9),snowMat);s.position.set(x,terrainY(x,z)+h*.88,z);scene.add(s);});
+  // PLANET GENESIS 10 — river valley, beach, conifer belt and distant world layers.
+  const riverMat=new THREE.MeshPhysicalMaterial({color:0x2c6274,roughness:.1,transparent:true,opacity:.9,clearcoat:1});
+  for(let i=0;i<120;i++){const z=70-i*6,x=Math.sin(i*.17)*22-35;const w=new THREE.Mesh(new THREE.PlaneGeometry(10,8),riverMat);w.rotation.x=-Math.PI/2;w.rotation.z=Math.sin(i*.17)*.16;w.position.set(x,terrainY(x,z)+.035,z);scene.add(w);}
+  const sandMat=new THREE.MeshStandardMaterial({color:0x9d8b68,roughness:1});
+  for(let i=0;i<45;i++){const z=-85-i*3.2,x=85+Math.sin(i*.25)*16;const p=new THREE.Mesh(new THREE.CircleGeometry(8+(i%5),18),sandMat);p.rotation.x=-Math.PI/2;p.position.set(x,terrainY(x,z)+.025,z);scene.add(p);}
+  const pineMat=new THREE.MeshStandardMaterial({color:0x27452d,roughness:1});
+  for(let i=0;i<85;i++){const x=-180+(i%17)*21,z=-120-Math.floor(i/17)*32,h=9+(i%7)*1.1;const g=new THREE.Group(),t=new THREE.Mesh(new THREE.CylinderGeometry(.18,.34,h,8),bark);t.position.y=h/2;g.add(t);for(let q=0;q<7;q++){const crown=new THREE.Mesh(new THREE.ConeGeometry(2.5-q*.18,2.2,12),pineMat);crown.position.y=3.7+q*.85;g.add(crown)}g.position.set(x,terrainY(x,z),z);scene.add(g);}
   // OPEN PLANET LANDMARKS — kilometre-scale scenery visible immediately.
   const lakeMat=new THREE.MeshPhysicalMaterial({color:0x315f73,roughness:.12,metalness:0,transparent:true,opacity:.86,clearcoat:1});
-  const lake=new THREE.Mesh(new THREE.CircleGeometry(95,96),lakeMat);lake.rotation.x=-Math.PI/2;lake.scale.set(2.1,1,.72);lake.position.set(115,terrainY(115,-125)-.25,-125);scene.add(lake);
+  const lake=new THREE.Mesh(new THREE.CircleGeometry(240,128),lakeMat);lake.rotation.x=-Math.PI/2;lake.scale.set(2.6,1,.9);lake.position.set(115,terrainY(115,-125)-.25,-125);scene.add(lake);
   const distantRock=new THREE.MeshStandardMaterial({color:0x59605b,roughness:1});
   const distantSnow=new THREE.MeshStandardMaterial({color:0xe3e5df,roughness:.9});
   for(let i=0;i<18;i++){const a=-1.2+i*.14,r=420+(i%4)*45,x=Math.sin(a)*r,z=-Math.cos(a)*r,h=75+(i%7)*18;
@@ -317,7 +324,7 @@ export function WorldZeroGame(){
  useEffect(()=>{if(counts.leaves>=3&&!knowledge.includes("fiber")){setFiber(1);learn("fiber","Z rostlin jsi získal pevná vlákna. Lze jimi svazovat materiály.");}},[counts.leaves]);
  const labels:Record<Kind,string>={branch:"ULOMIT VĚTEV",stick:"SEBRAT KLACEK",stone:"SEBRAT KÁMEN",leaf:"SEBRAT LISTÍ"};
  return <main className="wz-game"><World3D input={input} onCounts={setCounts} onTarget={setTarget} gatherApi={gatherApi}/>
-  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 09 · OPEN PLANET</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
+  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · WORLD BUILD 10 · PLANET GENESIS</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
   <div style={{position:"absolute",top:96,left:12,right:12,textAlign:"center",pointerEvents:"none",zIndex:5}}><span style={{display:"inline-block",background:"rgba(15,18,14,.72)",color:"#f3efdc",padding:"7px 10px",borderRadius:9,fontSize:12}}>{survivalMsg}</span></div>
   {flint>0&&fiber>0&&counts.branches>0&&!knowledge.includes("tool")&&<button className="wz-gather" style={{bottom:116}} onPointerDown={e=>{e.preventDefault();learn("tool","První technologický objev: svázaný kamenný nástroj. Teď může začít skutečné opracování dřeva.");}}>SPOJIT KÁMEN + VĚTEV + VLÁKNO</button>}
   {target&&<button className="wz-gather" onPointerDown={e=>{e.preventDefault();e.stopPropagation();gatherApi.current();setFlash("SEBRÁNO");setTimeout(()=>setFlash(""),260)}}>{labels[target]}</button>}{flash&&<div className="wz-action-flash">{flash}</div>}
