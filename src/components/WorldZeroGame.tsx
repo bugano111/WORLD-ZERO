@@ -282,7 +282,9 @@ function WorldCanvas({ input, onWoodChange, onNearTree }: { input: RefObject<Inp
         ),
       });
       objects.sort((a, b) => a.depth - b.depth).forEach((object) => object.draw());
-      drawPerson(ctx, width * 0.5, height * 0.66, Math.max(1.25, Math.min(width / 300, height / 620, 1.65)), false, length > 0.05 ? time * 0.012 : 0);
+      // Player is intentionally large and anchored in the foreground so he is always readable on iPhone.
+      const ps = Math.max(1.85, Math.min(width / 220, height / 430, 2.35));
+      drawPerson(ctx, width * 0.5, height * 0.80, ps, false, length > 0.05 ? time * 0.012 : 0);
 
       frame = requestAnimationFrame(render);
     };
