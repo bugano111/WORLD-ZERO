@@ -21,6 +21,8 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const sun=new THREE.DirectionalLight(0xffe4bd,2.55);sun.position.set(-22,32,18);sun.castShadow=true;
   sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;scene.add(sun);
   const sky=new THREE.Mesh(new THREE.SphereGeometry(150,24,16),new THREE.MeshBasicMaterial({color:0x91c8e3,side:THREE.BackSide,fog:false});scene.add(sky);
+  const cloudMat=new THREE.MeshStandardMaterial({color:0xf2f4ef,roughness:1,transparent:true,opacity:.72,depthWrite:false});
+  for(let i=0;i<9;i++){const cg=new THREE.Group();for(let j=0;j<5;j++){const cm=new THREE.Mesh(new THREE.SphereGeometry(3+(j%3)*1.1,12,8),cloudMat);cm.position.set(j*3.2-6,(j%2)*1.1,(j%3)*1.5);cm.scale.y=.55;cg.add(cm);}cg.position.set(-55+i*15,26+(i%3)*4,-55-(i%4)*9);scene.add(cg);}
   const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(2.2,18,12),new THREE.MeshBasicMaterial({color:0xffe6a8,fog:false});sunDisc.position.set(-45,48,-70);scene.add(sunDisc);
   const terrainY=(x:number,z:number)=>{
     const rolling=.55*Math.sin(x*.085)+.38*Math.cos(z*.095)+.22*Math.sin((x+z)*.16);
@@ -39,6 +41,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
 
   const horizonMat=new THREE.MeshBasicMaterial({color:0xb8c9b4,transparent:true,opacity:.48,side:THREE.DoubleSide,fog:true});
   const horizon=new THREE.Mesh(new THREE.CylinderGeometry(92,92,11,48,1,true),horizonMat);horizon.position.y=4.2;scene.add(horizon);
+  const waterMat=new THREE.MeshPhysicalMaterial({color:0x4f91a7,roughness:.18,metalness:0,transparent:true,opacity:.78,transmission:.12});
+  const stream=new THREE.Mesh(new THREE.PlaneGeometry(10,75,8,32),waterMat);stream.rotation.x=-Math.PI/2;stream.rotation.z=.08;stream.position.set(20,-.32,-8);stream.receiveShadow=true;scene.add(stream);
+  const shoreMat=new THREE.MeshStandardMaterial({color:0x8a8065,roughness:1});
+  for(let i=0;i<36;i++){const z=-40+i*2.1,x=15.2+Math.sin(i*.8)*1.1;const s=.18+(i%5)*.07;const q=new THREE.Mesh(new THREE.DodecahedronGeometry(s,1),shoreMat);q.position.set(x,terrainY(x,z)+s*.25,z);q.scale.y=.55;q.castShadow=true;scene.add(q);}
   const mountainMat=new THREE.MeshStandardMaterial({color:0x596c5d,roughness:1});
   for(const [x,z,s] of [[-38,-48,15],[0,-58,19],[37,-49,17],[-58,-34,12],[57,-35,13],[-24,28,7],[31,25,8]] as number[][]){
     const geo=new THREE.IcosahedronGeometry(s,2);const a=geo.attributes.position as THREE.BufferAttribute;
@@ -46,12 +52,20 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     geo.computeVertexNormals();const m=new THREE.Mesh(geo,mountainMat);m.position.set(x,s*.28,z);m.rotation.y=x*.07;m.receiveShadow=true;scene.add(m);
   }
   const player=new THREE.Group();
-  const skin=new THREE.MeshStandardMaterial({color:0xc99470,roughness:.82}),shirt=new THREE.MeshStandardMaterial({color:0x9c4035,roughness:.9}),dark=new THREE.MeshStandardMaterial({color:0x26342d,roughness:.9});
-  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.30,.62,5,10),shirt);torso.position.y=1.12;torso.castShadow=true;player.add(torso);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.25,20,16),skin);head.position.y=1.72;head.castShadow=true;player.add(head);
-  const hair=new THREE.Mesh(new THREE.SphereGeometry(.255,18,10,0,Math.PI*2,0,Math.PI*.48),new THREE.MeshStandardMaterial({color:0x3b2a22,roughness:1});hair.position.y=1.77;hair.castShadow=true;player.add(hair);
-  for(const sx of [-.39,.39]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.07,.48,4,8),skin);arm.position.set(sx,1.13,0);arm.rotation.z=sx<0?-.10:.10;arm.castShadow=true;player.add(arm);}
-  for(const sx of [-.16,.16]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.09,.52,4,8),dark);leg.position.set(sx,.45,0);leg.castShadow=true;player.add(leg);}
+  const skin=new THREE.MeshStandardMaterial({color:0xc58d68,roughness:.72}),shirt=new THREE.MeshStandardMaterial({color:0x596b58,roughness:.92}),dark=new THREE.MeshStandardMaterial({color:0x2e342f,roughness:.94}),boot=new THREE.MeshStandardMaterial({color:0x30261f,roughness:1}),hairM=new THREE.MeshStandardMaterial({color:0x35271f,roughness:1});
+  const pelvis=new THREE.Mesh(new THREE.CapsuleGeometry(.24,.28,6,12),dark);pelvis.position.y=.91;pelvis.castShadow=true;player.add(pelvis);
+  const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.31,.55,7,14),shirt);torso.position.y=1.28;torso.scale.set(1.08,1,.72);torso.castShadow=true;player.add(torso);
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.095,.105,.16,12),skin);neck.position.y=1.68;player.add(neck);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.235,24,18),skin);head.position.y=1.86;head.scale.set(.88,1.08,.92);head.castShadow=true;player.add(head);
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.238,22,12,0,Math.PI*2,0,Math.PI*.48),hairM);hair.position.y=1.91;hair.scale.set(.9,1.05,.94);player.add(hair);
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.035,.10,8),skin);nose.position.set(0,1.86,-.225);nose.rotation.x=-Math.PI/2;player.add(nose);
+  for(const sx of [-1,1]){
+    const upper=new THREE.Mesh(new THREE.CapsuleGeometry(.065,.34,5,9),shirt);upper.position.set(sx*.36,1.38,0);upper.rotation.z=sx*.12;upper.castShadow=true;player.add(upper);
+    const fore=new THREE.Mesh(new THREE.CapsuleGeometry(.055,.31,5,9),skin);fore.position.set(sx*.39,1.05,0);fore.castShadow=true;player.add(fore);
+    const thigh=new THREE.Mesh(new THREE.CapsuleGeometry(.095,.40,5,10),dark);thigh.position.set(sx*.145,.66,0);thigh.castShadow=true;player.add(thigh);
+    const shin=new THREE.Mesh(new THREE.CapsuleGeometry(.078,.38,5,10),skin);shin.position.set(sx*.145,.28,0);shin.castShadow=true;player.add(shin);
+    const foot=new THREE.Mesh(new THREE.BoxGeometry(.18,.12,.34),boot);foot.position.set(sx*.145,.08,-.07);foot.castShadow=true;player.add(foot);
+  }
   scene.add(player);
 
   const obstacles:{p:THREE.Vector3;r:number}[]=[];const interactives:THREE.Object3D[]=[];
@@ -80,8 +94,8 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   });
 
   const saplingMat=new THREE.MeshStandardMaterial({color:0x35633a,roughness:1});
-  for(let i=0;i<34;i++){
-    const a=i*2.399,r=16+(i%9)*2.1,x=Math.cos(a)*r,z=Math.sin(a)*r-7;
+  for(let i=0;i<120;i++){
+    const a=i*2.399,r=13+(i%24)*2.0,x=Math.cos(a)*r,z=Math.sin(a)*r-7;
     const sg=new THREE.Group();
     const st=new THREE.Mesh(new THREE.CylinderGeometry(.09,.16,2.4+(i%3)*.35,7),bark);st.position.y=1.2;st.castShadow=true;sg.add(st);
     const cr=new THREE.Mesh(new THREE.IcosahedronGeometry(.75+(i%4)*.08,1),saplingMat);cr.position.y=2.65+(i%3)*.18;cr.scale.y=1.3;cr.castShadow=true;sg.add(cr);
@@ -117,7 +131,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   }
   // Real 3D grass tufts
   const grassMat=new THREE.MeshStandardMaterial({color:0x466f3b,roughness:1,side:THREE.DoubleSide});
-  for(let i=0;i<520;i++){const x=((i*37)%101)/101*110-55,z=((i*61)%97)/97*110-55;const blade=new THREE.Mesh(new THREE.ConeGeometry(.025,.24+(i%7)*.035,3),grassMat);blade.position.set(x,.17,z);scene.add(blade);}
+  for(let i=0;i<1150;i++){const x=((i*37)%101)/101*110-55,z=((i*61)%97)/97*110-55;const blade=new THREE.Mesh(new THREE.ConeGeometry(.025,.24+(i%7)*.035,3),grassMat);blade.position.set(x,.17,z);scene.add(blade);}
 
   const makeAnimal=(kind:"horse"|"goat"|"deer",x:number,z:number,scale:number)=>{
     const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
@@ -132,6 +146,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     g.userData.animal=kind;g.userData.phase=Math.random()*6.28;scene.add(g);return g;
   };
   const animals=[makeAnimal("horse",-12,-4,1.15),makeAnimal("goat",8,1,.72),makeAnimal("goat",10,3,.68),makeAnimal("deer",-6,-16,.82)];
+  const shrubMat=new THREE.MeshStandardMaterial({color:0x365d35,roughness:1});
+  for(let i=0;i<85;i++){const x=((i*83)%131)/131*110-55,z=((i*57)%127)/127*110-55;const s=.25+(i%6)*.07;const b=new THREE.Mesh(new THREE.IcosahedronGeometry(s,1),shrubMat);b.position.set(x,terrainY(x,z)+s*.65,z);b.scale.set(1.35,.75,1);b.castShadow=true;scene.add(b);}
+  const flowerMats=[0xd9d0a8,0xc9b5d4,0xe0c68d].map(v=>new THREE.MeshStandardMaterial({color:v,roughness:.9}));
+  for(let i=0;i<75;i++){const x=((i*97)%137)/137*70-35,z=((i*71)%139)/139*70-35;const stem=new THREE.Mesh(new THREE.CylinderGeometry(.008,.012,.25,5),new THREE.MeshStandardMaterial({color:0x4d713e}));stem.position.set(x,terrainY(x,z)+.12,z);scene.add(stem);const fl=new THREE.Mesh(new THREE.SphereGeometry(.045,6,5),flowerMats[i%3]);fl.position.set(x,terrainY(x,z)+.27,z);scene.add(fl);}
   const plantMat=new THREE.MeshStandardMaterial({color:0x73924b,roughness:1,side:THREE.DoubleSide});
   for(let i=0;i<70;i++){const x=((i*47)%103)/103*100-50,z=((i*29)%89)/89*100-50;const p=new THREE.Mesh(new THREE.ConeGeometry(.08,.48,4),plantMat);p.position.set(x,.24,z);p.rotation.z=(i%3-1)*.12;scene.add(p);}
   let yaw=0,last=performance.now(),target:Target|null=null;const counts={branches:0,sticks:0,stones:0,leaves:0};
@@ -165,7 +183,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     if(!blocked(nx,nz)){player.position.x=nx;player.position.z=nz}else{if(!blocked(nx,player.position.z))player.position.x=nx;if(!blocked(player.position.x,nz))player.position.z=nz;}
    }
    player.position.y=terrainY(player.position.x,player.position.z);
-   player.rotation.y=yaw;chooseTarget();
+   player.rotation.y=yaw;
+   const walk=len>.04?Math.sin(now*.011)*.10:0;player.position.y+=Math.abs(walk)*.035;
+   if(player.children[7])player.children[7].rotation.x=walk;if(player.children[9])player.children[9].rotation.x=-walk;
+   chooseTarget();
    animals.forEach((a,i)=>{const ph=now*.00018+a.userData.phase;a.position.x+=Math.sin(ph+i)*dt*.18;a.position.z+=Math.cos(ph*.83+i)*dt*.15;a.rotation.y=Math.atan2(Math.sin(ph+i),Math.cos(ph*.83+i);});
    const behind=4.25,high=2.45;const camX=player.position.x-Math.sin(yaw)*behind,camZ=player.position.z+Math.cos(yaw)*behind;
    const camGround=terrainY(camX,camZ);
