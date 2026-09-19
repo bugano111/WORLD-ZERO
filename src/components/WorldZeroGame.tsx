@@ -25,7 +25,13 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const groundMat=new THREE.MeshStandardMaterial({color:0x5f8247,roughness:1,metalness:0});
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(120,120,40,40),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
   const pos=ground.geometry.attributes.position as THREE.BufferAttribute;
-  for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i);pos.setZ(i,.20*Math.sin(x*.17)+.13*Math.cos(y*.23)+.06*Math.sin((x+y)*.41));}
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i);
+    const rolling=.55*Math.sin(x*.085)+.38*Math.cos(y*.095)+.22*Math.sin((x+y)*.16);
+    const hill1=2.5*Math.exp(-((x+18)*(x+18)+(y+22)*(y+22))/180);
+    const hill2=1.8*Math.exp(-((x-20)*(x-20)+(y+8)*(y+8))/130);
+    const valley=-.75*Math.exp(-((x-2)*(x-2)+(y-5)*(y-5))/95);
+    pos.setZ(i,rolling+hill1+hill2+valley);
+  }
   ground.geometry.computeVertexNormals();scene.add(ground);
 
   const mountainMat=new THREE.MeshStandardMaterial({color:0x667866,roughness:1});
@@ -33,7 +39,9 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const player=new THREE.Group();
   const skin=new THREE.MeshStandardMaterial({color:0xc99470,roughness:.82}),shirt=new THREE.MeshStandardMaterial({color:0x9c4035,roughness:.9}),dark=new THREE.MeshStandardMaterial({color:0x26342d,roughness:.9});
   const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.30,.62,5,10),shirt);torso.position.y=1.12;torso.castShadow=true;player.add(torso);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(.25,16,12),skin);head.position.y=1.72;head.castShadow=true;player.add(head);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.25,20,16),skin);head.position.y=1.72;head.castShadow=true;player.add(head);
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.255,18,10,0,Math.PI*2,0,Math.PI*.48),new THREE.MeshStandardMaterial({color:0x3b2a22,roughness:1}));hair.position.y=1.77;hair.castShadow=true;player.add(hair);
+  for(const sx of [-.39,.39]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.07,.48,4,8),skin);arm.position.set(sx,1.13,0);arm.rotation.z=sx<0?-.10:.10;arm.castShadow=true;player.add(arm);}
   for(const sx of [-.16,.16]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.09,.52,4,8),dark);leg.position.set(sx,.45,0);leg.castShadow=true;player.add(leg);}
   scene.add(player);
 
@@ -46,7 +54,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.38+(i%3)*.04,.68+(i%2)*.08,h,14),bark);trunk.position.y=h/2;trunk.castShadow=true;trunk.receiveShadow=true;g.add(trunk);
    g.rotation.y=(i*.71)%6.28;
    const branchGeo=new THREE.CylinderGeometry(.13,.22,2.5,8);
-   for(const [rx,rz,ry] of [[-.65,0,4.1],[.65,.25,4.45]] as number[][]){const b=new THREE.Mesh(branchGeo,bark);b.position.set(rx,ry,rz);b.rotation.z=rx<0?-1.0:1.0;b.castShadow=true;g.add(b);}
+   for(const [rx,rz,ry,rzrot] of [[-.65,0,h*.68,-1.0],[.65,.25,h*.73,1.0],[-.28,-.2,h*.82,-.65],[.25,-.25,h*.88,.62]] as number[][]){
+    const b=new THREE.Mesh(branchGeo,bark);b.position.set(rx,ry,rz);b.rotation.z=rzrot;b.rotation.x=rz*.35;b.castShadow=true;g.add(b);
+    const twig=new THREE.Mesh(new THREE.CylinderGeometry(.045,.09,1.45,7),bark);twig.position.set(rx*1.75,ry+.55,rz*1.8);twig.rotation.z=rzrot*.8;twig.castShadow=true;g.add(twig);
+   }
    const crownY=h+.15;
    [[0,0,1.55],[-1.15,.15,1.15],[1.15,.1,1.25],[0,.75,1.2],[0,-.75,1.25],[-.55,0,1.3],[.55,.15,1.3]].forEach((a,j)=>{
     const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(a[2]*(1+(i%3)*.05),2),leafMats[(i+j)%leafMats.length]);crown.position.set(a[0]*(1+(i%2)*.12),crownY+(j%2)*.48,a[1]);crown.scale.set(1+(j%3)*.10,.78+(j%2)*.13,1-(j%2)*.06);crown.rotation.set((j%2)*.12,(i+j)*.37,(j%3-1)*.08);crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
@@ -77,6 +88,9 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   [[-5,-3,.65],[6,-5,.9],[-9,5,.7],[4,7,.8],[10,10,1.0]].forEach(([x,z,s])=>{
     const r=new THREE.Mesh(new THREE.DodecahedronGeometry(s,1),rockMat);r.position.set(x,s*.45,z);r.scale.y=.72;r.rotation.set(.18,x*.13,.08);r.castShadow=true;r.receiveShadow=true;scene.add(r);obstacles.push({p:new THREE.Vector3(x,0,z),r:s*.75});
   });
+  const cliffMat=new THREE.MeshStandardMaterial({color:0x676c65,roughness:.98});
+  const cliffPositions=[[-18,0,-22,3.8],[-14,1,-24,3.1],[-10,.3,-25,2.6],[17,0,-17,3.4],[20,.2,-19,2.8]] as number[][];
+  cliffPositions.forEach(([x,y,z,s],i)=>{const cr=new THREE.Mesh(new THREE.DodecahedronGeometry(s,1),cliffMat);cr.position.set(x,y+s*.48,z);cr.scale.set(1.25,.85,.9);cr.rotation.set(i*.13,i*.51,i*.07);cr.castShadow=true;cr.receiveShadow=true;scene.add(cr);});
   const logMat=new THREE.MeshStandardMaterial({color:0x513523,roughness:1});
   [[-6,6,.3],[8,7,-.22]].forEach(([x,z,rot])=>{const l=new THREE.Mesh(new THREE.CylinderGeometry(.24,.3,3.2,10),logMat);l.position.set(x,.28,z);l.rotation.z=Math.PI/2;l.rotation.y=rot;l.castShadow=true;scene.add(l);});
 
@@ -84,6 +98,19 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const grassMat=new THREE.MeshStandardMaterial({color:0x466f3b,roughness:1,side:THREE.DoubleSide});
   for(let i=0;i<260;i++){const x=((i*37)%101)/101*58-29,z=((i*61)%97)/97*58-29;const blade=new THREE.Mesh(new THREE.ConeGeometry(.045,.34,3),grassMat);blade.position.set(x,.17,z);scene.add(blade);}
 
+  const makeAnimal=(kind:"horse"|"goat"|"deer",x:number,z:number,scale:number)=>{
+    const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
+    const col=kind==="horse"?0x6b4934:kind==="goat"?0xb7ad99:0x8a6546;
+    const mat=new THREE.MeshStandardMaterial({color:col,roughness:.95});
+    const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,1.05,5,10),mat);body.rotation.z=Math.PI/2;body.position.y=1.05;body.castShadow=true;g.add(body);
+    const neck=new THREE.Mesh(new THREE.CylinderGeometry(.18,.26,.75,9),mat);neck.position.set(.62,1.48,0);neck.rotation.z=-.42;neck.castShadow=true;g.add(neck);
+    const head=new THREE.Mesh(new THREE.CapsuleGeometry(.19,.36,4,8),mat);head.position.set(.86,1.78,0);head.rotation.z=Math.PI/2;head.castShadow=true;g.add(head);
+    for(const sx of [-.45,.45])for(const sz of [-.22,.22]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.07,.085,.9,7),mat);leg.position.set(sx,.48,sz);leg.castShadow=true;g.add(leg);}
+    const tail=new THREE.Mesh(new THREE.CylinderGeometry(.035,.065,.55,6),mat);tail.position.set(-.9,1.25,0);tail.rotation.z=-.9;g.add(tail);
+    if(kind!=="horse"){const hornMat=new THREE.MeshStandardMaterial({color:0x5e584c,roughness:1});for(const zz of [-.12,.12]){const horn=new THREE.Mesh(new THREE.ConeGeometry(.045,.32,7),hornMat);horn.position.set(.92,2.05,zz);horn.rotation.z=-.3;g.add(horn);}}
+    g.userData.animal=kind;g.userData.phase=Math.random()*6.28;scene.add(g);return g;
+  };
+  const animals=[makeAnimal("horse",-12,-4,1.15),makeAnimal("goat",8,1,.72),makeAnimal("goat",10,3,.68),makeAnimal("deer",-6,-16,.82)];
   const plantMat=new THREE.MeshStandardMaterial({color:0x73924b,roughness:1,side:THREE.DoubleSide});
   for(let i=0;i<70;i++){const x=((i*47)%103)/103*48-24,z=((i*29)%89)/89*48-24;const p=new THREE.Mesh(new THREE.ConeGeometry(.08,.48,4),plantMat);p.position.set(x,.24,z);p.rotation.z=(i%3-1)*.12;scene.add(p);}
   let yaw=0,last=performance.now(),target:Target|null=null;const counts={branches:0,sticks:0,stones:0,leaves:0};
@@ -117,6 +144,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     if(!blocked(nx,nz)){player.position.x=nx;player.position.z=nz}else{if(!blocked(nx,player.position.z))player.position.x=nx;if(!blocked(player.position.x,nz))player.position.z=nz;}
    }
    player.rotation.y=yaw;chooseTarget();
+   animals.forEach((a,i)=>{const ph=now*.00018+a.userData.phase;a.position.x+=Math.sin(ph+i)*dt*.18;a.position.z+=Math.cos(ph*.83+i)*dt*.15;a.rotation.y=Math.atan2(Math.sin(ph+i),Math.cos(ph*.83+i));});
    const behind=4.25,high=2.45;camera.position.set(player.position.x-Math.sin(yaw)*behind,high,player.position.z+Math.cos(yaw)*behind);
    camera.lookAt(player.position.x,1.15,player.position.z);
    renderer.render(scene,camera);requestAnimationFrame(clock);
