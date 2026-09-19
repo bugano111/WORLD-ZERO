@@ -383,7 +383,7 @@ export function WorldZeroGame() {
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
         <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span>Kámen: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
-      {(nearTree || nearRock) && <button className="wz-gather" onClick={() => { input.current.gather = true; }}>{nearRock && !nearTree ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}
+      {(nearTree || nearRock) && <button className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); input.current.gather = true; }} onTouchStart={(event) => { event.stopPropagation(); input.current.gather = true; }}>{nearRock && !nearTree ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
