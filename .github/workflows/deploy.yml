@@ -1,4 +1,4 @@
-name: Deploy WORLD ZERO VERIFIED PRODUCTION
+name: WORLD ZERO PRODUCTION PROOF
 on:
   push:
     branches: [main]
