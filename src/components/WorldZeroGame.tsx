@@ -176,7 +176,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const d = Math.hypot(tree.x - player.x, tree.z - player.z);
         if (d < td) { td = d; ti = index; }
       });
-      if (ti >= 0 && td < 2.35) {
+      if (ti >= 0 && td < 2.8) {
         npc.harvested.add(ti); playerWood += 1; onWoodChange(npc.wood + playerWood); gatherCooldown = .55; return;
       }
       let ri = -1, rd = Infinity;
@@ -185,7 +185,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const d = Math.hypot(rock.x - player.x, rock.z - player.z);
         if (d < rd) { rd = d; ri = index; }
       });
-      if (ri >= 0 && rd < 2.15) {
+      if (ri >= 0 && rd < 2.45) {
         harvestedRocks.add(ri); playerStone += 1; onStoneChange(playerStone); gatherCooldown = .65;
       }
     };
@@ -228,9 +228,12 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const speed = 4.1 * dt / Math.max(1, length);
         const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
-        const blockedByTree = TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - nextX, tree.z - nextZ) < 1.35);
-        const blockedByRock = ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - nextX, rock.z - nextZ) < 1.05);
-        if (!blockedByTree && !blockedByRock) { player.x = nextX; player.z = nextZ; }
+        const blocked = (x: number, z: number) =>
+          TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - x, tree.z - z) < 1.65) ||
+          ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - x, rock.z - z) < 1.2);
+        // Resolve X/Z separately: solid objects stop the player but still allow sliding around them.
+        if (!blocked(nextX, player.z)) player.x = nextX;
+        if (!blocked(player.x, nextZ)) player.z = nextZ;
       }
 
       gatherCooldown = Math.max(0, gatherCooldown - dt);
@@ -249,8 +252,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         if (distance < nearestRockDistance) { nearestRockDistance = distance; nearestRock = index; }
       });
       const nearResource: "wood" | "stone" | null =
-        nearestTree >= 0 && nearestDistance < 2.35 ? "wood" :
-        nearestRock >= 0 && nearestRockDistance < 2.15 ? "stone" : null;
+        nearestTree >= 0 && nearestDistance < 2.8 ? "wood" :
+        nearestRock >= 0 && nearestRockDistance < 2.45 ? "stone" : null;
       if (nearResource !== lastNearResource) {
         lastNearResource = nearResource;
         onNearResource(nearResource);
@@ -393,7 +396,7 @@ export function WorldZeroGame() {
         <div><h1>WORLD ZERO</h1><p>Divočina</p></div>
         <div className="wz-day"><strong>Den 1</strong><span>Dřevo: {wood}</span><span>Kámen: {stone}</span><span><i className="is-ready" />renderer OK</span></div>
       </header>
-      {nearResource && <button type="button" className="wz-gather" onClick={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); setActionFlash("SEBRÁNO"); window.setTimeout(() => setActionFlash(""), 450); }}>{nearResource === "stone" ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}{actionFlash && <div className="wz-action-flash">{actionFlash}</div>}
+      {nearResource && <button type="button" className="wz-gather" onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); gatherApi.current(); setActionFlash("SEBRÁNO"); window.setTimeout(() => setActionFlash(""), 300); }}>{nearResource === "stone" ? "SBÍRAT KÁMEN" : "SBÍRAT DŘEVO"}</button>}{actionFlash && <div className="wz-action-flash">{actionFlash}</div>}
       <div className="wz-controls">
         <Joystick input={input} />
         <div className="wz-camera-controls">
