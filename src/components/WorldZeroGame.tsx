@@ -216,9 +216,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
 
     const project = (point: Point) => {
       const dx=point.x-player.x, dz=point.z-player.z;
-      const cosine=Math.cos(player.yaw), sine=Math.sin(player.yaw);
-      const side=dx*cosine-dz*sine;
-      const forward=-(dx*sine+dz*cosine);
+      const side=dx;
+      const forward=-dz;
       const visible=forward>-1.0 && forward<26;
       const distance=Math.max(1.5,forward+3.5);
       const scale=Math.max(.24,Math.min(1.30,4.8/distance));
@@ -232,14 +231,14 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
     const render = (time: number) => {
       const dt = Math.min((time - last) / 1000, 0.05);
       last = time;
-      player.yaw += input.current.camera * 1.7 * dt;
+      // World objects stay fixed in world space; no fake orbiting/rotating scenery.
       const moveX = input.current.joystick.x;
       const moveY = input.current.joystick.y;
       const length = Math.hypot(moveX, moveY);
       if (length > 0.05) {
         const speed = 4.1 * dt / Math.max(1, length);
-        const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
-        const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
+        const nextX = Math.max(-14, Math.min(14, player.x + moveX * speed));
+        const nextZ = Math.max(-14, Math.min(14, player.z + moveY * speed));
         const TREE_R=1.35, ROCK_R=.92;
         const blocked=(x:number,z:number)=>{
           for(let i=0;i<TREES.length;i++){
