@@ -10,16 +10,25 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
  const mount=useRef<HTMLDivElement>(null);
  useEffect(()=>{
   const host=mount.current;if(!host)return;
+  const makeTexture=(base:string,spots:string,scale=1)=>{
+    const cv=document.createElement("canvas");cv.width=cv.height=256;const x=cv.getContext("2d")!;
+    x.fillStyle=base;x.fillRect(0,0,256,256);
+    for(let i=0;i<1500;i++){const px=(i*73)%256,py=(i*151)%256,r=1+((i*19)%5)*scale;x.globalAlpha=.05+((i%7)/80);x.fillStyle=spots;x.fillRect(px,py,r,r);}
+    x.globalAlpha=1;const t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t;
+  };
+  const grassTex=makeTexture("#526f3d","#283d25",1.3);grassTex.repeat.set(34,34);
+  const barkTex=makeTexture("#65442d","#261a14",.8);barkTex.repeat.set(2,8);
+  const rockTex=makeTexture("#777a72","#3f443f",1.1);rockTex.repeat.set(3,3);
   const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc5df);scene.fog=new THREE.FogExp2(0xb9cabb,.013);
   const camera=new THREE.PerspectiveCamera(58,1,.1,180);
   const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.94;
   host.appendChild(renderer.domElement);
 
   const hemi=new THREE.HemisphereLight(0xcbe3f0,0x3e4b32,1.25);scene.add(hemi);
   const sun=new THREE.DirectionalLight(0xffe4bd,2.55);sun.position.set(-22,32,18);sun.castShadow=true;
-  sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;scene.add(sun);
+  sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-35;sun.shadow.camera.right=35;sun.shadow.camera.top=35;sun.shadow.camera.bottom=-35;scene.add(sun);
   const sky=new THREE.Mesh(new THREE.SphereGeometry(150,24,16),new THREE.MeshBasicMaterial({color:0x91c8e3,side:THREE.BackSide,fog:false});scene.add(sky);
   const cloudMat=new THREE.MeshStandardMaterial({color:0xf2f4ef,roughness:1,transparent:true,opacity:.72,depthWrite:false});
   for(let i=0;i<9;i++){const cg=new THREE.Group();for(let j=0;j<5;j++){const cm=new THREE.Mesh(new THREE.SphereGeometry(3+(j%3)*1.1,12,8),cloudMat);cm.position.set(j*3.2-6,(j%2)*1.1,(j%3)*1.5);cm.scale.y=.55;cg.add(cm);}cg.position.set(-55+i*15,26+(i%3)*4,-55-(i%4)*9);scene.add(cg);}
@@ -31,7 +40,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     const valley=-.75*Math.exp(-((x-2)*(x-2)+(z-5)*(z-5))/95);
     return rolling+hill1+hill2+valley;
   };
-  const groundMat=new THREE.MeshStandardMaterial({color:0x526f3d,roughness:1,metalness:0});
+  const groundMat=new THREE.MeshStandardMaterial({map:grassTex,color:0x87926e,roughness:.98,metalness:0});
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(420,420,120,120),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
   const pos=ground.geometry.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i);
@@ -43,6 +52,8 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const horizon=new THREE.Mesh(new THREE.CylinderGeometry(92,92,11,48,1,true),horizonMat);horizon.position.y=4.2;scene.add(horizon);
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x4f91a7,roughness:.18,metalness:0,transparent:true,opacity:.78,transmission:.12});
   const stream=new THREE.Mesh(new THREE.PlaneGeometry(10,75,8,32),waterMat);stream.rotation.x=-Math.PI/2;stream.rotation.z=.08;stream.position.set(20,-.32,-8);stream.receiveShadow=true;scene.add(stream);
+  const soilMat=new THREE.MeshStandardMaterial({color:0x6d5840,roughness:1});
+  for(let i=0;i<18;i++){const x=((i*41)%67)-33,z=((i*59)%71)-35;const patch=new THREE.Mesh(new THREE.CircleGeometry(1.2+(i%4)*.45,18),soilMat);patch.rotation.x=-Math.PI/2;patch.position.set(x,terrainY(x,z)+.012,z);patch.scale.set(1.7,.7,1);scene.add(patch);}
   const shoreMat=new THREE.MeshStandardMaterial({color:0x8a8065,roughness:1});
   for(let i=0;i<36;i++){const z=-40+i*2.1,x=15.2+Math.sin(i*.8)*1.1;const s=.18+(i%5)*.07;const q=new THREE.Mesh(new THREE.DodecahedronGeometry(s,1),shoreMat);q.position.set(x,terrainY(x,z)+s*.25,z);q.scale.y=.55;q.castShadow=true;scene.add(q);}
   const mountainMat=new THREE.MeshStandardMaterial({color:0x596c5d,roughness:1});
@@ -59,6 +70,10 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const head=new THREE.Mesh(new THREE.SphereGeometry(.235,24,18),skin);head.position.y=1.86;head.scale.set(.88,1.08,.92);head.castShadow=true;player.add(head);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(.238,22,12,0,Math.PI*2,0,Math.PI*.48),hairM);hair.position.y=1.91;hair.scale.set(.9,1.05,.94);player.add(hair);
   const nose=new THREE.Mesh(new THREE.ConeGeometry(.035,.10,8),skin);nose.position.set(0,1.86,-.225);nose.rotation.x=-Math.PI/2;player.add(nose);
+  const eyeM=new THREE.MeshStandardMaterial({color:0x25221e,roughness:.7});
+  for(const ex of [-.075,.075]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.018,8,6),eyeM);eye.position.set(ex,1.895,-.218);player.add(eye);}
+  for(const ex of [-.255,.255]){const ear=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),skin);ear.position.set(ex,1.86,0);ear.scale.y=1.25;player.add(ear);}
+
   for(const sx of [-1,1]){
     const upper=new THREE.Mesh(new THREE.CapsuleGeometry(.065,.34,5,9),shirt);upper.position.set(sx*.36,1.38,0);upper.rotation.z=sx*.12;upper.castShadow=true;player.add(upper);
     const fore=new THREE.Mesh(new THREE.CapsuleGeometry(.055,.31,5,9),skin);fore.position.set(sx*.39,1.05,0);fore.castShadow=true;player.add(fore);
@@ -69,7 +84,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   scene.add(player);
 
   const obstacles:{p:THREE.Vector3;r:number}[]=[];const interactives:THREE.Object3D[]=[];
-  const bark=new THREE.MeshStandardMaterial({color:0x5c3925,roughness:1}),leafMats=[0x315c35,0x3f7440,0x28512f].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.94});
+  const bark=new THREE.MeshStandardMaterial({map:barkTex,color:0xa88467,roughness:1}),leafMats=[0x315c35,0x3f7440,0x28512f].map(c=>new THREE.MeshStandardMaterial({color:c,roughness:.94});
   const treePts=[[-8,-9],[-3,-12],[5,-10],[10,-6],[-11,0],[11,2],[-8,8],[7,9],[1,13],[-14,-14],[14,-14]] as number[][];
   treePts.forEach(([x,z],i)=>{
    const g=new THREE.Group();g.position.set(x,terrainY(x,z),z);g.userData.tree=true;g.userData.branches=0;
@@ -97,8 +112,8 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   for(let i=0;i<120;i++){
     const a=i*2.399,r=13+(i%24)*2.0,x=Math.cos(a)*r,z=Math.sin(a)*r-7;
     const sg=new THREE.Group();
-    const st=new THREE.Mesh(new THREE.CylinderGeometry(.09,.16,2.4+(i%3)*.35,7),bark);st.position.y=1.2;st.castShadow=true;sg.add(st);
-    const cr=new THREE.Mesh(new THREE.IcosahedronGeometry(.75+(i%4)*.08,1),saplingMat);cr.position.y=2.65+(i%3)*.18;cr.scale.y=1.3;cr.castShadow=true;sg.add(cr);
+    const sh=2.5+(i%9)*.48;const st=new THREE.Mesh(new THREE.CylinderGeometry(.07+sh*.018,.13+sh*.025,sh,9),bark);st.position.y=sh/2;st.castShadow=true;sg.add(st);
+    for(let k=0;k<5;k++){const cr=new THREE.Mesh(new THREE.IcosahedronGeometry(.55+(i%4)*.09,2),saplingMat);cr.position.set(Math.cos(k*1.25)*.42,sh-.15+k*.18,Math.sin(k*1.25)*.35);cr.scale.set(1,.72,1);cr.castShadow=true;sg.add(cr);}
     sg.position.set(x,terrainY(x,z),z);scene.add(sg);
   }
 
@@ -112,11 +127,11 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   [[-1.3,3.6],[3.8,4.4],[-4.7,6.3],[6.1,7.7]].forEach(p=>makePickup("stone",p[0],p[1]);
   [[-.4,2.4],[4.2,2.0],[-3.5,5.2]].forEach(p=>makePickup("leaf",p[0],p[1]);
 
-  const rockMat=new THREE.MeshStandardMaterial({color:0x6d716a,roughness:1});
+  const rockMat=new THREE.MeshStandardMaterial({map:rockTex,color:0x9a9a91,roughness:.96});
   [[-5,-3,.65],[6,-5,.9],[-9,5,.7],[4,7,.8],[10,10,1.0]].forEach(([x,z,s])=>{
     const r=new THREE.Mesh(new THREE.DodecahedronGeometry(s,1),rockMat);r.position.set(x,terrainY(x,z)+s*.45,z);r.scale.y=.72;r.rotation.set(.18,x*.13,.08);r.castShadow=true;r.receiveShadow=true;scene.add(r);obstacles.push({p:new THREE.Vector3(x,0,z),r:s*.75});
   });
-  const cliffMat=new THREE.MeshStandardMaterial({color:0x676c65,roughness:.98});
+  const cliffMat=new THREE.MeshStandardMaterial({map:rockTex,color:0x8a8b82,roughness:.98});
   const cliffPositions=[[-18,0,-22,3.8],[-14,1,-24,3.1],[-10,.3,-25,2.6],[17,0,-17,3.4],[20,.2,-19,2.8],[-7,0,18,1.7],[-5,0,19,1.35],[-3,0,20,1.05]] as number[][];
   cliffPositions.forEach(([x,y,z,s],i)=>{const cr=new THREE.Mesh(new THREE.DodecahedronGeometry(s,1),cliffMat);cr.position.set(x,y+s*.48,z);cr.scale.set(1.25,.85,.9);cr.rotation.set(i*.13,i*.51,i*.07);cr.castShadow=true;cr.receiveShadow=true;scene.add(cr);});
   const logMat=new THREE.MeshStandardMaterial({color:0x513523,roughness:1});
