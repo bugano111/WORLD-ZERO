@@ -129,7 +129,10 @@ function drawPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale: 
   ctx.stroke();
   ctx.fillStyle = npc ? COLORS.npc : COLORS.player;
   ctx.fillRect(x - 15 * scale, y - 65 * scale, 30 * scale, 41 * scale);
+  ctx.fillStyle = npc ? "#b98432" : "#9f4034";
+  ctx.fillRect(x + 7 * scale, y - 65 * scale, 8 * scale, 41 * scale);
   ellipse(ctx, x, y - 78 * scale, 13 * scale, 15 * scale, COLORS.skin);
+  ellipse(ctx, x + 4 * scale, y - 80 * scale, 4 * scale, 10 * scale, "rgba(116,69,46,.18)");
   if (npc) {
     ctx.fillStyle = COLORS.hat;
     ctx.fillRect(x - 16 * scale, y - 92 * scale, 32 * scale, 7 * scale);
@@ -316,13 +319,34 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         }
       }
 
-      ctx.fillStyle = COLORS.sky;
-      ctx.fillRect(0, 0, width, height * 0.43);
-      ctx.fillStyle = COLORS.haze;
-      ctx.fillRect(0, height * 0.39, width, height * 0.08);
-      polygon(ctx, [[0, height * 0.43], [width, height * 0.43], [width, height], [0, height]], COLORS.grass);
-      polygon(ctx, [[0, height * 0.43], [width, height * 0.43], [width, height * 0.55], [0, height * 0.51]], COLORS.grassFar);
-      polygon(ctx, [[0, height * 0.67], [width, height * 0.58], [width, height * 0.72], [0, height * 0.83]], COLORS.grassDark);
+      // Atmosphere + layered terrain for stronger depth.
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.48);
+      skyGradient.addColorStop(0, "#79b9d8");
+      skyGradient.addColorStop(0.72, "#b8dbe3");
+      skyGradient.addColorStop(1, "#dce9d7");
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, width, height * 0.48);
+      ellipse(ctx, width * 0.78, height * 0.12, 34, 34, "rgba(255,239,173,.72)");
+      polygon(ctx, [[0,height*.43],[width*.18,height*.35],[width*.36,height*.43],[width*.55,height*.33],[width*.77,height*.43],[width,height*.36],[width,height*.5],[0,height*.5]], "#759365");
+      polygon(ctx, [[0,height*.45],[width*.25,height*.39],[width*.47,height*.46],[width*.72,height*.38],[width,height*.45],[width,height*.53],[0,height*.53]], "#8faa72");
+      const groundGradient = ctx.createLinearGradient(0, height * .43, 0, height);
+      groundGradient.addColorStop(0, "#8eaa62");
+      groundGradient.addColorStop(.55, "#688d48");
+      groundGradient.addColorStop(1, "#4f743b");
+      ctx.fillStyle = groundGradient;
+      ctx.fillRect(0, height * .43, width, height * .57);
+      // Perspective ground bands.
+      polygon(ctx, [[0,height*.57],[width,height*.52],[width,height*.59],[0,height*.66]], "rgba(178,201,111,.30)");
+      polygon(ctx, [[0,height*.74],[width,height*.63],[width,height*.72],[0,height*.86]], "rgba(45,91,48,.24)");
+      polygon(ctx, [[0,height*.91],[width,height*.78],[width,height*.84],[0,height]], "rgba(183,205,112,.18)");
+      // Small grass blades in foreground.
+      ctx.strokeStyle = "rgba(39,84,43,.46)";
+      ctx.lineWidth = 1.4;
+      for (let i=0;i<34;i++) {
+        const gx=(i*97 + 31)%Math.max(1,width), gy=height*(.56+((i*53)%41)/100);
+        const gh=4+((i*7)%8);
+        ctx.beginPath(); ctx.moveTo(gx,gy); ctx.lineTo(gx-3,gy-gh); ctx.moveTo(gx,gy); ctx.lineTo(gx+3,gy-gh*.8); ctx.stroke();
+      }
 
       const objects: Array<{ depth: number; draw: () => void }> = [];
       const campProjection = project({ x: -3.7, z: -1.8 });
