@@ -41,11 +41,14 @@ export function WorldZeroGame(){
   const rockMat=new THREE.MeshStandardMaterial({color:0x686963,roughness:.95});
   for(let i=0;i<150;i++){const a=i*4.17,r=22+(i%39)*8,x=Math.cos(a)*r,z=Math.sin(a)*r;const m=new THREE.Mesh(new THREE.DodecahedronGeometry(.5+(i%6)*.18,1),rockMat);m.scale.set(1.3,.65,1);m.position.set(x,H(x,z)+.3,z);m.rotation.set(i*.3,i*.7,0);m.castShadow=true;scene.add(m)}
 
-  const human=new THREE.Group(),skin=new THREE.MeshStandardMaterial({color:0xb88768,roughness:.8}),cloth=new THREE.MeshStandardMaterial({color:0x3d4742,roughness:1});
+  const human=new THREE.Group(),skin=new THREE.MeshStandardMaterial({color:0xb88768,roughness:.8}),cloth=new THREE.MeshStandardMaterial({color:0x3d4742,roughness:1}),pants=new THREE.MeshStandardMaterial({color:0x242a2d,roughness:1});
   const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.48,1.05,6,10),cloth);torso.position.y=2.05;human.add(torso);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.38,16,12),skin);head.scale.set(.86,1.08,.9);head.position.y=3.35;human.add(head);
-  const limb=(x:number,y:number)=>{const m=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.95,5,8),skin);m.position.set(x,y,0);human.add(m);return m};
-  const la=limb(-.62,2.05),ra=limb(.62,2.05),ll=limb(-.25,.72),rl=limb(.25,.72);[torso,head,la,ra,ll,rl].forEach(m=>m.castShadow=true);scene.add(human);
+  const arm=(x:number)=>{const m=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.95,5,8),skin);m.position.set(x,2.05,0);human.add(m);return m};
+  const leg=(x:number)=>{const m=new THREE.Mesh(new THREE.CapsuleGeometry(.17,1.05,5,8),pants);m.position.set(x,.72,0);human.add(m);return m};
+  const la=arm(-.62),ra=arm(.62),ll=leg(-.25),rl=leg(.25);
+  const hair=new THREE.Mesh(new THREE.SphereGeometry(.39,16,10,0,Math.PI*2,0,Math.PI*.48),new THREE.MeshStandardMaterial({color:0x2b201a,roughness:1}));hair.position.y=3.47;human.add(hair);
+  [torso,head,la,ra,ll,rl,hair].forEach(m=>m.castShadow=true);scene.add(human);
   human.position.set(0,H(0,0),0);
 
   const grassMat=new THREE.MeshStandardMaterial({color:0x496742,side:THREE.DoubleSide,roughness:1});
@@ -56,7 +59,7 @@ export function WorldZeroGame(){
    yaw+=j.look*dt*1.5;const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),right=new THREE.Vector3(forward.z,0,-forward.x);
    human.position.addScaledVector(forward,-j.y*dt*7);human.position.addScaledVector(right,j.x*dt*7);human.position.y=H(human.position.x,human.position.z);
    const moving=Math.abs(j.x)+Math.abs(j.y)>.1,t=now*.008;if(moving){la.rotation.x=Math.sin(t)*.7;ra.rotation.x=-Math.sin(t)*.7;ll.rotation.x=-Math.sin(t)*.55;rl.rotation.x=Math.sin(t)*.55}else{la.rotation.x=ra.rotation.x=ll.rotation.x=rl.rotation.x=0}
-   const back=forward.clone().multiplyScalar(7.2);camera.position.set(human.position.x-back.x,human.position.y+4.8,human.position.z-back.z);camera.lookAt(human.position.x,human.position.y+1.8,human.position.z);
+   const back=forward.clone().multiplyScalar(10.5);camera.position.set(human.position.x-back.x,human.position.y+5.8,human.position.z-back.z);camera.lookAt(human.position.x,human.position.y+1.65,human.position.z);
    renderer.render(scene,camera);requestAnimationFrame(clock)};
   const resize=()=>{const w=el.clientWidth,h=el.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);requestAnimationFrame(clock);
   return()=>{removeEventListener("resize",resize);renderer.dispose();el.replaceChildren()}
@@ -64,7 +67,7 @@ export function WorldZeroGame(){
  const joy=(e:React.PointerEvent<HTMLDivElement>)=>{const r=e.currentTarget.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)/(r.width*.35),y=(e.clientY-r.top-r.height/2)/(r.height*.35);input.current.x=Math.max(-1,Math.min(1,x));input.current.y=Math.max(-1,Math.min(1,y))};
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · GENESIS REBUILD</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · GENESIS REBUILD · FULL BODY</div></div>
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
   <div style={{position:"absolute",right:22,bottom:"max(35px,env(safe-area-inset-bottom))",display:"flex",gap:12}}>
    <button onPointerDown={()=>input.current.look=-1} onPointerUp={()=>input.current.look=0} onPointerCancel={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>‹</button>
