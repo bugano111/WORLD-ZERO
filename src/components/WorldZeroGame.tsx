@@ -193,7 +193,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const d = Math.hypot(tree.x - player.x, tree.z - player.z);
         if (d < td) { td = d; ti = index; }
       });
-      if (ti >= 0 && td < 1.28) {
+      if (ti >= 0 && td < 1.82) {
         playerWood += 1;
         onWoodChange(npc.wood + playerWood);
         gatherCooldown = .45;
@@ -205,7 +205,7 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const d = Math.hypot(rock.x - player.x, rock.z - player.z);
         if (d < rd) { rd = d; ri = index; }
       });
-      if (ri >= 0 && rd < 1.12) {
+      if (ri >= 0 && rd < 1.30) {
         harvestedRocks.add(ri);
         playerStone += 1;
         onStoneChange(playerStone);
@@ -251,8 +251,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
         const speed = 4.1 * dt / Math.max(1, length);
         const nextX = Math.max(-14, Math.min(14, player.x + (moveX * Math.cos(player.yaw) + moveY * Math.sin(player.yaw)) * speed));
         const nextZ = Math.max(-14, Math.min(14, player.z + (-moveX * Math.sin(player.yaw) + moveY * Math.cos(player.yaw)) * speed));
-        const treeRadius = 0.92;
-        const rockRadius = 0.78;
+        const treeRadius = 1.55;
+        const rockRadius = 1.05;
         const collides = (x: number, z: number) =>
           TREES.some((tree, index) => !npc.harvested.has(index) && Math.hypot(tree.x - x, tree.z - z) < treeRadius) ||
           ROCKS.some((rock, index) => !harvestedRocks.has(index) && Math.hypot(rock.x - x, rock.z - z) < rockRadius);
@@ -278,8 +278,8 @@ function WorldCanvas({ input, onWoodChange, onStoneChange, onNearResource, gathe
       let nearestRock = -1, nearestRockDistance = Infinity;
       ROCKS.forEach((rock,index)=>{ if(harvestedRocks.has(index)) return; const d=Math.hypot(rock.x-player.x,rock.z-player.z); if(d<nearestRockDistance){nearestRockDistance=d;nearestRock=index;} });
       const nearResource: "wood" | "stone" | null =
-        nearestTree >= 0 && nearestDistance < 1.28 ? "wood" :
-        nearestRock >= 0 && nearestRockDistance < 1.12 ? "stone" : null;
+        nearestTree >= 0 && nearestDistance < 1.82 ? "wood" :
+        nearestRock >= 0 && nearestRockDistance < 1.30 ? "stone" : null;
       if (nearResource !== lastNearResource) { lastNearResource = nearResource; onNearResource(nearResource); }
 
       const target = npc.phase === "toCamp" ? camp : TREES[npc.treeIndex];
