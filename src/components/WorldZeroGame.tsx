@@ -19,8 +19,8 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const grassTex=makeTexture("#526f3d","#283d25",1.3);grassTex.repeat.set(34,34);
   const barkTex=makeTexture("#65442d","#261a14",.8);barkTex.repeat.set(2,8);
   const rockTex=makeTexture("#777a72","#3f443f",1.1);rockTex.repeat.set(3,3);
-  const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc5df);scene.fog=new THREE.FogExp2(0xb9cabb,.013);
-  const camera=new THREE.PerspectiveCamera(55,1,.1,180);
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x8fc5df);scene.fog=new THREE.FogExp2(0xc0d0c2,.0065);
+  const camera=new THREE.PerspectiveCamera(62,1,.1,180);
   const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.94;
@@ -33,7 +33,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const cloudMat=new THREE.MeshStandardMaterial({color:0xf2f4ef,roughness:1,transparent:true,opacity:.72,depthWrite:false});
   for(let i=0;i<9;i++){const cg=new THREE.Group();for(let j=0;j<5;j++){const cm=new THREE.Mesh(new THREE.SphereGeometry(3+(j%3)*1.1,12,8),cloudMat);cm.position.set(j*3.2-6,(j%2)*1.1,(j%3)*1.5);cm.scale.y=.55;cg.add(cm);}cg.position.set(-55+i*15,26+(i%3)*4,-55-(i%4)*9);scene.add(cg);}
   const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(4.5,24,18),new THREE.MeshBasicMaterial({color:0xffe6a8,fog:false});sunDisc.position.set(-180,210,-420);scene.add(sunDisc);
-  const PLANET_RADIUS=1450;
+  const PLANET_RADIUS=6371;
   const terrainY=(x:number,z:number)=>{
     const d2=x*x+z*z;
     const curvature=-d2/(2*PLANET_RADIUS);
@@ -45,7 +45,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     return curvature+continental+rolling+hill1+hill2+valley;
   };
   const groundMat=new THREE.MeshStandardMaterial({map:grassTex,color:0x87926e,roughness:.98,metalness:0});
-  const ground=new THREE.Mesh(new THREE.PlaneGeometry(900,900,180,180),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(1800,1800,220,220),groundMat);ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;
   const pos=ground.geometry.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i);
     pos.setZ(i,terrainY(x,y);
@@ -95,7 +95,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     const shin=add(new THREE.CapsuleGeometry(.068,.34,7,11),skin,[sx*.135,.22,0]);
     add(new THREE.BoxGeometry(.17,.115,.34),boots,[sx*.135,.065,-.085]);
   }
-  scene.add(player);
+  scene.add(player);player.visible=false;
 
   const obstacles:{p:THREE.Vector3;r:number}[]=[];const interactives:THREE.Object3D[]=[];
   const bark=new THREE.MeshStandardMaterial({map:barkTex,color:0x9a7658,roughness:1});
@@ -120,11 +120,11 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   };
   [[-8,-9],[-3,-12],[5,-10],[10,-6],[-11,0],[11,2],[-8,8],[7,9],[1,13],[-14,-14],[14,-14]].forEach((p,i)=>makeTree(p[0],p[1],i));
   const saplingMat=new THREE.MeshStandardMaterial({color:0x35633a,roughness:1});
-  for(let i=0;i<260;i++){
-    const a=i*2.399,r=18+(i%70)*2.35,x=Math.cos(a)*r,z=Math.sin(a)*r-7;
+  for(let i=0;i<420;i++){
+    const a=i*2.399,r=20+(i%110)*2.65,x=Math.cos(a)*r,z=Math.sin(a)*r-7;
     const sg=new THREE.Group();
-    const sh=2.5+(i%9)*.48;const st=new THREE.Mesh(new THREE.CylinderGeometry(.07+sh*.018,.13+sh*.025,sh,9),bark);st.position.y=sh/2;st.castShadow=true;sg.add(st);
-    for(let k=0;k<5;k++){const cr=new THREE.Mesh(new THREE.IcosahedronGeometry(.55+(i%4)*.09,2),saplingMat);cr.position.set(Math.cos(k*1.25)*.42,sh-.15+k*.18,Math.sin(k*1.25)*.35);cr.scale.set(1,.72,1);cr.castShadow=true;sg.add(cr);}
+    const sh=7.5+(i%11)*1.15;const st=new THREE.Mesh(new THREE.CylinderGeometry(.10+sh*.012,.22+sh*.018,sh,10),bark);st.position.y=sh/2;st.castShadow=true;sg.add(st);
+    for(let k=0;k<5;k++){const cr=new THREE.Mesh(new THREE.IcosahedronGeometry(1.15+(i%5)*.18,2),saplingMat);cr.position.set(Math.cos(k*1.25)*.42,sh-.15+k*.18,Math.sin(k*1.25)*.35);cr.scale.set(1,.72,1);cr.castShadow=true;sg.add(cr);}
     sg.position.set(x,terrainY(x,z),z);scene.add(sg);
   }
 
@@ -158,7 +158,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   // Grass = hundreds of blade clumps following the ground.
   const grassMats=[0x426638,0x527442,0x627f49].map(v=>new THREE.MeshStandardMaterial({color:v,roughness:1,side:THREE.DoubleSide}));
   const bladeGeo=new THREE.PlaneGeometry(.018,.30);
-  for(let i=0;i<900;i++){const x=((i*37)%211)/211*180-90,z=((i*61)%197)/197*180-90,cl=new THREE.Group();for(let b=0;b<5;b++){const blade=new THREE.Mesh(bladeGeo,grassMats[(i+b)%3]);blade.position.set((b-2)*.024,.15+(b%2)*.025,Math.sin(b*2.1)*.025);blade.rotation.y=b*1.256;blade.rotation.z=(b-2)*.05;cl.add(blade);}cl.position.set(x,terrainY(x,z),z);scene.add(cl);}
+  for(let i=0;i<1800;i++){const x=((i*37)%211)/211*180-90,z=((i*61)%197)/197*180-90,cl=new THREE.Group();for(let b=0;b<5;b++){const blade=new THREE.Mesh(bladeGeo,grassMats[(i+b)%3]);blade.position.set((b-2)*.024,.15+(b%2)*.025,Math.sin(b*2.1)*.025);blade.rotation.y=b*1.256;blade.rotation.z=(b-2)*.05;cl.add(blade);}cl.position.set(x,terrainY(x,z),z);scene.add(cl);}
 
   const makeAnimal=(kind:"horse"|"goat"|"deer",x:number,z:number,scale:number)=>{
     const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);
@@ -173,6 +173,9 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
     g.userData.animal=kind;g.userData.phase=Math.random()*6.28;scene.add(g);return g;
   };
   const animals=[makeAnimal("horse",-12,-4,1.15),makeAnimal("goat",8,1,.72),makeAnimal("goat",10,3,.68),makeAnimal("deer",-6,-16,.82)];
+  const fernMat=new THREE.MeshStandardMaterial({color:0x3f6d38,roughness:1,side:THREE.DoubleSide});
+  const fernLeaf=new THREE.PlaneGeometry(.55,.09);
+  for(let i=0;i<170;i++){const x=((i*79)%181)/181*130-65,z=((i*53)%173)/173*130-65,fg=new THREE.Group();for(let q=0;q<7;q++){const fr=new THREE.Mesh(fernLeaf,fernMat);const a=q*Math.PI*2/7;fr.position.set(Math.cos(a)*.25,.18,Math.sin(a)*.25);fr.rotation.set(-.55,a,0);fg.add(fr);}fg.position.set(x,terrainY(x,z),z);scene.add(fg);}
   const shrubMat=new THREE.MeshStandardMaterial({color:0x365d35,roughness:1});
   for(let i=0;i<85;i++){const x=((i*83)%131)/131*110-55,z=((i*57)%127)/127*110-55;const s=.25+(i%6)*.07;const b=new THREE.Mesh(new THREE.IcosahedronGeometry(s,1),shrubMat);b.position.set(x,terrainY(x,z)+s*.65,z);b.scale.set(1.35,.75,1);b.castShadow=true;scene.add(b);}
   const flowerMats=[0xd9d0a8,0xc9b5d4,0xe0c68d].map(v=>new THREE.MeshStandardMaterial({color:v,roughness:.9}));
@@ -206,19 +209,18 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    const j=input.current.joystick,len=Math.min(1,Math.hypot(j.x,j.y));
    if(len>.02){const fx=Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=Math.sin(yaw);const dx=(rx*j.x+fx*(-j.y))*3.0*dt,dz=(rz*j.x+fz*(-j.y))*3.0*dt;
     const nx=player.position.x+dx,nz=player.position.z+dz;
-    const blocked=(x:number,z:number)=>obstacles.some(o=>Math.hypot(x-o.p.x,z-o.p.z)<o.r+.32);
-    if(!blocked(nx,nz)){player.position.x=nx;player.position.z=nz}else{if(!blocked(nx,player.position.z))player.position.x=nx;if(!blocked(player.position.x,nz))player.position.z=nz;}
+    player.position.x=nx;player.position.z=nz;
    }
    player.position.y=terrainY(player.position.x,player.position.z);
    player.rotation.y=yaw;
-   const walk=len>.04?Math.sin(now*.011)*.10:0;player.position.y+=Math.abs(walk)*.035;
+   const walk=len>.04?Math.sin(now*.011)*.10:0;
    if(player.children[7])player.children[7].rotation.x=walk;if(player.children[9])player.children[9].rotation.x=-walk;
    chooseTarget();
    animals.forEach((a,i)=>{const ph=now*.00018+a.userData.phase;a.position.x+=Math.sin(ph+i)*dt*.18;a.position.z+=Math.cos(ph*.83+i)*dt*.15;a.rotation.y=Math.atan2(Math.sin(ph+i),Math.cos(ph*.83+i));});
-   const behind=3.6,high=2.05;const camX=player.position.x-Math.sin(yaw)*behind,camZ=player.position.z+Math.cos(yaw)*behind;
-   const camGround=terrainY(camX,camZ);
-   camera.position.set(camX,Math.max(player.position.y+high,camGround+1.45),camZ);
-   camera.lookAt(player.position.x,player.position.y+1.15,player.position.z);
+   const eye=1.68;
+   camera.position.set(player.position.x,player.position.y+eye,player.position.z);
+   const look=new THREE.Vector3(Math.sin(yaw),-.055,-Math.cos(yaw));
+   camera.lookAt(camera.position.clone().add(look.multiplyScalar(12)));
    renderer.render(scene,camera);requestAnimationFrame(clock);
   };
   const resize=()=>{const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};resize();addEventListener("resize",resize);
