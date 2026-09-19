@@ -191,7 +191,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
   const clock=(now:number)=>{
    const dt=Math.min(.033,(now-last)/1000);last=now;
    yaw+=input.current.camera*1.55*dt;
-   const j=input.current.joystick,len=Math.min(1,Math.hypot(j.x,j.y);
+   const j=input.current.joystick,len=Math.min(1,Math.hypot(j.x,j.y));
    if(len>.02){const fx=Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=Math.sin(yaw);const dx=(rx*j.x+fx*(-j.y))*3.0*dt,dz=(rz*j.x+fz*(-j.y))*3.0*dt;
     const nx=player.position.x+dx,nz=player.position.z+dz;
     const blocked=(x:number,z:number)=>obstacles.some(o=>Math.hypot(x-o.p.x,z-o.p.z)<o.r+.32);
@@ -202,7 +202,7 @@ function World3D({input,onCounts,onTarget,gatherApi}:{input:RefObject<InputState
    const walk=len>.04?Math.sin(now*.011)*.10:0;player.position.y+=Math.abs(walk)*.035;
    if(player.children[7])player.children[7].rotation.x=walk;if(player.children[9])player.children[9].rotation.x=-walk;
    chooseTarget();
-   animals.forEach((a,i)=>{const ph=now*.00018+a.userData.phase;a.position.x+=Math.sin(ph+i)*dt*.18;a.position.z+=Math.cos(ph*.83+i)*dt*.15;a.rotation.y=Math.atan2(Math.sin(ph+i),Math.cos(ph*.83+i);});
+   animals.forEach((a,i)=>{const ph=now*.00018+a.userData.phase;a.position.x+=Math.sin(ph+i)*dt*.18;a.position.z+=Math.cos(ph*.83+i)*dt*.15;a.rotation.y=Math.atan2(Math.sin(ph+i),Math.cos(ph*.83+i));});
    const behind=4.25,high=2.45;const camX=player.position.x-Math.sin(yaw)*behind,camZ=player.position.z+Math.cos(yaw)*behind;
    const camGround=terrainY(camX,camZ);
    camera.position.set(camX,Math.max(player.position.y+high,camGround+1.45),camZ);
@@ -225,11 +225,22 @@ function Joystick({input}:{input:RefObject<InputState>}){
 function Cam({d,input,children}:{d:number;input:RefObject<InputState>;children:ReactNode}){return <button className="wz-camera-button" onPointerDown={e=>{safelyCapturePointer(e.currentTarget,e.pointerId);input.current.camera=d}} onPointerUp={()=>input.current.camera=0} onPointerCancel={()=>input.current.camera=0}>{children}</button>}
 
 export function WorldZeroGame(){
+ const [hunger,setHunger]=useState(100),[thirst,setThirst]=useState(100),[energy,setEnergy]=useState(100);
+ const [knowledge,setKnowledge]=useState<string[]>([]);
+ const [fiber,setFiber]=useState(0),[flint,setFlint]=useState(0);
+ const [survivalMsg,setSurvivalMsg]=useState("Jsi sám v divočině. První úkol: přežít a poznat okolí.");
+ const learn=(k:string,msg:string)=>setKnowledge(v=>v.includes(k)?v:(setSurvivalMsg(msg),[...v,k]));
+
  const input=useRef<InputState>({joystick:{x:0,y:0},camera:0}),gatherApi=useRef<()=>void>(()=>{});
  const [counts,setCounts]=useState({branches:0,sticks:0,stones:0,leaves:0});const [target,setTarget]=useState<Kind|null>(null);const [flash,setFlash]=useState("");
+ useEffect(()=>{const id=setInterval(()=>{setHunger(v=>Math.max(0,v-.35));setThirst(v=>Math.max(0,v-.55));setEnergy(v=>Math.max(0,v-.12));},2500);return()=>clearInterval(id)},[]);
+ useEffect(()=>{if(counts.stones>=2&&!knowledge.includes("flint")){setFlint(1);learn("flint","Při zkoumání kamenů jsi objevil ostrou hranu. To je základ řezného nástroje.");}},[counts.stones]);
+ useEffect(()=>{if(counts.leaves>=3&&!knowledge.includes("fiber")){setFiber(1);learn("fiber","Z rostlin jsi získal pevná vlákna. Lze jimi svazovat materiály.");}},[counts.leaves]);
  const labels:Record<Kind,string>={branch:"ULOMIT VĚTEV",stick:"SEBRAT KLACEK",stone:"SEBRAT KÁMEN",leaf:"SEBRAT LISTÍ"};
  return <main className="wz-game"><World3D input={input} onCounts={setCounts} onTarget={setTarget} gatherApi={gatherApi}/>
-  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · REAL 3D</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span></div></header>
+  <div className="wz-hud"><header className="wz-statusbar"><div><h1>WORLD ZERO</h1><p>Divočina · REAL 3D</p></div><div className="wz-day"><strong>Den 1</strong><span>Větve: {counts.branches}</span><span>Klacky: {counts.sticks}</span><span>Listí: {counts.leaves}</span><span>Kameny: {counts.stones}</span><span><i className="is-ready"/>WebGL 3D</span><span>Hlad {Math.round(hunger)}</span><span>Žízeň {Math.round(thirst)}</span><span>Energie {Math.round(energy)}</span></div></header>
+  <div style={{position:"absolute",top:96,left:12,right:12,textAlign:"center",pointerEvents:"none",zIndex:5}}><span style={{display:"inline-block",background:"rgba(15,18,14,.72)",color:"#f3efdc",padding:"7px 10px",borderRadius:9,fontSize:12}}>{survivalMsg}</span></div>
+  {flint>0&&fiber>0&&counts.branches>0&&!knowledge.includes("tool")&&<button className="wz-gather" style={{bottom:116}} onPointerDown={e=>{e.preventDefault();learn("tool","První technologický objev: svázaný kamenný nástroj. Teď může začít skutečné opracování dřeva.");}}>SPOJIT KÁMEN + VĚTEV + VLÁKNO</button>}
   {target&&<button className="wz-gather" onPointerDown={e=>{e.preventDefault();e.stopPropagation();gatherApi.current();setFlash("SEBRÁNO");setTimeout(()=>setFlash(""),260)}}>{labels[target]}</button>}{flash&&<div className="wz-action-flash">{flash}</div>}
   <div className="wz-controls"><Joystick input={input}/><div className="wz-camera-controls"><Cam d={-1} input={input}>‹</Cam><Cam d={1} input={input}>›</Cam></div></div></div>
  </main>;
