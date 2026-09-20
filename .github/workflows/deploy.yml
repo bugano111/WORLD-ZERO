@@ -123,23 +123,23 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "BUILD 46" dist/assets
+          grep -R "BUILD 47" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
-      - name: Stamp immutable R46 deployment
+      - name: Stamp immutable R47 deployment
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R46</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R47</div></body>')
           p.write_text(s)
           PY
-          rm -rf /tmp/worldzero-r46
-          mkdir -p /tmp/worldzero-r46
-          cp -a dist/. /tmp/worldzero-r46/
-          mkdir -p dist/r46
-          cp -a /tmp/worldzero-r46/. dist/r46/
-          sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/r46/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/r46/#g' dist/r46/index.html
+          rm -rf /tmp/worldzero-r47
+          mkdir -p /tmp/worldzero-r47
+          cp -a dist/. /tmp/worldzero-r47/
+          mkdir -p dist/r47
+          cp -a /tmp/worldzero-r47/. dist/r47/
+          sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/r47/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/r47/#g' dist/r47/index.html
       - name: Create stable play URL
         run: |
           cp dist/index.html dist/play.html
