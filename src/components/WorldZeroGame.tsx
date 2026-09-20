@@ -6,7 +6,7 @@ import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader.js";
 type Input={x:number;y:number;look:number};
 export function WorldZeroGame(){
  const host=useRef<HTMLDivElement>(null),input=useRef<Input>({x:0,y:0,look:0});
- const [status,setStatus]=useState("NAČÍTÁM SKUTEČNÝ SVĚT…"),[sound,setSound]=useState(false),[wood,setWood]=useState(0),[stone,setStone]=useState(0),[flint,setFlint]=useState(0),[fiber,setFiber]=useState(0),[fire,setFire]=useState(false),[near,setNear]=useState<"wood"|"stone"|"flint"|"fiber"|null>(null);
+ const [status,setStatus]=useState("REALISM 38 · NAČÍTÁM NOVÝ SVĚT…"),[sound,setSound]=useState(false),[wood,setWood]=useState(0),[stone,setStone]=useState(0),[flint,setFlint]=useState(0),[fiber,setFiber]=useState(0),[fire,setFire]=useState(false),[near,setNear]=useState<"wood"|"stone"|"flint"|"fiber"|null>(null);
  const gather=useRef<()=>void>(()=>{});
  useEffect(()=>{
   if(!host.current)return;
@@ -71,7 +71,7 @@ export function WorldZeroGame(){
     const spots=[[-9,13,1.25],[12,20,1.15]];
     spots.forEach(([x,z,s],i)=>{const t=src.clone(true);t.position.set(x,H(x,z),z);t.scale.setScalar(s);t.rotation.y=i*1.618;scene.add(t);t.updateMatrixWorld(true);realTrees.push(t)});
 
-  setStatus("DEN 1 · ČLOVĚK V DIVOČINĚ");},undefined,e=>{console.error("HERO TREE",e);setStatus("CHYBA NAČTENÍ LESA")});
+  setStatus("REALISM 38 · DEN 1 · NOVÝ SVĚT");},undefined,e=>{console.error("HERO TREE",e);setStatus("CHYBA NAČTENÍ LESA")});
 
   // Dense real-model understory around spawn; this is what fills the camera foreground.
   const denseLoader=new GLTFLoader();
