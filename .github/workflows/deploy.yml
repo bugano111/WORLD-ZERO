@@ -123,21 +123,8 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "REALISM 40" dist/assets
+          grep -R "REALISM 41" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
-      - name: Create immutable REALISM 40 route
-        run: |
-          rm -rf /tmp/worldzero-r40
-          cp -a dist /tmp/worldzero-r40
-          mkdir -p dist/releases/realism40
-          cp -a /tmp/worldzero-r40/. dist/releases/realism40/
-          python - <<'PY'
-          p="dist/releases/realism40/index.html"
-          s=open(p,encoding="utf-8").read()
-          s=s.replace('src="./assets/','src="./assets/').replace('href="./assets/','href="./assets/')
-          open(p,"w",encoding="utf-8").write(s)
-          PY
-          grep -q "REALISM 40" dist/releases/realism40/assets/*.js
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
