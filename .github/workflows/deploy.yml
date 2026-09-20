@@ -42,6 +42,35 @@ jobs:
             u=pick(kind); ext=".png" if ".png" in u.lower().split("?")[0] else ".jpg"; out=f"public/real-assets/forest_floor_{kind}_1k{ext}"
             urllib.request.urlretrieve(u,out); print(out,os.path.getsize(out))
           PY
+      - name: Fetch photoreal 3D forest models
+        run: |
+          python - <<'PY'
+          import json, os, re, urllib.request
+          os.makedirs("public/real-assets/models",exist_ok=True)
+          UA={"User-Agent":"WORLD-ZERO-Builder/1.0"}
+          def walk(x,p="",out=None):
+            out=[] if out is None else out
+            if isinstance(x,dict):
+              if isinstance(x.get("url"),str): out.append((p,x["url"]))
+              for k,v in x.items(): walk(v,p+"/"+str(k),out)
+            elif isinstance(x,list):
+              for i,v in enumerate(x): walk(v,p+"/"+str(i),out)
+            return out
+          for aid in ("tree_small_02","rock_09","tree_stump_01"):
+            req=urllib.request.Request("https://api.polyhaven.com/files/"+aid,headers=UA)
+            with urllib.request.urlopen(req,timeout=90) as r: d=json.load(r)
+            arr=walk(d)
+            cand=[(p,u) for p,u in arr if ("1k" in (p+" "+u).lower()) and (".gltf" in u.lower() or ".glb" in u.lower())]
+            if not cand: raise SystemExit("No 1K glTF for "+aid)
+            # Prefer self-contained GLB, otherwise first glTF asset.
+            cand.sort(key=lambda q:(0 if ".glb" in q[1].lower() else 1,len(q[1])))
+            p,u=cand[0]
+            ext=".glb" if ".glb" in u.lower().split("?")[0] else ".gltf"
+            out="public/real-assets/models/"+aid+ext
+            req=urllib.request.Request(u,headers=UA)
+            with urllib.request.urlopen(req,timeout=180) as r, open(out,"wb") as o:o.write(r.read())
+            print(aid,out,os.path.getsize(out),u)
+          PY
       - run: npm run build
       - name: Verify bundled PBR files
         run: |
@@ -54,7 +83,7 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "REALISM 16" dist/assets
+          grep -R "REALISM 17" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
