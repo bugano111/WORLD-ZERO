@@ -39,27 +39,14 @@ export function WorldZeroGame(){
   const water=new THREE.Mesh(new THREE.PlaneGeometry(1100,520),new THREE.MeshPhysicalMaterial({color:0x284f5c,roughness:.045,metalness:.02,transparent:true,opacity:.76,clearcoat:1,clearcoatRoughness:.025,ior:1.333}));
   water.rotation.x=-Math.PI/2;water.position.set(260,-6.2,-470);scene.add(water);
 
-  const bark=new THREE.MeshStandardMaterial({color:0x3c2b20,roughness:1});
-  const leaf=[0x27452d,0x31533a,0x3c6041].map(v=>new THREE.MeshStandardMaterial({color:v,roughness:1,metalness:0}));
-  const tree=(x:number,z:number,s=1)=>{const g=new THREE.Group(),h=(8+Math.random()*5)*s;
-   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.24*s,.78*s,h,18),bark);trunk.position.y=h/2;trunk.castShadow=true;g.add(trunk);
-   for(let b=0;b<11;b++){const a=b*2.399,r=1.2+(b%4)*.55,y=h*.48+(b%5)*h*.09;
-    const br=new THREE.Mesh(new THREE.CylinderGeometry(.055*s,.18*s,3.8*s,8),bark);br.position.set(Math.cos(a)*r*.45,y,Math.sin(a)*r*.45);br.rotation.z=Math.PI/2.7;br.rotation.y=-a;br.castShadow=true;g.add(br);
-    for(let q=0;q<3;q++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry((1.15+q*.28)*s,3),leaf[(b+q)%3]);crown.scale.set(1.65,.48,.82+(b%3)*.12);crown.rotation.set((b%2)*.18,a*.13,(q-1)*.11);crown.position.set(Math.cos(a)*(r+q*.65),y+q*.6,Math.sin(a)*(r+q*.65));crown.castShadow=true;g.add(crown)}
-   }g.position.set(x,H(x,z),z);scene.add(g)};
-  for(let i=0;i<230;i++){const a=i*2.399,r=35+(i%47)*6.8,x=Math.cos(a)*r+(i%5)*28,z=Math.sin(a)*r-35;if(Math.hypot(x,z)>24)tree(x,z,.7+(i%7)*.08)}
-
-  // REALISM 19: replace the near-field procedural look with real scanned/modelled forest vegetation.
-  const gltfLoader=new GLTFLoader();
-  const scatterReal=(url:string,count:number,minR:number,maxR:number,scale:number)=>{
-    gltfLoader.load(url,(gltf)=>{
-      const src=gltf.scene;src.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
-      for(let i=0;i<count;i++){const a=i*2.399963+(url.length*.17),r=minR+(i%Math.max(1,count-1))/(Math.max(1,count-1))*(maxR-minR);const x=Math.cos(a)*r+((i*7)%9-4)*2.1,z=Math.sin(a)*r+((i*11)%13-6)*1.5;const o=src.clone(true);o.position.set(x,H(x,z),z);o.rotation.y=a*1.73;const s=scale*(.72+(i%7)*.075);o.scale.setScalar(s);scene.add(o)}
-    },undefined,e=>console.error("REAL FOREST asset",url,e));
-  };
-  scatterReal("./real-assets/models/shrub_02.gltf",18,14,88,.42);
-  scatterReal("./real-assets/models/weed_plant_02.gltf",28,8,70,.34);
-  scatterReal("./real-assets/models/tree_stump_01.gltf",7,18,82,.65);
+  // REALISM 20: near-field forest is built from a real high-detail tree asset.
+  const realTrees:THREE.Object3D[]=[];
+  new GLTFLoader().load("./real-assets/models/tree_small_02.gltf",(gltf)=>{
+    const src=gltf.scene;
+    src.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
+    const spots=[[-8,-15,1.45],[12,-19,1.7],[-18,-25,1.8],[22,-28,1.55],[-28,-36,1.95],[31,-40,1.75],[-38,-48,2.05],[42,-55,1.9],[-52,-62,2.2],[58,-70,2.1],[-68,-78,2.35],[72,-88,2.3],[0,-34,1.65],[7,-52,1.85],[-9,-67,2.05]];
+    spots.forEach(([x,z,s],i)=>{const t=src.clone(true);t.position.set(x,H(x,z),z);t.scale.setScalar(s);t.rotation.y=i*1.618;scene.add(t);realTrees.push(t)});
+  },undefined,e=>console.error("HERO TREE",e));
 
   const rockMat=new THREE.MeshStandardMaterial({color:0x555952,roughness:.88,metalness:0});
   // REALISM 18: actual photogrammetry replaces the primitive near-field rocks.
@@ -142,7 +129,7 @@ export function WorldZeroGame(){
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
   {!sound&&<button onPointerDown={()=>{setSound(true);window.dispatchEvent(new Event("worldzero-audio"))}} style={{position:"absolute",top:"max(72px,env(safe-area-inset-top))",right:14,zIndex:20,padding:"10px 14px",borderRadius:18,border:"1px solid #ffffff99",background:"#152018dd",color:"white",fontWeight:800}}>🔊 ZAPNOUT ZVUK</button>}
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 19 · REAL VEGETATION</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 20 · PHOTOREAL FOREST</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
   {flint>=2&&!fire&&<button onPointerDown={e=>{e.preventDefault();setFire(true);setFlint(v=>v-2);setStatus("OBJEV: JISKRA → OHEŇ · BEZ OHNIŠTĚ HROZÍ POŽÁR");const flame=new THREE.Mesh(new THREE.ConeGeometry(.35,1.15,10),new THREE.MeshStandardMaterial({color:0xff6b18,emissive:0xff3300,emissiveIntensity:2}));flame.position.set(human.position.x,H(human.position.x,human.position.z)+.55,human.position.z);scene.add(flame);fires.push(flame)}} style={{position:"absolute",right:24,bottom:"max(210px,calc(env(safe-area-inset-bottom) + 210px))",padding:"12px 15px",borderRadius:18,border:"2px solid #ffd27a",background:"#5b281ddd",color:"white",fontWeight:800,zIndex:5}}>KŘESAT PAZOURKY</button>}
   {near&&<button onPointerDown={e=>{e.preventDefault();gather.current()}} style={{position:"absolute",right:24,bottom:"max(112px,calc(env(safe-area-inset-bottom) + 112px))",width:86,height:86,borderRadius:"50%",border:"2px solid #ffffffaa",background:"#1d2b20dd",color:"white",fontWeight:800,fontSize:13,zIndex:5}}>SBÍRAT<br/>{near==="stone"?"KÁMEN":near==="flint"?"PAZOUREK":near==="fiber"?"VLÁKNO":"DŘEVO"}</button>}
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
