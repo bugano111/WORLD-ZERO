@@ -123,7 +123,7 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "REALISM 42" dist/assets
+          grep -R "BUILD 42" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Stamp immutable R42 deployment
         run: |
