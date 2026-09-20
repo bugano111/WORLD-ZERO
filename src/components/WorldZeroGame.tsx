@@ -1,6 +1,7 @@
 import React,{useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
+import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader.js";
 
 type Input={x:number;y:number;look:number};
 export function WorldZeroGame(){
@@ -12,9 +13,9 @@ export function WorldZeroGame(){
   const el=host.current,scene=new THREE.Scene();
   scene.background=new THREE.Color(0x91a9ad);scene.fog=new THREE.FogExp2(0x8fa3a0,.0024);
   // REALISM 25: a real 360° forest photograph now forms the entire horizon/canopy.
-  const panoLoader=new THREE.TextureLoader();
-  panoLoader.load("./real-assets/mossy_forest_panorama.jpg",tex=>{
-    tex.mapping=THREE.EquirectangularReflectionMapping;tex.colorSpace=THREE.SRGBColorSpace;
+  const panoLoader=new RGBELoader();
+  panoLoader.load("./real-assets/mossy_forest_panorama.hdr",tex=>{
+    tex.mapping=THREE.EquirectangularReflectionMapping;
     scene.background=tex;scene.environment=tex;
   });
   const camera=new THREE.PerspectiveCamera(62,1,.1,4000);
