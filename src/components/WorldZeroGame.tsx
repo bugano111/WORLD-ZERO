@@ -21,7 +21,7 @@ export function WorldZeroGame(){
   sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-180;sun.shadow.camera.right=180;sun.shadow.camera.top=180;sun.shadow.camera.bottom=-180;scene.add(sun);
 
   const H=(x:number,z:number)=>Math.sin(x*.009)*8+Math.cos(z*.012)*6+Math.sin((x+z)*.021)*2.2-Math.exp(-((x-40)**2+(z+60)**2)/18000)*13;
-  const geo=new THREE.PlaneGeometry(1800,1800,240,240);geo.rotateX(-Math.PI/2);
+  const geo=new THREE.PlaneGeometry(1800,1800,320,320);geo.rotateX(-Math.PI/2);
   const p=geo.attributes.position as THREE.BufferAttribute;const cols:number[]=[];
   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),y=H(x,z);p.setY(i,y);const rock=y>11,low=y<-5;const c=new THREE.Color(rock?0x696a62:low?0x4e6045:y>5?0x405b36:0x365532);const micro=Math.sin(x*.17)*Math.cos(z*.13)*.018+Math.sin((x-z)*.047)*.014;c.offsetHSL(micro*.18,micro*.5,micro);cols.push(c.r,c.g,c.b)}
   geo.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));geo.computeVertexNormals();
@@ -29,7 +29,7 @@ export function WorldZeroGame(){
 
   const cloudMat=new THREE.MeshStandardMaterial({color:0xffffff,transparent:true,opacity:.68,roughness:1,depthWrite:false});
   for(let i=0;i<18;i++){const cg=new THREE.Group();for(let q=0;q<5;q++){const cm=new THREE.Mesh(new THREE.SphereGeometry(7+(q%3)*3,12,8),cloudMat);cm.scale.set(2.2,.55,1);cm.position.set(q*7,Math.sin(q)*2,0);cg.add(cm)}cg.position.set(-300+(i%6)*125,90+(i%3)*9,-260+Math.floor(i/6)*190);scene.add(cg)}
-  const water=new THREE.Mesh(new THREE.PlaneGeometry(1100,520),new THREE.MeshPhysicalMaterial({color:0x284f5c,roughness:.08,metalness:0,transparent:true,opacity:.82,clearcoat:1,clearcoatRoughness:.08}));
+  const water=new THREE.Mesh(new THREE.PlaneGeometry(1100,520),new THREE.MeshPhysicalMaterial({color:0x284f5c,roughness:.045,metalness:.02,transparent:true,opacity:.76,clearcoat:1,clearcoatRoughness:.025,ior:1.333}));
   water.rotation.x=-Math.PI/2;water.position.set(260,-6.2,-470);scene.add(water);
 
   const bark=new THREE.MeshStandardMaterial({color:0x3c2b20,roughness:1});
@@ -52,6 +52,10 @@ export function WorldZeroGame(){
   const arm=(x:number)=>{const m=new THREE.Mesh(new THREE.CapsuleGeometry(.115,.98,8,12),skin);m.position.set(x,2.05,0);human.add(m);return m};
   const leg=(x:number)=>{const m=new THREE.Mesh(new THREE.CapsuleGeometry(.145,1.08,8,12),pants);m.position.set(x,.72,0);human.add(m);return m};
   const la=arm(-.62),ra=arm(.62),ll=leg(-.25),rl=leg(.25);
+  la.rotation.z=-.08;ra.rotation.z=.08;
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.14,.16,.22,12),skin);neck.position.y=2.94;human.add(neck);
+  const shoulder=new THREE.Mesh(new THREE.CapsuleGeometry(.16,.72,8,12),cloth);shoulder.rotation.z=Math.PI/2;shoulder.position.y=2.55;human.add(shoulder);
+  const hip=new THREE.Mesh(new THREE.CapsuleGeometry(.29,.32,8,12),pants);hip.rotation.z=Math.PI/2;hip.position.y=1.25;human.add(hip);
   const hair=new THREE.Mesh(new THREE.SphereGeometry(.39,16,10,0,Math.PI*2,0,Math.PI*.48),new THREE.MeshStandardMaterial({color:0x2b201a,roughness:1}));hair.position.y=3.47;human.add(hair);
   const shoeMat=new THREE.MeshStandardMaterial({color:0x171717,roughness:.85});
   const shoeL=new THREE.Mesh(new THREE.BoxGeometry(.34,.18,.58),shoeMat),shoeR=shoeL.clone();shoeL.position.set(-.25,.08,.12);shoeR.position.set(.25,.08,.12);human.add(shoeL,shoeR);
@@ -80,6 +84,8 @@ export function WorldZeroGame(){
     const sim={temperature:18,humidity:.58,wind:.22,soilMoisture:.62,forestHealth:1,pollution:0};
   const birdMat=new THREE.MeshStandardMaterial({color:0x202426,roughness:.9});
   const birds:THREE.Group[]=[];for(let i=0;i<9;i++){const bg=new THREE.Group();const b1=new THREE.Mesh(new THREE.PlaneGeometry(.65,.16),birdMat),b2=b1.clone();b1.rotation.z=.25;b2.rotation.z=-.25;b1.position.x=-.32;b2.position.x=.32;bg.add(b1,b2);scene.add(bg);birds.push(bg)}
+  const patchMat=new THREE.MeshStandardMaterial({color:0x2f4b2d,transparent:true,opacity:.34,roughness:1,depthWrite:false});
+  for(let i=0;i<90;i++){const a=i*2.399,r=18+(i%45)*8,x=Math.cos(a)*r,z=Math.sin(a)*r;const pm=new THREE.Mesh(new THREE.CircleGeometry(3+(i%7)*1.4,18),patchMat);pm.rotation.x=-Math.PI/2;pm.position.set(x,H(x,z)+.025,z);pm.scale.set(1.8,.7,1);scene.add(pm)}
   const grassMat=new THREE.MeshStandardMaterial({color:0x496742,side:THREE.DoubleSide,roughness:1});
   const blade=new THREE.PlaneGeometry(.08,.7);blade.translate(0,.35,0);const inst=new THREE.InstancedMesh(blade,grassMat,18000),dummy=new THREE.Object3D();
   for(let i=0;i<18000;i++){const a=i*2.399,r=8+(i%240)*2.2,x=Math.cos(a)*r,z=Math.sin(a)*r;dummy.position.set(x,H(x,z),z);dummy.rotation.y=(i*.73)%6.28;dummy.scale.y=.55+(i%9)*.08;dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix)}scene.add(inst);
@@ -88,8 +94,11 @@ export function WorldZeroGame(){
    yaw+=j.look*dt*1.5;gatherCooldown=Math.max(0,gatherCooldown-dt);const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),right=new THREE.Vector3(forward.z,0,-forward.x);
    human.position.addScaledVector(forward,-j.y*dt*7);human.position.addScaledVector(right,-j.x*dt*7);human.position.y=H(human.position.x,human.position.z);
    let nr:"wood"|"stone"|"flint"|"fiber"|null=null,rd=3.2;for(const r of resourceRocks){if(r.visible){const d=Math.hypot(r.position.x-human.position.x,r.position.z-human.position.z);if(d<rd){rd=d;nr="stone"}}}if(!nr){let td=3.8;for(const o of scene.children){if(o instanceof THREE.Group&&o!==human&&o.visible){const d=Math.hypot(o.position.x-human.position.x,o.position.z-human.position.z);if(d<td){td=d;nr="wood"}}}}setNear(prev=>prev===nr?prev:nr);
-   const moving=Math.abs(j.x)+Math.abs(j.y)>.1,t=now*.008;if(moving&&audioCtx){stepTimer-=dt;if(stepTimer<=0){stepSound();stepTimer=.42}}if(windGain)windGain.gain.value=.018+sim.wind*.08;if(moving){la.rotation.x=Math.sin(t)*.7;ra.rotation.x=-Math.sin(t)*.7;ll.rotation.x=-Math.sin(t)*.55;rl.rotation.x=Math.sin(t)*.55}else{la.rotation.x=ra.rotation.x=ll.rotation.x=rl.rotation.x=0}
-   const back=forward.clone().multiplyScalar(16);camera.position.set(human.position.x-back.x,human.position.y+6.0,human.position.z-back.z);camera.lookAt(human.position.x,human.position.y+1.72,human.position.z);camera.updateMatrixWorld(true);
+   const speed=Math.min(1,Math.hypot(j.x,j.y)),moving=speed>.08,t=now*.0075;
+   if(moving&&audioCtx){stepTimer-=dt;if(stepTimer<=0){stepSound();stepTimer=.48-.12*speed}}if(windGain)windGain.gain.value=.018+sim.wind*.08;
+   if(moving){const gait=Math.sin(t),gait2=Math.sin(t+Math.PI);la.rotation.x=THREE.MathUtils.lerp(la.rotation.x,gait*.62,dt*12);ra.rotation.x=THREE.MathUtils.lerp(ra.rotation.x,gait2*.62,dt*12);ll.rotation.x=THREE.MathUtils.lerp(ll.rotation.x,gait2*.48,dt*12);rl.rotation.x=THREE.MathUtils.lerp(rl.rotation.x,gait*.48,dt*12);torso.rotation.z=THREE.MathUtils.lerp(torso.rotation.z,-j.x*.055,dt*7);torso.rotation.x=THREE.MathUtils.lerp(torso.rotation.x,.035,dt*7);human.position.y=H(human.position.x,human.position.z)+Math.abs(Math.sin(t))*0.035*speed;const moveAngle=Math.atan2(-j.x,-j.y)+yaw;human.rotation.y=THREE.MathUtils.lerp(human.rotation.y,moveAngle,Math.min(1,dt*8))}
+   else{la.rotation.x=THREE.MathUtils.lerp(la.rotation.x,0,dt*9);ra.rotation.x=THREE.MathUtils.lerp(ra.rotation.x,0,dt*9);ll.rotation.x=THREE.MathUtils.lerp(ll.rotation.x,0,dt*9);rl.rotation.x=THREE.MathUtils.lerp(rl.rotation.x,0,dt*9);torso.rotation.z=THREE.MathUtils.lerp(torso.rotation.z,0,dt*8);torso.rotation.x=THREE.MathUtils.lerp(torso.rotation.x,0,dt*8)}
+   const back=forward.clone().multiplyScalar(16),desiredCam=new THREE.Vector3(human.position.x-back.x,human.position.y+6.0,human.position.z-back.z);camera.position.lerp(desiredCam,1-Math.exp(-dt*9));camera.lookAt(human.position.x,human.position.y+1.72,human.position.z);camera.updateMatrixWorld(true);
    for(let i=0;i<insects.length;i++){const h=insectHome[i],a=now*.0007+i*1.73,r=.35+(i%5)*.16;const x=h.x+Math.cos(a*1.3)*r,z=h.z+Math.sin(a*.91)*r;insects[i].position.set(x,h.y+Math.sin(a*2.7)*.22,z)}
    for(let i=0;i<animals.length;i++){const a=now*.000025+i*1.7,r=48+i*3,x=Math.cos(a)*r,z=Math.sin(a*.83)*r;animals[i].position.set(x,H(x,z),z);animals[i].rotation.y=-a+.4}
    sim.humidity=.55+Math.sin(now*.00001)*.08;sim.wind=.18+Math.sin(now*.000017)*.1;
@@ -101,7 +110,7 @@ export function WorldZeroGame(){
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
   {!sound&&<button onPointerDown={()=>{setSound(true);window.dispatchEvent(new Event("worldzero-audio"))}} style={{position:"absolute",top:"max(72px,env(safe-area-inset-top))",right:14,zIndex:20,padding:"10px 14px",borderRadius:18,border:"1px solid #ffffff99",background:"#152018dd",color:"white",fontWeight:800}}>🔊 ZAPNOUT ZVUK</button>}
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 11 · VISUAL OVERHAUL</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 12 · MOTION + GRAPHICS</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
   {flint>=2&&!fire&&<button onPointerDown={e=>{e.preventDefault();setFire(true);setFlint(v=>v-2);setStatus("OBJEV: JISKRA → OHEŇ · BEZ OHNIŠTĚ HROZÍ POŽÁR");const flame=new THREE.Mesh(new THREE.ConeGeometry(.35,1.15,10),new THREE.MeshStandardMaterial({color:0xff6b18,emissive:0xff3300,emissiveIntensity:2}));flame.position.set(human.position.x,H(human.position.x,human.position.z)+.55,human.position.z);scene.add(flame);fires.push(flame)}} style={{position:"absolute",right:24,bottom:"max(210px,calc(env(safe-area-inset-bottom) + 210px))",padding:"12px 15px",borderRadius:18,border:"2px solid #ffd27a",background:"#5b281ddd",color:"white",fontWeight:800,zIndex:5}}>KŘESAT PAZOURKY</button>}
   {near&&<button onPointerDown={e=>{e.preventDefault();gather.current()}} style={{position:"absolute",right:24,bottom:"max(112px,calc(env(safe-area-inset-bottom) + 112px))",width:86,height:86,borderRadius:"50%",border:"2px solid #ffffffaa",background:"#1d2b20dd",color:"white",fontWeight:800,fontSize:13,zIndex:5}}>SBÍRAT<br/>{near==="stone"?"KÁMEN":near==="flint"?"PAZOUREK":near==="fiber"?"VLÁKNO":"DŘEVO"}</button>}
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
