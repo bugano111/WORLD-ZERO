@@ -24,7 +24,7 @@ export function WorldZeroGame(){
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.0;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xb9cbc2,0x182018,.42));
-  const sun=new THREE.DirectionalLight(0xffe3b0,3.35);sun.position.set(-90,140,55);sun.castShadow=true;
+  const sun=new THREE.DirectionalLight(0xffddb0,3.0);sun.position.set(-70,115,42);sun.castShadow=true;
   sun.shadow.mapSize.set(4096,4096);sun.shadow.bias=-.00008;sun.shadow.normalBias=.018;sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;scene.add(sun);
 
   const H=(x:number,z:number)=>Math.sin(x*.0045)*6+Math.cos(z*.006)*4+Math.sin((x+z)*.012)*1.15-Math.exp(-((x-40)**2+(z+60)**2)/18000)*13;
@@ -39,6 +39,13 @@ export function WorldZeroGame(){
   groundMat.normalMap=prep(tl.load("./real-assets/forest_floor_nor_gl_1k.jpg"));groundMat.normalScale.set(1.7,1.7);
   groundMat.roughnessMap=prep(tl.load("./real-assets/forest_floor_rough_1k.jpg"));
   const ground=new THREE.Mesh(geo,groundMat);ground.receiveShadow=true;scene.add(ground);
+  // REALISM 36: subtle wet moss floor layer breaks visible texture repetition near the player.
+  const mossDetail=new THREE.Mesh(
+    new THREE.CircleGeometry(42,64),
+    new THREE.MeshStandardMaterial({color:0x263c29,roughness:.76,metalness:0,transparent:true,opacity:.13,depthWrite:false})
+  );
+  mossDetail.rotation.x=-Math.PI/2;mossDetail.scale.set(1.45,.82,1);mossDetail.position.set(-9,H(-9,8)+.035,8);scene.add(mossDetail);
+
 
   // REALISM 33: volumetric-style canopy light shafts, mobile-cheap transparent geometry.
   const shaftMat=new THREE.MeshBasicMaterial({color:0xffe7b5,transparent:true,opacity:.045,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide});
@@ -110,6 +117,8 @@ export function WorldZeroGame(){
   hero("./real-assets/models/shrub_02.gltf",[[-4,-2,.78,.5],[4,-3,.72,2.1],[-7,1,.88,1.4],[7,2,.8,2.8],[-10,4,.95,.2],[11,5,.9,1.9]]);
   hero("./real-assets/models/weed_plant_02.gltf",[[-2,-1,.55,.4],[2,-1,.5,1.8],[-5,2,.62,2.6],[5,3,.58,.9],[-8,5,.66,1.3],[9,6,.64,2.5]]);
 
+
+  hero("./real-assets/models/rock_moss_set_01.gltf",[[-18,-14,.9,.2],[19,-16,.72,1.4],[-22,6,.82,2.5],[23,8,1.02,.7],[-16,22,.68,1.9],[18,25,.88,2.9]]);
 
   // REALISM 18: actual photogrammetry replaces the primitive near-field rocks.
   const realRockRoots:THREE.Object3D[]=[];
@@ -189,7 +198,7 @@ export function WorldZeroGame(){
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
   {!sound&&<button onPointerDown={()=>{setSound(true);window.dispatchEvent(new Event("worldzero-audio"))}} style={{position:"absolute",top:"max(72px,env(safe-area-inset-top))",right:14,zIndex:20,padding:"10px 14px",borderRadius:18,border:"1px solid #ffffff99",background:"#152018dd",color:"white",fontWeight:800}}>🔊 ZAPNOUT ZVUK</button>}
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 35 · FOREST MICRODETAIL</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 36 · NATURAL FOREST FLOOR</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
   {flint>=2&&!fire&&<button onPointerDown={e=>{e.preventDefault();setFire(true);setFlint(v=>v-2);setStatus("OBJEV: JISKRA → OHEŇ · BEZ OHNIŠTĚ HROZÍ POŽÁR");const flame=new THREE.Mesh(new THREE.ConeGeometry(.35,1.15,10),new THREE.MeshStandardMaterial({color:0xff6b18,emissive:0xff3300,emissiveIntensity:2}));flame.position.set(human.position.x,H(human.position.x,human.position.z)+.55,human.position.z);scene.add(flame);fires.push(flame)}} style={{position:"absolute",right:24,bottom:"max(210px,calc(env(safe-area-inset-bottom) + 210px))",padding:"12px 15px",borderRadius:18,border:"2px solid #ffd27a",background:"#5b281ddd",color:"white",fontWeight:800,zIndex:5}}>KŘESAT PAZOURKY</button>}
   {near&&<button onPointerDown={e=>{e.preventDefault();gather.current()}} style={{position:"absolute",right:24,bottom:"max(112px,calc(env(safe-area-inset-bottom) + 112px))",width:86,height:86,borderRadius:"50%",border:"2px solid #ffffffaa",background:"#1d2b20dd",color:"white",fontWeight:800,fontSize:13,zIndex:5}}>SBÍRAT<br/>{near==="stone"?"KÁMEN":near==="flint"?"PAZOUREK":near==="fiber"?"VLÁKNO":"DŘEVO"}</button>}
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
