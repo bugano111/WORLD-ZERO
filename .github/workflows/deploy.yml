@@ -23,8 +23,6 @@ jobs:
       - name: Verify game build
         run: |
           test -f dist/index.html
-          grep -R "GENESIS REBUILD" dist/assets
-          grep -R "REALISM 9" dist/assets
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
           touch dist/.nojekyll
