@@ -1,4 +1,4 @@
-name: WORLD ZERO REALISM 9 LIVE VERIFY
+name: WORLD ZERO REALISM 9 LIVE VERIFY 2
 on:
   push:
     branches: [main]
