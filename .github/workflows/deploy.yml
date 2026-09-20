@@ -139,6 +139,7 @@ jobs:
           cp -a dist/. /tmp/worldzero-r42/
           mkdir -p dist/r42
           cp -a /tmp/worldzero-r42/. dist/r42/
+          sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/r42/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/r42/#g' dist/r42/index.html
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
