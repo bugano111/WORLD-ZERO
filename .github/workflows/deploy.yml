@@ -42,7 +42,27 @@ jobs:
             u=pick(kind); ext=".png" if ".png" in u.lower().split("?")[0] else ".jpg"; out=f"public/real-assets/forest_floor_{kind}_1k{ext}"
             urllib.request.urlretrieve(u,out); print(out,os.path.getsize(out))
           PY
+      - name: Fetch CC0 glTF rock with dependencies
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request
+          aid="rock_moss_set_01"; H={"User-Agent":"WORLD-ZERO-Builder/1.0"}
+          with urllib.request.urlopen(urllib.request.Request("https://api.polyhaven.com/files/"+aid,headers=H),timeout=90) as r:d=json.load(r)
+          node=d.get("gltf",{}).get("1k",{}).get("gltf")
+          if not node: raise SystemExit("missing gltf/1k/gltf")
+          os.makedirs("public/real-assets/models",exist_ok=True)
+          def dl(url,path):
+            os.makedirs(os.path.dirname(path),exist_ok=True)
+            with urllib.request.urlopen(urllib.request.Request(url,headers=H),timeout=180) as r,open(path,"wb") as o:o.write(r.read())
+            print(path,os.path.getsize(path))
+          dl(node["url"],"public/real-assets/models/"+aid+".gltf")
+          for rel,info in node.get("include",{}).items(): dl(info["url"],"public/real-assets/models/"+rel)
+          PY
       - run: npm run build
+      - name: Verify real glTF rock
+        run: |
+          test -s dist/real-assets/models/rock_moss_set_01.gltf
+          test -s dist/real-assets/models/rock_moss_set_01.bin
       - name: Verify bundled PBR files
         run: |
           ls -lh dist/real-assets/
