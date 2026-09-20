@@ -1,4 +1,4 @@
-name: WORLD ZERO LIVING PLANET REALISM 9 PUBLISH
+name: WORLD ZERO REALISM 9 LIVE VERIFY
 on:
   push:
     branches: [main]
