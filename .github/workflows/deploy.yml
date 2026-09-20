@@ -25,10 +25,10 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "REALISM 13" dist/assets
+          grep -R "REALISM 14" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Publish dist to gh-pages
-        if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'pull_request'
+        if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'pull_request' || github.event_name == 'pull_request'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
