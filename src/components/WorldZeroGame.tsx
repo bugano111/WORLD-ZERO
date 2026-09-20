@@ -14,7 +14,7 @@ export function WorldZeroGame(){
   const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure=1.18;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
+  renderer.toneMappingExposure=1.28;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xd8ebf4,0x263321,.78));
   const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(10,24,16),new THREE.MeshBasicMaterial({color:0xffe7b0}));sunDisc.position.set(-260,330,-650);scene.add(sunDisc);const halo=new THREE.Mesh(new THREE.SphereGeometry(5.5,24,16),new THREE.MeshBasicMaterial({color:0xffe7b0,transparent:true,opacity:.07,depthWrite:false}));halo.position.copy(sunDisc.position);scene.add(halo);
   const sun=new THREE.DirectionalLight(0xfff1d2,4.2);sun.position.set(-90,140,55);sun.castShadow=true;
@@ -35,10 +35,10 @@ export function WorldZeroGame(){
   const bark=new THREE.MeshStandardMaterial({color:0x3c2b20,roughness:1});
   const leaf=[0x27452d,0x31533a,0x3c6041].map(v=>new THREE.MeshStandardMaterial({color:v,roughness:1,metalness:0}));
   const tree=(x:number,z:number,s=1)=>{const g=new THREE.Group(),h=(8+Math.random()*5)*s;
-   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.30*s,.72*s,h,14),bark);trunk.position.y=h/2;trunk.castShadow=true;g.add(trunk);
+   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.24*s,.78*s,h,18),bark);trunk.position.y=h/2;trunk.castShadow=true;g.add(trunk);
    for(let b=0;b<11;b++){const a=b*2.399,r=1.2+(b%4)*.55,y=h*.48+(b%5)*h*.09;
     const br=new THREE.Mesh(new THREE.CylinderGeometry(.055*s,.18*s,3.8*s,8),bark);br.position.set(Math.cos(a)*r*.45,y,Math.sin(a)*r*.45);br.rotation.z=Math.PI/2.7;br.rotation.y=-a;br.castShadow=true;g.add(br);
-    for(let q=0;q<3;q++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry((1.35+q*.25)*s,2),leaf[(b+q)%3]);crown.scale.set(1.65,.48,.82+(b%3)*.12);crown.rotation.set((b%2)*.18,a*.13,(q-1)*.11);crown.position.set(Math.cos(a)*(r+q*.65),y+q*.6,Math.sin(a)*(r+q*.65));crown.castShadow=true;g.add(crown)}
+    for(let q=0;q<3;q++){const crown=new THREE.Mesh(new THREE.IcosahedronGeometry((1.15+q*.28)*s,3),leaf[(b+q)%3]);crown.scale.set(1.65,.48,.82+(b%3)*.12);crown.rotation.set((b%2)*.18,a*.13,(q-1)*.11);crown.position.set(Math.cos(a)*(r+q*.65),y+q*.6,Math.sin(a)*(r+q*.65));crown.castShadow=true;g.add(crown)}
    }g.position.set(x,H(x,z),z);scene.add(g)};
   for(let i=0;i<230;i++){const a=i*2.399,r=35+(i%47)*6.8,x=Math.cos(a)*r+(i%5)*28,z=Math.sin(a)*r-35;if(Math.hypot(x,z)>24)tree(x,z,.7+(i%7)*.08)}
 
@@ -91,8 +91,8 @@ export function WorldZeroGame(){
   const debris=new THREE.InstancedMesh(debrisGeo,debrisMat,4200);debris.receiveShadow=true;
   for(let i=0;i<4200;i++){const a=i*2.399963,r=8+Math.sqrt(i/4200)*410,x=Math.cos(a)*r+(i%17-8)*1.7,z=Math.sin(a)*r+((i*7)%19-9)*1.5;dummy.position.set(x,H(x,z)+.035,z);dummy.rotation.set(-Math.PI/2,0,a);const s=.45+(i%11)*.055;dummy.scale.set(s,s,1);dummy.updateMatrix();debris.setMatrixAt(i,dummy.matrix)}scene.add(debris);
   const grassMat=new THREE.MeshStandardMaterial({color:0x496742,side:THREE.DoubleSide,roughness:1});
-  const blade=new THREE.PlaneGeometry(.08,.7);blade.translate(0,.35,0);const inst=new THREE.InstancedMesh(blade,grassMat,18000),dummy=new THREE.Object3D();
-  for(let i=0;i<18000;i++){const a=i*2.399,r=8+(i%240)*2.2,x=Math.cos(a)*r,z=Math.sin(a)*r;dummy.position.set(x,H(x,z),z);dummy.rotation.y=(i*.73)%6.28;dummy.scale.y=.55+(i%9)*.08;dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix)}scene.add(inst);
+  const blade=new THREE.PlaneGeometry(.08,.7);blade.translate(0,.35,0);const inst=new THREE.InstancedMesh(blade,grassMat,28000),dummy=new THREE.Object3D();
+  for(let i=0;i<28000;i++){const a=i*2.399,r=8+(i%240)*2.2,x=Math.cos(a)*r,z=Math.sin(a)*r;dummy.position.set(x,H(x,z),z);dummy.rotation.y=(i*.73)%6.28;dummy.scale.y=.55+(i%9)*.08;dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix)}scene.add(inst);
 
   let yaw=0,last=performance.now();const clock=(now:number)=>{const dt=Math.min(.04,(now-last)/1000);last=now;const j=input.current;
    yaw+=j.look*dt*1.5;gatherCooldown=Math.max(0,gatherCooldown-dt);const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),right=new THREE.Vector3(forward.z,0,-forward.x);
@@ -114,7 +114,7 @@ export function WorldZeroGame(){
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
   {!sound&&<button onPointerDown={()=>{setSound(true);window.dispatchEvent(new Event("worldzero-audio"))}} style={{position:"absolute",top:"max(72px,env(safe-area-inset-top))",right:14,zIndex:20,padding:"10px 14px",borderRadius:18,border:"1px solid #ffffff99",background:"#152018dd",color:"white",fontWeight:800}}>🔊 ZAPNOUT ZVUK</button>}
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 13 · PBR WORLD</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 14 · VISUAL LEAP</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
   {flint>=2&&!fire&&<button onPointerDown={e=>{e.preventDefault();setFire(true);setFlint(v=>v-2);setStatus("OBJEV: JISKRA → OHEŇ · BEZ OHNIŠTĚ HROZÍ POŽÁR");const flame=new THREE.Mesh(new THREE.ConeGeometry(.35,1.15,10),new THREE.MeshStandardMaterial({color:0xff6b18,emissive:0xff3300,emissiveIntensity:2}));flame.position.set(human.position.x,H(human.position.x,human.position.z)+.55,human.position.z);scene.add(flame);fires.push(flame)}} style={{position:"absolute",right:24,bottom:"max(210px,calc(env(safe-area-inset-bottom) + 210px))",padding:"12px 15px",borderRadius:18,border:"2px solid #ffd27a",background:"#5b281ddd",color:"white",fontWeight:800,zIndex:5}}>KŘESAT PAZOURKY</button>}
   {near&&<button onPointerDown={e=>{e.preventDefault();gather.current()}} style={{position:"absolute",right:24,bottom:"max(112px,calc(env(safe-area-inset-bottom) + 112px))",width:86,height:86,borderRadius:"50%",border:"2px solid #ffffffaa",background:"#1d2b20dd",color:"white",fontWeight:800,fontSize:13,zIndex:5}}>SBÍRAT<br/>{near==="stone"?"KÁMEN":near==="flint"?"PAZOUREK":near==="fiber"?"VLÁKNO":"DŘEVO"}</button>}
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
