@@ -91,7 +91,31 @@ jobs:
           dl(node["url"],"public/real-assets/models/"+aid+".gltf")
           for rel,info in node.get("include",{}).items(): dl(info["url"],"public/real-assets/models/"+rel)
           PY
+      - name: Fetch photoreal forest panorama
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request
+          aid="mossy_forest"; H={"User-Agent":"WORLD-ZERO-Builder/1.0"}
+          with urllib.request.urlopen(urllib.request.Request("https://api.polyhaven.com/files/"+aid,headers=H),timeout=90) as r:d=json.load(r)
+          found=[]
+          def walk(x,p=""):
+            if isinstance(x,dict):
+              if isinstance(x.get("url"),str): found.append((p,x["url"]))
+              for k,v in x.items(): walk(v,p+"/"+str(k))
+            elif isinstance(x,list):
+              for i,v in enumerate(x): walk(v,p+"/"+str(i))
+          walk(d)
+          cand=[(p,u) for p,u in found if (".jpg" in u.lower() or ".jpeg" in u.lower()) and ("2k" in (p+" "+u).lower() or "1k" in (p+" "+u).lower())]
+          if not cand: raise SystemExit("no forest jpg")
+          cand.sort(key=lambda q:(0 if "2k" in (q[0]+" "+q[1]).lower() else 1,len(q[1])))
+          u=cand[0][1]; os.makedirs("public/real-assets",exist_ok=True)
+          with urllib.request.urlopen(urllib.request.Request(u,headers=H),timeout=180) as r,open("public/real-assets/mossy_forest_panorama.jpg","wb") as o:o.write(r.read())
+          print(u,os.path.getsize("public/real-assets/mossy_forest_panorama.jpg"))
+          PY
       - run: npm run build
+      - name: Verify forest panorama
+        run: |
+          test -s dist/real-assets/mossy_forest_panorama.jpg
       - name: Verify hero tree
         run: |
           test -s dist/real-assets/models/tree_small_02.gltf
