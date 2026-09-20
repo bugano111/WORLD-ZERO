@@ -68,7 +68,8 @@ export function WorldZeroGame(){
   new GLTFLoader().load("./real-assets/models/tree_small_02.gltf",(gltf)=>{
     const src=gltf.scene;
     src.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
-    const spots=[[-7,10,1.35],[10,16,1.25],[-18,28,1.45]];\n    spots.forEach(([x,z,s],i)=>{const t=src.clone(true);t.position.set(x,H(x,z),z);t.scale.setScalar(s);t.rotation.y=i*1.618;scene.add(t);t.updateMatrixWorld(true);realTrees.push(t)});
+    const spots=[[-7,10,1.35],[10,16,1.25],[-18,28,1.45]];
+    spots.forEach(([x,z,s],i)=>{const t=src.clone(true);t.position.set(x,H(x,z),z);t.scale.setScalar(s);t.rotation.y=i*1.618;scene.add(t);t.updateMatrixWorld(true);realTrees.push(t)});
     // REALISM 30: deep forest rings — real trees dominate the full playable view, not just six props.
     for(let i=0;i<0;i++){const a=i*2.39996323,r=48+(i%7)*13,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.abs(x)<10&&z>-5&&z<35)continue;const t=src.clone(true);t.position.set(x,H(x,z),z);const s=1.45+(i%6)*.16;t.scale.setScalar(s);t.rotation.y=a*1.71;scene.add(t);realTrees.push(t)}
 
