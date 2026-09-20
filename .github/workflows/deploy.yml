@@ -115,7 +115,7 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "REALISM 22" dist/assets
+          grep -R "REALISM 23" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
