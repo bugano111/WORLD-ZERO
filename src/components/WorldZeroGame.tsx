@@ -18,14 +18,14 @@ export function WorldZeroGame(){
     tex.mapping=THREE.EquirectangularReflectionMapping;
     scene.background=tex;scene.environment=tex;
   });
-  const camera=new THREE.PerspectiveCamera(58,1,.1,4000);
+  const camera=new THREE.PerspectiveCamera(55,1,.08,2200);
   const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
   renderer.setPixelRatio(Math.min(devicePixelRatio,1.65));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=true;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.0;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xb9cbc2,0x182018,.42));
   const sun=new THREE.DirectionalLight(0xffe3b0,3.35);sun.position.set(-90,140,55);sun.castShadow=true;
-  sun.shadow.mapSize.set(4096,4096);sun.shadow.bias=-.00015;sun.shadow.normalBias=.025;sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;scene.add(sun);
+  sun.shadow.mapSize.set(4096,4096);sun.shadow.bias=-.00008;sun.shadow.normalBias=.018;sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;scene.add(sun);
 
   const H=(x:number,z:number)=>Math.sin(x*.0045)*6+Math.cos(z*.006)*4+Math.sin((x+z)*.012)*1.15-Math.exp(-((x-40)**2+(z+60)**2)/18000)*13;
   const geo=new THREE.PlaneGeometry(1800,1800,420,420);geo.rotateX(-Math.PI/2);
@@ -36,7 +36,7 @@ export function WorldZeroGame(){
   const tl=new THREE.TextureLoader();
   const prep=(t:THREE.Texture,srgb=false)=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(42,42);t.anisotropy=Math.min(16,renderer.capabilities.getMaxAnisotropy());if(srgb)t.colorSpace=THREE.SRGBColorSpace;t.needsUpdate=true;return t};
   groundMat.map=prep(tl.load("./real-assets/forest_floor_diff_1k.jpg"),true);
-  groundMat.normalMap=prep(tl.load("./real-assets/forest_floor_nor_gl_1k.jpg"));groundMat.normalScale.set(1.45,1.45);
+  groundMat.normalMap=prep(tl.load("./real-assets/forest_floor_nor_gl_1k.jpg"));groundMat.normalScale.set(1.7,1.7);
   groundMat.roughnessMap=prep(tl.load("./real-assets/forest_floor_rough_1k.jpg"));
   const ground=new THREE.Mesh(geo,groundMat);ground.receiveShadow=true;scene.add(ground);
 
@@ -82,6 +82,16 @@ export function WorldZeroGame(){
   });
   hero("./real-assets/models/rock_moss_set_01.gltf",[[-11,-2,.62,.4],[12,-1,.76,1.8],[-8,9,.54,2.6],[10,10,.68,.9]]);
   hero("./real-assets/models/tree_stump_01.gltf",[[-6,-11,.68,1.1],[8,-12,.82,2.4],[-15,8,.72,.5]]);
+
+  // REALISM 35: micro-ecology corridor. Real assets deliberately frame the walkable path without blocking it.
+  hero("./real-assets/models/weed_plant_02.gltf",[
+    [-3,-6,.38,.2],[3,-6,.42,1.1],[-4,-3,.34,2.2],[4,-2,.4,.7],
+    [-5,1,.44,1.8],[5,2,.36,2.9],[-6,5,.46,.5],[6,6,.41,1.5],
+    [-7,9,.5,2.5],[7,10,.45,.9],[-8,14,.48,1.2],[8,15,.52,2.3]
+  ]);
+  hero("./real-assets/models/shrub_02.gltf",[
+    [-8,-5,.62,.8],[8,-4,.68,2.1],[-9,3,.72,1.5],[9,5,.64,.3],[-10,11,.76,2.7],[10,13,.7,1.1]
+  ]);
 
   const rockMat=new THREE.MeshStandardMaterial({color:0x555952,roughness:.88,metalness:0});
   // REALISM 26: hand-composed photoreal foreground at spawn, so the first frame is unmistakably new.
@@ -179,7 +189,7 @@ export function WorldZeroGame(){
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
   {!sound&&<button onPointerDown={()=>{setSound(true);window.dispatchEvent(new Event("worldzero-audio"))}} style={{position:"absolute",top:"max(72px,env(safe-area-inset-top))",right:14,zIndex:20,padding:"10px 14px",borderRadius:18,border:"1px solid #ffffff99",background:"#152018dd",color:"white",fontWeight:800}}>🔊 ZAPNOUT ZVUK</button>}
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 34 · DENSE FOREST FLOOR</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · REALISM 35 · FOREST MICRODETAIL</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
   {flint>=2&&!fire&&<button onPointerDown={e=>{e.preventDefault();setFire(true);setFlint(v=>v-2);setStatus("OBJEV: JISKRA → OHEŇ · BEZ OHNIŠTĚ HROZÍ POŽÁR");const flame=new THREE.Mesh(new THREE.ConeGeometry(.35,1.15,10),new THREE.MeshStandardMaterial({color:0xff6b18,emissive:0xff3300,emissiveIntensity:2}));flame.position.set(human.position.x,H(human.position.x,human.position.z)+.55,human.position.z);scene.add(flame);fires.push(flame)}} style={{position:"absolute",right:24,bottom:"max(210px,calc(env(safe-area-inset-bottom) + 210px))",padding:"12px 15px",borderRadius:18,border:"2px solid #ffd27a",background:"#5b281ddd",color:"white",fontWeight:800,zIndex:5}}>KŘESAT PAZOURKY</button>}
   {near&&<button onPointerDown={e=>{e.preventDefault();gather.current()}} style={{position:"absolute",right:24,bottom:"max(112px,calc(env(safe-area-inset-bottom) + 112px))",width:86,height:86,borderRadius:"50%",border:"2px solid #ffffffaa",background:"#1d2b20dd",color:"white",fontWeight:800,fontSize:13,zIndex:5}}>SBÍRAT<br/>{near==="stone"?"KÁMEN":near==="flint"?"PAZOUREK":near==="fiber"?"VLÁKNO":"DŘEVO"}</button>}
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
