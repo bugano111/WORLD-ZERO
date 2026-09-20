@@ -131,6 +131,12 @@ jobs:
           cp -a dist /tmp/worldzero-r40
           mkdir -p dist/releases/realism40
           cp -a /tmp/worldzero-r40/. dist/releases/realism40/
+          python - <<'PY'
+          p="dist/releases/realism40/index.html"
+          s=open(p,encoding="utf-8").read()
+          s=s.replace('src="./assets/','src="./assets/').replace('href="./assets/','href="./assets/')
+          open(p,"w",encoding="utf-8").write(s)
+          PY
           grep -q "REALISM 40" dist/releases/realism40/assets/*.js
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
