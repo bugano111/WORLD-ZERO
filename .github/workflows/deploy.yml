@@ -1,4 +1,4 @@
-name: WORLD ZERO REALISM 10 LIVE
+name: WORLD ZERO CURRENT LIVE
 on:
   push:
     branches: [main]
@@ -127,7 +127,7 @@ jobs:
           grep -R "KŘESAT PAZOURKY" dist/assets
           grep -R "REALISM 40 · IPHONE STABLE" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
-      - name: Stamp immutable R53 deployment
+      - name: Stamp immutable R54 deployment
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -136,16 +136,20 @@ jobs:
           s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · REALISM 40 · IPHONE STABLE</div></body>')
           p.write_text(s)
           PY
-          rm -rf /tmp/worldzero-r53
-          mkdir -p /tmp/worldzero-r53
-          cp -a dist/. /tmp/worldzero-r53/
-          mkdir -p dist/r53
-          cp -a /tmp/worldzero-r53/. dist/r53/
-          sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/r53/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/r53/#g' dist/r53/index.html
-      - name: Create stable play URL R53
+          rm -rf /tmp/worldzero-r54
+          mkdir -p /tmp/worldzero-r54
+          cp -a dist/. /tmp/worldzero-r54/
+          mkdir -p dist/r54
+          cp -a /tmp/worldzero-r54/. dist/r54/
+          sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/r54/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/r54/#g' dist/r54/index.html
+      - name: Create stable play URL R54
         run: |
           cp dist/index.html dist/play.html
           test -s dist/play.html
+          mkdir -p dist/current
+          cp -a /tmp/worldzero-r54/. dist/current/
+          sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/current/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/current/#g' dist/current/index.html
+          test -s dist/current/index.html
       - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
