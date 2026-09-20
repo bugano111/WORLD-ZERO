@@ -94,12 +94,12 @@ jobs:
       - name: Fetch photoreal forest panorama
         run: |
           mkdir -p public/real-assets
-          curl -fL --retry 3 "https://dl.polyhaven.org/file/ph-assets/HDRIs/tonemapped/2k/mossy_forest_2k.jpg" -o public/real-assets/mossy_forest_panorama.jpg
-          test -s public/real-assets/mossy_forest_panorama.jpg
+          curl -fL --retry 3 "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/mossy_forest_1k.hdr" -o public/real-assets/mossy_forest_panorama.hdr
+          test -s public/real-assets/mossy_forest_panorama.hdr
       - run: npm run build
       - name: Verify forest panorama
         run: |
-          test -s dist/real-assets/mossy_forest_panorama.jpg
+          test -s dist/real-assets/mossy_forest_panorama.hdr
       - name: Verify hero tree
         run: |
           test -s dist/real-assets/models/tree_small_02.gltf
