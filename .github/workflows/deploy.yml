@@ -123,23 +123,23 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "BUILD 42" dist/assets
+          grep -R "BUILD 43" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
-      - name: Stamp immutable R42 deployment
+      - name: Stamp immutable R43 deployment
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R42</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R43</div></body>')
           p.write_text(s)
           PY
-          rm -rf /tmp/worldzero-r42
-          mkdir -p /tmp/worldzero-r42
-          cp -a dist/. /tmp/worldzero-r42/
-          mkdir -p dist/r42
-          cp -a /tmp/worldzero-r42/. dist/r42/
-          sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/r42/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/r42/#g' dist/r42/index.html
+          rm -rf /tmp/worldzero-r43
+          mkdir -p /tmp/worldzero-r43
+          cp -a dist/. /tmp/worldzero-r43/
+          mkdir -p dist/r43
+          cp -a /tmp/worldzero-r43/. dist/r43/
+          sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/r43/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/r43/#g' dist/r43/index.html
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
