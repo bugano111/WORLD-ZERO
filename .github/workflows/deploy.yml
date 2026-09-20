@@ -20,7 +20,11 @@ jobs:
       - run: npm install
       - run: npm run build
       - name: Verify GENESIS REBUILD marker
-        run: grep -R "GENESIS REBUILD" dist/assets
+        run: |
+          grep -R "GENESIS REBUILD" dist/assets
+          grep -R "REALISM 9" dist/assets
+          grep -R "LIVING PLANET" dist/assets
+          grep -R "KŘESAT PAZOURKY" dist/assets
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
