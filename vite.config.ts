@@ -7,9 +7,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        entryFileNames: "assets/world-zero-r41-[hash].js",
-        chunkFileNames: "assets/world-zero-r41-[hash].js",
-        assetFileNames: "assets/world-zero-r41-[hash][extname]"
+        entryFileNames: "assets/world-zero-r43-[hash].js",
+        chunkFileNames: "assets/world-zero-r43-[hash].js",
+        assetFileNames: "assets/world-zero-r43-[hash][extname]"
       }
     }
   }
