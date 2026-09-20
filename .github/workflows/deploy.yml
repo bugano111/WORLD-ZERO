@@ -19,7 +19,36 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Fetch real CC0 PBR ground
+        run: |
+          mkdir -p public/real-assets
+          curl -L --fail --retry 3 -o /tmp/files.json https://api.polyhaven.com/files/forest_floor
+          python - <<'PY'
+          import json, os, re, urllib.request
+          d=json.load(open("/tmp/files.json"))
+          found=[]
+          def walk(x,p=""):
+            if isinstance(x,dict):
+              if isinstance(x.get("url"),str): found.append((p,x["url"]))
+              for k,v in x.items(): walk(v,p+"/"+str(k))
+            elif isinstance(x,list):
+              for i,v in enumerate(x): walk(v,p+"/"+str(i))
+          walk(d)
+          def pick(kind):
+            cand=[u for p,u in found if "1k" in (p+" "+u).lower() and kind in (p+" "+u).lower() and re.search(r'\.(jpg|png)(\?|$)',u.lower())]
+            if not cand: raise SystemExit("missing "+kind)
+            return cand[0]
+          for kind in ("diff","nor_gl","rough"):
+            u=pick(kind); ext=".png" if ".png" in u.lower().split("?")[0] else ".jpg"; out=f"public/real-assets/forest_floor_{kind}_1k{ext}"
+            urllib.request.urlretrieve(u,out); print(out,os.path.getsize(out))
+          PY
       - run: npm run build
+      - name: Verify bundled PBR files
+        run: |
+          ls -lh dist/real-assets/
+          test -n "$(find dist/real-assets -type f -name 'forest_floor_diff_1k*' -size +10k)"
+          test -n "$(find dist/real-assets -type f -name 'forest_floor_nor_gl_1k*' -size +10k)"
+          test -n "$(find dist/real-assets -type f -name 'forest_floor_rough_1k*' -size +10k)"
       - name: Verify REALISM 10 release
         run: |
           test -f dist/index.html
@@ -28,7 +57,7 @@ jobs:
           grep -R "REALISM 15" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Publish dist to gh-pages
-        if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'pull_request' || github.event_name == 'pull_request' || github.event_name == 'pull_request'
+        if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
