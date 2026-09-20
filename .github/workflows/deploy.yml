@@ -136,6 +136,18 @@ jobs:
           s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · REALISM 40 · IPHONE STABLE</div></body>')
           p.write_text(s)
           PY
+      - name: Create isolated current-game URL
+        run: |
+          mkdir -p dist/play-r50
+          cp dist/index.html dist/play-r50/index.html
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("dist/play-r50/index.html")
+          s=p.read_text()
+          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R50 · NEW DEPLOY</div></body>')
+          p.write_text(s)
+          PY
+          grep -q "LIVE R50" dist/play-r50/index.html
       - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
