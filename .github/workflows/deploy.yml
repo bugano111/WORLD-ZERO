@@ -42,12 +42,12 @@ jobs:
             u=pick(kind); ext=".png" if ".png" in u.lower().split("?")[0] else ".jpg"; out=f"public/real-assets/forest_floor_{kind}_1k{ext}"
             urllib.request.urlretrieve(u,out); print(out,os.path.getsize(out))
           PY
-      - name: Fetch photoreal 3D forest models
+      - name: Fetch photoreal CC0 forest props
         run: |
           python - <<'PY'
           import json, os, re, urllib.request
           os.makedirs("public/real-assets/models",exist_ok=True)
-          UA={"User-Agent":"WORLD-ZERO-Builder/1.0"}
+          H={"User-Agent":"WORLD-ZERO-Builder/1.0"}
           def walk(x,p="",out=None):
             out=[] if out is None else out
             if isinstance(x,dict):
@@ -56,22 +56,22 @@ jobs:
             elif isinstance(x,list):
               for i,v in enumerate(x): walk(v,p+"/"+str(i),out)
             return out
-          for aid in ("tree_small_02","rock_09","tree_stump_01"):
-            req=urllib.request.Request("https://api.polyhaven.com/files/"+aid,headers=UA)
-            with urllib.request.urlopen(req,timeout=90) as r: d=json.load(r)
+          for aid in ("rock_moss_set_01","tree_stump_01"):
+            with urllib.request.urlopen(urllib.request.Request("https://api.polyhaven.com/files/"+aid,headers=H),timeout=90) as r:d=json.load(r)
             arr=walk(d)
-            cand=[(p,u) for p,u in arr if ("1k" in (p+" "+u).lower()) and (".gltf" in u.lower() or ".glb" in u.lower())]
-            if not cand: raise SystemExit("No 1K glTF for "+aid)
-            # Prefer self-contained GLB, otherwise first glTF asset.
-            cand.sort(key=lambda q:(0 if ".glb" in q[1].lower() else 1,len(q[1])))
-            p,u=cand[0]
-            ext=".glb" if ".glb" in u.lower().split("?")[0] else ".gltf"
-            out="public/real-assets/models/"+aid+ext
-            req=urllib.request.Request(u,headers=UA)
-            with urllib.request.urlopen(req,timeout=180) as r, open(out,"wb") as o:o.write(r.read())
-            print(aid,out,os.path.getsize(out),u)
+            # Prefer a small GLB; Poly Haven model pages explicitly provide glTF.
+            cand=[(p,u) for p,u in arr if ".glb" in u.lower()]
+            if not cand: raise SystemExit("No GLB for "+aid)
+            cand.sort(key=lambda q:(0 if "1k" in (q[0]+" "+q[1]).lower() else 1,len(q[1])))
+            u=cand[0][1]; out="public/real-assets/models/"+aid+".glb"
+            with urllib.request.urlopen(urllib.request.Request(u,headers=H),timeout=180) as r, open(out,"wb") as o:o.write(r.read())
+            print(aid,os.path.getsize(out),u)
           PY
       - run: npm run build
+      - name: Verify photoreal model assets
+        run: |
+          test -s public/real-assets/models/rock_moss_set_01.glb
+          test -s public/real-assets/models/tree_stump_01.glb
       - name: Verify bundled PBR files
         run: |
           ls -lh dist/real-assets/
