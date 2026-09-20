@@ -1,17 +1,17 @@
-name: WORLD ZERO REALISM 9 LIVE VERIFY 2
+name: WORLD ZERO Pages Live
 on:
   push:
     branches: [main]
-  workflow_dispatch:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 permissions:
   contents: write
 concurrency:
-  group: static-publish
+  group: world-zero-pages
   cancel-in-progress: true
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,14 +20,15 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
-      - name: Verify GENESIS REBUILD marker
+      - name: Verify game build
         run: |
+          test -f dist/index.html
           grep -R "GENESIS REBUILD" dist/assets
           grep -R "REALISM 9" dist/assets
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-      - name: Publish dist to gh-pages
-        if: github.event_name == 'push'
+          touch dist/.nojekyll
+      - name: Publish verified build
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
