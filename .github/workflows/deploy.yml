@@ -140,6 +140,10 @@ jobs:
           mkdir -p dist/r43
           cp -a /tmp/worldzero-r43/. dist/r43/
           sed -i 's#src="/WORLD-ZERO/#src="/WORLD-ZERO/r43/#g; s#href="/WORLD-ZERO/#href="/WORLD-ZERO/r43/#g' dist/r43/index.html
+      - name: Create stable play URL
+        run: |
+          cp dist/index.html dist/play.html
+          test -s dist/play.html
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
