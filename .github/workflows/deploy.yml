@@ -125,6 +125,17 @@ jobs:
           grep -R "KŘESAT PAZOURKY" dist/assets
           grep -R "REALISM 41" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
+      - name: Stamp immutable R42 deployment
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("dist/index.html")
+          s=p.read_text()
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R42</div></body>')
+          p.write_text(s)
+          PY
+          mkdir -p dist/r42
+          cp -a dist/. dist/r42/
       - name: Publish dist to gh-pages
         if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
