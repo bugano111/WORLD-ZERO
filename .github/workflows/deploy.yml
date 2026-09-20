@@ -6,7 +6,9 @@ on:
   pull_request:
     branches: [main]
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 concurrency:
   group: static-publish
   cancel-in-progress: true
@@ -144,13 +146,19 @@ jobs:
         run: |
           cp dist/index.html dist/play.html
           test -s dist/play.html
-      - name: Publish dist to gh-pages
+      - name: Configure GitHub Pages
         if: github.event_name == 'push'
-        uses: peaceiris/actions-gh-pages@v4
+        uses: actions/configure-pages@v5
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
-          force_orphan: true
+          enablement: true
+      - name: Upload GitHub Pages artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
+      - name: Deploy directly to GitHub Pages
+        if: github.event_name == 'push'
+        id: deployment
+        uses: actions/deploy-pages@v4
 
 # deployment trigger: realism15-pbr
