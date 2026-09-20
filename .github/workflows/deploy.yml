@@ -82,7 +82,7 @@ jobs:
         run: |
           python - <<'PY'
           import json, os, urllib.request
-          aid="tree_small_02"; H={"User-Agent":"WORLD-ZERO-Builder/1.0"}
+          aid="pine_sapling_small"; H={"User-Agent":"WORLD-ZERO-Builder/1.0"}
           with urllib.request.urlopen(urllib.request.Request("https://api.polyhaven.com/files/"+aid,headers=H),timeout=90) as r:d=json.load(r)
           root=d.get("gltf",{}); node=(root.get("1k",{}) or root.get("2k",{})).get("gltf")
           if not node: raise SystemExit("missing tree gltf")
@@ -104,7 +104,7 @@ jobs:
           test -s dist/real-assets/mossy_forest_panorama.hdr
       - name: Verify hero tree
         run: |
-          test -s dist/real-assets/models/tree_small_02.gltf
+          test -s dist/real-assets/models/pine_sapling_small.gltf
       - name: Verify vegetation models
         run: |
           test -s dist/real-assets/models/shrub_02.gltf
@@ -125,7 +125,7 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "REALISM 40 · IPHONE STABLE" dist/assets
+          grep -R "REALISM 41 · MOBILE REAL ASSETS" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Stamp current deployment
         run: |
@@ -133,7 +133,7 @@ jobs:
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · REALISM 40 · IPHONE STABLE</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · REALISM 41 · MOBILE REAL ASSETS</div></body>')
           p.write_text(s)
           PY
       - name: Create isolated current-game URL
@@ -163,4 +163,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# deployment trigger: REALISM40-direct-pages
+# deployment trigger: REALISM41-mobile-real-assets
