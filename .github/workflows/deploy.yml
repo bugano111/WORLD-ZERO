@@ -136,23 +136,20 @@ jobs:
           PY
       - name: Create isolated current-game URL
         run: |
-          mkdir -p dist/play-r54
-          cp dist/index.html dist/play-r54/index.html
-          cp -R dist/real-assets dist/play-r54/real-assets
+          mkdir -p dist/r55
+          cp dist/index.html dist/r55/index.html
           python - <<'PY'
           from pathlib import Path
-          p=Path("dist/play-r54/index.html")
+          p=Path("dist/r55/index.html")
           s=p.read_text()
-          # Isolated subpath must resolve Vite assets from the parent deployment root.
           s=s.replace('src="./assets/', 'src="../assets/').replace('href="./assets/', 'href="../assets/')
           s=s.replace('src="/WORLD-ZERO/assets/', 'src="../assets/').replace('href="/WORLD-ZERO/assets/', 'href="../assets/')
           s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R55 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
+          Path("dist/r55.html").write_text(s)
           PY
-          grep -q "LIVE R55" dist/play-r54/index.html
-          test -s dist/play-r54/real-assets/mossy_forest_panorama.hdr
-          test -s dist/play-r54/real-assets/models/pine_sapling_small.gltf
-          test -s dist/play-r54/real-assets/models/shrub_02.gltf
+          grep -q "LIVE R55" dist/r55/index.html
+          grep -q "LIVE R55" dist/r55.html
       - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
