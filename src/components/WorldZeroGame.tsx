@@ -6,7 +6,7 @@ import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader.js";
 type Input={x:number;y:number;look:number};
 export function WorldZeroGame(){
  const host=useRef<HTMLDivElement>(null),input=useRef<Input>({x:0,y:0,look:0});
- const [status,setStatus]=useState("REALISM 66 · REAL FOREST…"),[wood,setWood]=useState(0),[stone,setStone]=useState(0),[fiber,setFiber]=useState(0);
+ const [status,setStatus]=useState("REALISM 67 · REAL FOREST…"),[wood,setWood]=useState(0),[stone,setStone]=useState(0),[fiber,setFiber]=useState(0);
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
@@ -43,7 +43,19 @@ export function WorldZeroGame(){
   let idleAction:THREE.AnimationAction|null=null,walkAction:THREE.AnimationAction|null=null,runAction:THREE.AnimationAction|null=null,currentAction:THREE.AnimationAction|null=null;
   const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.18).play();if(currentAction)currentAction.fadeOut(.18);currentAction=next};
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/human.glb`,g=>{
-    humanModel=g.scene; humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+    humanModel=g.scene;
+    // R67 civilian pass: remove the source model's blue/avatar materials.
+    // Use physically-lit natural skin, then add ordinary civilian clothing.
+    const skin=new THREE.MeshStandardMaterial({color:0xc98f6b,roughness:.72,metalness:0});
+    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.material=skin}});
+    const shirtMat=new THREE.MeshStandardMaterial({color:0x444a45,roughness:.9});
+    const jeansMat=new THREE.MeshStandardMaterial({color:0x26394b,roughness:.92});
+    const shoeMat=new THREE.MeshStandardMaterial({color:0x252321,roughness:.88});
+    const shirt=new THREE.Mesh(new THREE.CapsuleGeometry(.25,.42,8,16),shirtMat); shirt.position.y=1.22; shirt.scale.set(1,.9,.55); shirt.castShadow=true;
+    const hips=new THREE.Mesh(new THREE.BoxGeometry(.42,.36,.25),jeansMat); hips.position.y=.83; hips.castShadow=true;
+    const shoeL=new THREE.Mesh(new THREE.BoxGeometry(.16,.11,.31),shoeMat); shoeL.position.set(-.13,.07,.05); shoeL.castShadow=true;
+    const shoeR=shoeL.clone(); shoeR.position.x=.13;
+    human.add(shirt,hips,shoeL,shoeR);
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     const scale=1.78/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
     human.add(humanModel);
@@ -51,7 +63,7 @@ export function WorldZeroGame(){
     const by=(n:string)=>g.animations.find(x=>x.name.toLowerCase().includes(n));
     idleAction=humanMixer.clipAction(by("idle")||g.animations[0]); walkAction=humanMixer.clipAction(by("walk")||g.animations[0]); runAction=humanMixer.clipAction(by("run")||by("walk")||g.animations[0]);
     currentAction=idleAction; idleAction.play();
-  },undefined,e=>{console.error("R61 human load failed",e);setStatus("R66 · CHYBA MODELU POSTAVY")});
+  },undefined,e=>{console.error("R61 human load failed",e);setStatus("R67 · CHYBA MODELU POSTAVY")});
   (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
   const clock=new THREE.Clock();
   let yaw=0,last=performance.now();
@@ -66,13 +78,13 @@ export function WorldZeroGame(){
    const t=clock.getElapsedTime();sun.position.x=-45+Math.sin(t*.015)*18;sun.position.z=-25+Math.cos(t*.015)*18;
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
    renderer.render(scene,camera);requestAnimationFrame(loop)};
-  const resize=()=>{const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);setStatus("REALISM 66 · DEN 1 · REAL FOREST");requestAnimationFrame(loop);
+  const resize=()=>{const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);setStatus("REALISM 67 · DEN 1 · REAL FOREST");requestAnimationFrame(loop);
   return()=>{removeEventListener("resize",resize);removeEventListener("keydown",kd);removeEventListener("keyup",ku);delete (window as any).__wzCollect;renderer.dispose();el.replaceChildren()}
  },[]);
  const joy=(e:React.PointerEvent<HTMLDivElement>)=>{const r=e.currentTarget.getBoundingClientRect();input.current.x=Math.max(-1,Math.min(1,(e.clientX-r.left-r.width/2)/(r.width*.35)));input.current.y=Math.max(-1,Math.min(1,(e.clientY-r.top-r.height/2)/(r.height*.35)))};
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12}}>{status} · LIVING PLANET · BUILD R66</div><div style={{fontSize:13,marginTop:5}}>🪵 Dřevo {wood} · 🪨 Kámen {stone} · 🌿 Vláknina {fiber}</div><div style={{fontSize:12,marginTop:6,background:"#0008",padding:"6px 8px",borderRadius:8}}>ÚKOL: Nasbírej 5 dřeva · {wood}/5</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12}}>{status} · LIVING PLANET · BUILD R67</div><div style={{fontSize:13,marginTop:5}}>🪵 Dřevo {wood} · 🪨 Kámen {stone} · 🌿 Vláknina {fiber}</div><div style={{fontSize:12,marginTop:6,background:"#0008",padding:"6px 8px",borderRadius:8}}>ÚKOL: Nasbírej 5 dřeva · {wood}/5</div></div>
   <button onPointerDown={()=>{const p=(window as any).__wzCollect?.();if(p===false){setStatus("PŘIBLIŽ SE K PADLÉMU DŘEVU");return}setWood(v=>v+1);if(wood>=4)setStatus("ÚKOL SPLNĚN · ODEMČENO: PRIMITIVNÍ TÁBOR");else setStatus("SEBRÁNO DŘEVO · POKRAČUJ V PRŮZKUMU")}} style={{position:"absolute",right:22,bottom:115,width:82,height:82,borderRadius:"50%",border:"2px solid #fff9",background:"#1d2b20dd",color:"white",fontWeight:800}}>SBÍRAT</button>
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
   <div style={{position:"absolute",right:22,bottom:"max(25px,env(safe-area-inset-bottom))",display:"flex",gap:10}}><button onPointerDown={()=>input.current.look=-1} onPointerUp={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>‹</button><button onPointerDown={()=>input.current.look=1} onPointerUp={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>›</button></div>
