@@ -120,40 +120,40 @@ jobs:
           test -n "$(find dist/real-assets -type f -name 'forest_floor_diff_1k*' -size +10k)"
           test -n "$(find dist/real-assets -type f -name 'forest_floor_nor_gl_1k*' -size +10k)"
           test -n "$(find dist/real-assets -type f -name 'forest_floor_rough_1k*' -size +10k)"
-      - name: Verify REALISM 55 release
+      - name: Verify REALISM 60 release
         run: |
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
-          grep -R "BUILD R59" dist/assets
+          grep -R "BUILD R60" dist/assets
       - name: Stamp current deployment
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R59 · CURRENT</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R60 · CURRENT</div></body>')
           p.write_text(s)
           PY
       - name: Create isolated current-game URL
         run: |
-          mkdir -p dist/r59
-          cp dist/index.html dist/r59/index.html
+          mkdir -p dist/r60
+          cp dist/index.html dist/r60/index.html
           python - <<'PY'
           from pathlib import Path
-          p=Path("dist/r59/index.html")
+          p=Path("dist/r60/index.html")
           s=p.read_text()
           s=s.replace('src="./assets/', 'src="../assets/').replace('href="./assets/', 'href="../assets/')
           s=s.replace('src="/WORLD-ZERO/assets/', 'src="../assets/').replace('href="/WORLD-ZERO/assets/', 'href="../assets/')
-          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R59 · CURRENT DEPLOY</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R60 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
-          Path("dist/r59.html").write_text(s)
+          Path("dist/r60.html").write_text(s)
           # Keep legacy R57 PLAY entry alive, but serve the current working game.
           legacy=Path("dist/r57"); legacy.mkdir(exist_ok=True)
-          Path("dist/r57/index.html").write_text(s.replace("LIVE R59","LIVE CURRENT · R59"))
-          Path("dist/r57.html").write_text(s.replace("LIVE R59","LIVE CURRENT · R59"))
+          Path("dist/r57/index.html").write_text(s.replace("LIVE R60","LIVE CURRENT · R60"))
+          Path("dist/r57.html").write_text(s.replace("LIVE R60","LIVE CURRENT · R60"))
           PY
-          grep -q "LIVE R59" dist/r59/index.html
-          grep -q "LIVE R59" dist/r59.html
+          grep -q "LIVE R60" dist/r60/index.html
+          grep -q "LIVE R60" dist/r60.html
           test -s dist/r57/index.html
           test -s dist/r57.html
       - name: Configure GitHub Pages
@@ -171,4 +171,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# deployment trigger: R59-playable-checkpoint
+# deployment trigger: R60-playable-checkpoint
