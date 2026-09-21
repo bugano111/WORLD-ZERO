@@ -22,16 +22,16 @@ export function WorldZeroGame(){
   for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i);pa.setY(i,H(x,z))}g.computeVertexNormals();
   const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1});
   const loadTex=(url:string,kind:"map"|"normalMap"|"roughnessMap")=>tex.load(url,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(70,70);if(kind==="map")t.colorSpace=THREE.SRGBColorSpace;(groundMat as any)[kind]=t;groundMat.needsUpdate=true});
-  loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_diff_1k.jpg","map");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_nor_gl_1k.jpg","normalMap");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_rough_1k.jpg","roughnessMap");
+  loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_diff_1k.jpg`,"map");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_nor_gl_1k.jpg`,"normalMap");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_rough_1k.jpg`,"roughnessMap");
   const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
-  new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr",hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.backgroundBlurriness=.18;});
+  new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.backgroundBlurriness=.18;});
   const gltf=new GLTFLoader();
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z),z);o.rotation.y=a*1.7;o.scale.setScalar(scale*(.72+(i%7)*.075));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf",95,12,250,2.6);
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf",130,7,170,1.2);
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf",170,4,120,.85);
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/tree_stump_01.gltf",24,14,150,1.4);
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf",45,9,160,1.25);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,95,12,250,2.6);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,130,7,170,1.2);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf`,170,4,120,.85);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/tree_stump_01.gltf`,24,14,150,1.4);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,45,9,160,1.25);
   // R59: no primitive fallback geometry; the forest is built only from real glTF assets.
   const collectibleWood:THREE.Mesh[]=[];
   const woodMat=new THREE.MeshStandardMaterial({color:0x5b3821,roughness:1});
@@ -42,7 +42,7 @@ export function WorldZeroGame(){
   let humanModel:THREE.Object3D|null=null,humanMixer:THREE.AnimationMixer|null=null;
   let idleAction:THREE.AnimationAction|null=null,walkAction:THREE.AnimationAction|null=null,runAction:THREE.AnimationAction|null=null,currentAction:THREE.AnimationAction|null=null;
   const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.18).play();if(currentAction)currentAction.fadeOut(.18);currentAction=next};
-  loader.load(`${import.meta.env.BASE_URL}real-assets/models/human.glb",g=>{
+  loader.load(`${import.meta.env.BASE_URL}real-assets/models/human.glb`,g=>{
     humanModel=g.scene; humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     const scale=1.78/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
