@@ -150,7 +150,7 @@ jobs:
           s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R53 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
           PY
-          grep -q "LIVE R52" dist/play-r53/index.html
+          grep -q "LIVE R53" dist/play-r53/index.html
       - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
