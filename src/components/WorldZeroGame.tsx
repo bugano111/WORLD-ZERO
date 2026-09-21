@@ -6,7 +6,7 @@ import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader.js";
 type Input={x:number;y:number;look:number};
 export function WorldZeroGame(){
  const host=useRef<HTMLDivElement>(null),input=useRef<Input>({x:0,y:0,look:0});
- const [status,setStatus]=useState("REALISM 58 · ŽIVÝ LES…"),[wood,setWood]=useState(0),[stone,setStone]=useState(0),[fiber,setFiber]=useState(0);
+ const [status,setStatus]=useState("REALISM 59 · REAL FOREST…"),[wood,setWood]=useState(0),[stone,setStone]=useState(0),[fiber,setFiber]=useState(0);
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
@@ -32,19 +32,14 @@ export function WorldZeroGame(){
   scatterModel("/WORLD-ZERO/real-assets/models/weed_plant_02.gltf",170,4,120,.85);
   scatterModel("/WORLD-ZERO/real-assets/models/tree_stump_01.gltf",24,14,150,1.4);
   scatterModel("/WORLD-ZERO/real-assets/models/rock_moss_set_01.gltf",45,9,160,1.25);
-  const trunkMat=new THREE.MeshStandardMaterial({color:0x4b3524,roughness:1}),leafMat=new THREE.MeshStandardMaterial({color:0x29452b,roughness:.92});
-  const trees:THREE.Group[]=[];
-  for(let i=0;i<45;i++){const a=i*2.399963,r=18+((i*47)%100)/100*260,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.abs(x)<7&&z>-12&&z<55)continue;
-   const t=new THREE.Group(),h=5+(i%9)*.55;const tr=new THREE.Mesh(new THREE.CylinderGeometry(.28,.48,h,8),trunkMat);tr.position.y=h/2;tr.castShadow=true;t.add(tr);
-   for(let q=0;q<3;q++){const c=new THREE.Mesh(new THREE.ConeGeometry(2.2-q*.35,3.8,9),leafMat);c.position.y=h-1+q*1.5;c.castShadow=true;t.add(c)}
-   t.position.set(x,H(x,z),z);t.rotation.y=a;t.scale.setScalar(.75+(i%7)*.06);scene.add(t);trees.push(t);
-  }
-  const rockMat=new THREE.MeshStandardMaterial({color:0x676c63,roughness:.96});const rocks:THREE.Mesh[]=[];
-  for(let i=0;i<25;i++){const a=i*3.73,r=10+((i*29)%100)/100*180,x=Math.cos(a)*r,z=Math.sin(a)*r;const m=new THREE.Mesh(new THREE.DodecahedronGeometry(.45+(i%5)*.16,0),rockMat);m.scale.set(1.4,.65,1);m.position.set(x,H(x,z)+.3,z);m.rotation.set(i*.2,i*.7,0);m.castShadow=true;scene.add(m);rocks.push(m)}
-  const grassMat=new THREE.MeshStandardMaterial({color:0x45623a,side:THREE.DoubleSide,roughness:1});
-  for(let i=0;i<250;i++){const a=i*2.399,r=4+Math.sqrt(i/700)*150,x=Math.cos(a)*r,z=Math.sin(a)*r;const blade=new THREE.Mesh(new THREE.PlaneGeometry(.16,.65),grassMat);blade.position.set(x,H(x,z)+.32,z);blade.rotation.y=a*1.7;scene.add(blade)}
+  // R59: no primitive fallback geometry; the forest is built only from real glTF assets.
+  const collectibleWood:THREE.Mesh[]=[];
+  const woodMat=new THREE.MeshStandardMaterial({color:0x5b3821,roughness:1});
+  for(let i=0;i<18;i++){const a=i*2.399,r=6+(i%9)*4.2,x=Math.cos(a)*r,z=Math.sin(a)*r;
+    const log=new THREE.Mesh(new THREE.CylinderGeometry(.13,.16,1.25,10),woodMat);log.rotation.z=Math.PI/2;log.rotation.y=a;log.position.set(x,H(x,z)+.18,z);log.castShadow=true;scene.add(log);collectibleWood.push(log)}
   const human=new THREE.Group(),cloth=new THREE.MeshStandardMaterial({color:0x343936,roughness:1}),skin=new THREE.MeshStandardMaterial({color:0xa87960,roughness:.9});
   const body=new THREE.Mesh(new THREE.CapsuleGeometry(.38,.9,6,10),cloth);body.position.y=1.65;const head=new THREE.Mesh(new THREE.SphereGeometry(.3,14,10),skin);head.position.y=2.65;human.add(body,head);human.position.set(0,H(0,0),0);scene.add(human);
+  (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
   const clock=new THREE.Clock();
   let yaw=0,last=performance.now();
   const birds:THREE.Mesh[]=[];const birdMat=new THREE.MeshBasicMaterial({color:0x171717});
@@ -58,14 +53,14 @@ export function WorldZeroGame(){
    const t=clock.getElapsedTime();sun.position.x=-45+Math.sin(t*.015)*18;sun.position.z=-25+Math.cos(t*.015)*18;
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
    renderer.render(scene,camera);requestAnimationFrame(loop)};
-  const resize=()=>{const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);setStatus("REALISM 58 · DEN 1 · ŽIVÝ LES");requestAnimationFrame(loop);
-  return()=>{removeEventListener("resize",resize);removeEventListener("keydown",kd);removeEventListener("keyup",ku);renderer.dispose();el.replaceChildren()}
+  const resize=()=>{const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);setStatus("REALISM 59 · DEN 1 · REAL FOREST");requestAnimationFrame(loop);
+  return()=>{removeEventListener("resize",resize);removeEventListener("keydown",kd);removeEventListener("keyup",ku);delete (window as any).__wzCollect;renderer.dispose();el.replaceChildren()}
  },[]);
  const joy=(e:React.PointerEvent<HTMLDivElement>)=>{const r=e.currentTarget.getBoundingClientRect();input.current.x=Math.max(-1,Math.min(1,(e.clientX-r.left-r.width/2)/(r.width*.35)));input.current.y=Math.max(-1,Math.min(1,(e.clientY-r.top-r.height/2)/(r.height*.35)))};
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12}}>{status} · LIVING PLANET · BUILD R58</div><div style={{fontSize:13,marginTop:5}}>🪵 Dřevo {wood} · 🪨 Kámen {stone} · 🌿 Vláknina {fiber}</div><div style={{fontSize:12,marginTop:6,background:"#0008",padding:"6px 8px",borderRadius:8}}>ÚKOL: Nasbírej 5 dřeva · {wood}/5</div></div>
-  <button onPointerDown={()=>{setWood(v=>v+1);if(wood>=4)setStatus("ÚKOL SPLNĚN · ODEMČENO: PRIMITIVNÍ TÁBOR");else setStatus("NALEZENO DŘEVO · POKRAČUJ V PRŮZKUMU")}} style={{position:"absolute",right:22,bottom:115,width:82,height:82,borderRadius:"50%",border:"2px solid #fff9",background:"#1d2b20dd",color:"white",fontWeight:800}}>SBÍRAT</button>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12}}>{status} · LIVING PLANET · BUILD R59</div><div style={{fontSize:13,marginTop:5}}>🪵 Dřevo {wood} · 🪨 Kámen {stone} · 🌿 Vláknina {fiber}</div><div style={{fontSize:12,marginTop:6,background:"#0008",padding:"6px 8px",borderRadius:8}}>ÚKOL: Nasbírej 5 dřeva · {wood}/5</div></div>
+  <button onPointerDown={()=>{const p=(window as any).__wzCollect?.();if(p===false){setStatus("PŘIBLIŽ SE K PADLÉMU DŘEVU");return}setWood(v=>v+1);if(wood>=4)setStatus("ÚKOL SPLNĚN · ODEMČENO: PRIMITIVNÍ TÁBOR");else setStatus("SEBRÁNO DŘEVO · POKRAČUJ V PRŮZKUMU")}} style={{position:"absolute",right:22,bottom:115,width:82,height:82,borderRadius:"50%",border:"2px solid #fff9",background:"#1d2b20dd",color:"white",fontWeight:800}}>SBÍRAT</button>
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
   <div style={{position:"absolute",right:22,bottom:"max(25px,env(safe-area-inset-bottom))",display:"flex",gap:10}}><button onPointerDown={()=>input.current.look=-1} onPointerUp={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>‹</button><button onPointerDown={()=>input.current.look=1} onPointerUp={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>›</button></div>
  </main>
