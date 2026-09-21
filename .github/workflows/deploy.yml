@@ -120,12 +120,12 @@ jobs:
           test -n "$(find dist/real-assets -type f -name 'forest_floor_diff_1k*' -size +10k)"
           test -n "$(find dist/real-assets -type f -name 'forest_floor_nor_gl_1k*' -size +10k)"
           test -n "$(find dist/real-assets -type f -name 'forest_floor_rough_1k*' -size +10k)"
-      - name: Verify REALISM 10 release
+      - name: Verify REALISM 55 release
         run: |
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "BUILD R54" dist/assets
+          grep -R "BUILD R55" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Stamp current deployment
         run: |
@@ -133,7 +133,7 @@ jobs:
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R54 · CURRENT</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R55 · CURRENT</div></body>')
           p.write_text(s)
           PY
       - name: Create isolated current-game URL
@@ -148,10 +148,10 @@ jobs:
           # Isolated subpath must resolve Vite assets from the parent deployment root.
           s=s.replace('src="./assets/', 'src="../assets/').replace('href="./assets/', 'href="../assets/')
           s=s.replace('src="/WORLD-ZERO/assets/', 'src="../assets/').replace('href="/WORLD-ZERO/assets/', 'href="../assets/')
-          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R54 · CURRENT DEPLOY</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R55 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
           PY
-          grep -q "LIVE R54" dist/play-r54/index.html
+          grep -q "LIVE R55" dist/play-r54/index.html
           test -s dist/play-r54/real-assets/mossy_forest_panorama.hdr
           test -s dist/play-r54/real-assets/models/pine_sapling_small.gltf
           test -s dist/play-r54/real-assets/models/shrub_02.gltf
@@ -170,4 +170,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# deployment trigger: R54-fix-runtime-assets
+# deployment trigger: R55-playable-checkpoint
