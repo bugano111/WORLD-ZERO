@@ -6,7 +6,7 @@ import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader.js";
 type Input={x:number;y:number;look:number};
 export function WorldZeroGame(){
  const host=useRef<HTMLDivElement>(null),input=useRef<Input>({x:0,y:0,look:0});
- const [status,setStatus]=useState("REALISM 56 · NAČÍTÁM REALISTICKÝ SVĚT…"),[wood,setWood]=useState(0),[stone,setStone]=useState(0);
+ const [status,setStatus]=useState("REALISM 57 · NAČÍTÁM REALISTICKÝ SVĚT…"),[wood,setWood]=useState(0),[stone,setStone]=useState(0);
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
@@ -51,13 +51,13 @@ export function WorldZeroGame(){
   const loop=(now:number)=>{const dt=Math.min(.04,(now-last)/1000);last=now;const j=input.current;yaw+=j.look*dt*1.8;const f=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),r=new THREE.Vector3(f.z,0,-f.x);
    human.position.addScaledVector(f,-j.y*dt*6);human.position.addScaledVector(r,-j.x*dt*6);human.position.y=H(human.position.x,human.position.z);if(Math.hypot(j.x,j.y)>.05)human.rotation.y=Math.atan2(-j.x,-j.y)+yaw;
    const cam=human.position.clone().addScaledVector(f,-11);cam.y+=4.8;camera.position.lerp(cam,1-Math.exp(-dt*8));camera.lookAt(human.position.x,human.position.y+1.5,human.position.z);renderer.render(scene,camera);requestAnimationFrame(loop)};
-  const resize=()=>{const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);setStatus("REALISM 56 · DEN 1 · REAL FOREST");requestAnimationFrame(loop);
+  const resize=()=>{const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);setStatus("REALISM 57 · DEN 1 · REAL FOREST");requestAnimationFrame(loop);
   return()=>{removeEventListener("resize",resize);removeEventListener("keydown",kd);removeEventListener("keyup",ku);renderer.dispose();el.replaceChildren()}
  },[]);
  const joy=(e:React.PointerEvent<HTMLDivElement>)=>{const r=e.currentTarget.getBoundingClientRect();input.current.x=Math.max(-1,Math.min(1,(e.clientX-r.left-r.width/2)/(r.width*.35)));input.current.y=Math.max(-1,Math.min(1,(e.clientY-r.top-r.height/2)/(r.height*.35)))};
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12}}>{status} · LIVING PLANET · BUILD R56</div><div style={{fontSize:13,marginTop:5}}>Dřevo {wood} · Kámen {stone}</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12}}>{status} · LIVING PLANET · BUILD R57</div><div style={{fontSize:13,marginTop:5}}>Dřevo {wood} · Kámen {stone}</div></div>
   <button onPointerDown={()=>{setWood(v=>v+1);setStatus("NALEZENO DŘEVO · OBJEVUJ A PŘEŽIJ")}} style={{position:"absolute",right:22,bottom:115,width:82,height:82,borderRadius:"50%",border:"2px solid #fff9",background:"#1d2b20dd",color:"white",fontWeight:800}}>SBÍRAT</button>
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
   <div style={{position:"absolute",right:22,bottom:"max(25px,env(safe-area-inset-bottom))",display:"flex",gap:10}}><button onPointerDown={()=>input.current.look=-1} onPointerUp={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>‹</button><button onPointerDown={()=>input.current.look=1} onPointerUp={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>›</button></div>
