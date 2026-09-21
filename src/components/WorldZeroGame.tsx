@@ -6,7 +6,7 @@ import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader.js";
 type Input={x:number;y:number;look:number};
 export function WorldZeroGame(){
  const host=useRef<HTMLDivElement>(null),input=useRef<Input>({x:0,y:0,look:0});
- const [status,setStatus]=useState("REALISM 38 · NAČÍTÁM NOVÝ SVĚT…"),[sound,setSound]=useState(false),[wood,setWood]=useState(0),[stone,setStone]=useState(0),[flint,setFlint]=useState(0),[fiber,setFiber]=useState(0),[fire,setFire]=useState(false),[near,setNear]=useState<"wood"|"stone"|"flint"|"fiber"|null>(null);
+ const [status,setStatus]=useState("REALISM 54 · NAČÍTÁM NOVÝ SVĚT…"),[sound,setSound]=useState(false),[wood,setWood]=useState(0),[stone,setStone]=useState(0),[flint,setFlint]=useState(0),[fiber,setFiber]=useState(0),[fire,setFire]=useState(false),[near,setNear]=useState<"wood"|"stone"|"flint"|"fiber"|null>(null);
  const gather=useRef<()=>void>(()=>{});
  useEffect(()=>{
   if(!host.current)return;
@@ -71,7 +71,7 @@ export function WorldZeroGame(){
     const spots=[[-9,13,1.25],[12,20,1.15]];
     spots.forEach(([x,z,s],i)=>{const t=src.clone(true);t.position.set(x,H(x,z),z);t.scale.setScalar(s);t.rotation.y=i*1.618;scene.add(t);t.updateMatrixWorld(true);realTrees.push(t)});
 
-  setStatus("REALISM 38 · DEN 1 · NOVÝ SVĚT");},undefined,e=>{console.error("HERO TREE",e);setStatus("CHYBA NAČTENÍ LESA")});
+  setStatus("REALISM 54 · DEN 1 · NOVÝ SVĚT");},undefined,e=>{console.error("HERO TREE",e);setStatus("CHYBA NAČTENÍ LESA")});
 
   // Dense real-model understory around spawn; this is what fills the camera foreground.
   const denseLoader=new GLTFLoader();
@@ -203,7 +203,7 @@ export function WorldZeroGame(){
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>
   {!sound&&<button onPointerDown={()=>{setSound(true);window.dispatchEvent(new Event("worldzero-audio"))}} style={{position:"absolute",top:"max(72px,env(safe-area-inset-top))",right:14,zIndex:20,padding:"10px 14px",borderRadius:18,border:"1px solid #ffffff99",background:"#152018dd",color:"white",fontWeight:800}}>🔊 ZAPNOUT ZVUK</button>}
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · BUILD R52 · LIVE 2026-09-21</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:20}}>WORLD ZERO</b><div style={{fontSize:12,opacity:.9}}>{status} · LIVING PLANET · DISCOVERY SIMULATION · BUILD R54 · LIVE 2026-09-21</div><div style={{marginTop:6,fontSize:13}}>Dřevo {wood} · Kámen {stone} · Pazourek {flint} · Vlákno {fiber}</div></div>
   {flint>=2&&!fire&&<button onPointerDown={e=>{e.preventDefault();setFire(true);setFlint(v=>v-2);setStatus("OBJEV: JISKRA → OHEŇ · BEZ OHNIŠTĚ HROZÍ POŽÁR");const flame=new THREE.Mesh(new THREE.ConeGeometry(.35,1.15,10),new THREE.MeshStandardMaterial({color:0xff6b18,emissive:0xff3300,emissiveIntensity:2}));flame.position.set(human.position.x,H(human.position.x,human.position.z)+.55,human.position.z);scene.add(flame);fires.push(flame)}} style={{position:"absolute",right:24,bottom:"max(210px,calc(env(safe-area-inset-bottom) + 210px))",padding:"12px 15px",borderRadius:18,border:"2px solid #ffd27a",background:"#5b281ddd",color:"white",fontWeight:800,zIndex:5}}>KŘESAT PAZOURKY</button>}
   {near&&<button onPointerDown={e=>{e.preventDefault();gather.current()}} style={{position:"absolute",right:24,bottom:"max(112px,calc(env(safe-area-inset-bottom) + 112px))",width:86,height:86,borderRadius:"50%",border:"2px solid #ffffffaa",background:"#1d2b20dd",color:"white",fontWeight:800,fontSize:13,zIndex:5}}>SBÍRAT<br/>{near==="stone"?"KÁMEN":near==="flint"?"PAZOUREK":near==="fiber"?"VLÁKNO":"DŘEVO"}</button>}
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
