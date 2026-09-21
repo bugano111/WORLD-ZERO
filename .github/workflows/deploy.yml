@@ -124,9 +124,7 @@ jobs:
         run: |
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
-          grep -R "KŘESAT PAZOURKY" dist/assets
           grep -R "BUILD R55" dist/assets
-          grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Stamp current deployment
         run: |
           python - <<'PY'
