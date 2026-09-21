@@ -147,9 +147,15 @@ jobs:
           s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R59 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
           Path("dist/r59.html").write_text(s)
+          # Keep legacy R57 PLAY entry alive, but serve the current working game.
+          legacy=Path("dist/r57"); legacy.mkdir(exist_ok=True)
+          Path("dist/r57/index.html").write_text(s.replace("LIVE R59","LIVE CURRENT · R59"))
+          Path("dist/r57.html").write_text(s.replace("LIVE R59","LIVE CURRENT · R59"))
           PY
           grep -q "LIVE R59" dist/r59/index.html
           grep -q "LIVE R59" dist/r59.html
+          test -s dist/r57/index.html
+          test -s dist/r57.html
       - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
