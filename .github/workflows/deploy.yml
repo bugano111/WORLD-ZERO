@@ -125,7 +125,7 @@ jobs:
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
           grep -R "KŘESAT PAZOURKY" dist/assets
-          grep -R "BUILD R52" dist/assets
+          grep -R "BUILD R54" dist/assets
           grep -R "ZAPNOUT ZVUK" dist/assets
       - name: Stamp current deployment
         run: |
@@ -133,24 +133,28 @@ jobs:
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R52 · CURRENT</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R54 · CURRENT</div></body>')
           p.write_text(s)
           PY
       - name: Create isolated current-game URL
         run: |
-          mkdir -p dist/play-r53
-          cp dist/index.html dist/play-r53/index.html
+          mkdir -p dist/play-r54
+          cp dist/index.html dist/play-r54/index.html
+          cp -R dist/real-assets dist/play-r54/real-assets
           python - <<'PY'
           from pathlib import Path
-          p=Path("dist/play-r53/index.html")
+          p=Path("dist/play-r54/index.html")
           s=p.read_text()
           # Isolated subpath must resolve Vite assets from the parent deployment root.
           s=s.replace('src="./assets/', 'src="../assets/').replace('href="./assets/', 'href="../assets/')
           s=s.replace('src="/WORLD-ZERO/assets/', 'src="../assets/').replace('href="/WORLD-ZERO/assets/', 'href="../assets/')
-          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R53 · CURRENT DEPLOY</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R54 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
           PY
-          grep -q "LIVE R53" dist/play-r53/index.html
+          grep -q "LIVE R54" dist/play-r54/index.html
+          test -s dist/play-r54/real-assets/mossy_forest_panorama.hdr
+          test -s dist/play-r54/real-assets/models/pine_sapling_small.gltf
+          test -s dist/play-r54/real-assets/models/shrub_02.gltf
       - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
@@ -166,4 +170,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# deployment trigger: R53-fix-relative-assets
+# deployment trigger: R54-fix-runtime-assets
