@@ -211,7 +211,7 @@ jobs:
         run: |
           mkdir -p dist/proof
           cp wz-r102-mobile.png dist/proof/latest-mobile.png
-          cp wz-r102-mobile.png dist/proof/r118-mobile.png
+          cp wz-r102-mobile.png dist/proof/r128-mobile.png
       - name: Upload visual proof
         uses: actions/upload-artifact@v4
         with:
