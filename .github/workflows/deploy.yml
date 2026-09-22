@@ -135,40 +135,40 @@ jobs:
         run: |
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
-          grep -R "BUILD R92" dist/assets
+          grep -R "BUILD R93" dist/assets
       - name: Stamp current deployment
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R92 · CURRENT</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R93 · CURRENT</div></body>')
           p.write_text(s)
           PY
       - name: Create isolated current-game URL
         run: |
-          mkdir -p dist/r92
-          cp dist/index.html dist/r92/index.html
+          mkdir -p dist/r93
+          cp dist/index.html dist/r93/index.html
           python - <<'PY'
           from pathlib import Path
-          p=Path("dist/r92/index.html")
+          p=Path("dist/r93/index.html")
           s=p.read_text()
           s=s.replace('src="./assets/', 'src="../assets/').replace('href="./assets/', 'href="../assets/')
           s=s.replace('src="/WORLD-ZERO/assets/', 'src="../assets/').replace('href="/WORLD-ZERO/assets/', 'href="../assets/')
-          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R92 · CURRENT DEPLOY</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R93 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
-          Path("dist/r92.html").write_text(s)
+          Path("dist/r93.html").write_text(s)
           # Keep legacy R57 PLAY entry alive, but serve the current working game.
           legacy=Path("dist/r57"); legacy.mkdir(exist_ok=True)
-          Path("dist/r57/index.html").write_text(s.replace("LIVE R92","LIVE CURRENT · R77"))
-          Path("dist/r57.html").write_text(s.replace("LIVE R92","LIVE CURRENT · R77"))
+          Path("dist/r57/index.html").write_text(s.replace("LIVE R93","LIVE CURRENT · R77"))
+          Path("dist/r57.html").write_text(s.replace("LIVE R93","LIVE CURRENT · R77"))
           # Keep R74 PLAY entry alive and point it at the current verified build.
           r74=Path("dist/r74"); r74.mkdir(exist_ok=True)
-          Path("dist/r74/index.html").write_text(s.replace("LIVE R92","LIVE CURRENT · R77"))
-          Path("dist/r74.html").write_text(s.replace("LIVE R92","LIVE CURRENT · R77"))
+          Path("dist/r74/index.html").write_text(s.replace("LIVE R93","LIVE CURRENT · R77"))
+          Path("dist/r74.html").write_text(s.replace("LIVE R93","LIVE CURRENT · R77"))
           PY
-          grep -q "LIVE R92" dist/r92/index.html
-          grep -q "LIVE R92" dist/r92.html
+          grep -q "LIVE R93" dist/r93/index.html
+          grep -q "LIVE R93" dist/r93.html
           test -s dist/r57/index.html
           test -s dist/r57.html
           test -s dist/r74/index.html
@@ -188,4 +188,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# deployment trigger: R92-real-human
+# deployment trigger: R93-real-human
