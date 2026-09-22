@@ -162,11 +162,18 @@ jobs:
           legacy=Path("dist/r57"); legacy.mkdir(exist_ok=True)
           Path("dist/r57/index.html").write_text(s.replace("LIVE R77","LIVE CURRENT · R77"))
           Path("dist/r57.html").write_text(s.replace("LIVE R77","LIVE CURRENT · R77"))
-          # Keep R74 PLAY entry alive and point it at the current verified build.\n          r74=Path("dist/r74"); r74.mkdir(exist_ok=True)\n          Path("dist/r74/index.html").write_text(s.replace("LIVE R77","LIVE CURRENT · R77"))\n          Path("dist/r74.html").write_text(s.replace("LIVE R77","LIVE CURRENT · R77"))\n          PY
+          # Keep R74 PLAY entry alive and point it at the current verified build.
+          r74=Path("dist/r74"); r74.mkdir(exist_ok=True)
+          Path("dist/r74/index.html").write_text(s.replace("LIVE R77","LIVE CURRENT · R77"))
+          Path("dist/r74.html").write_text(s.replace("LIVE R77","LIVE CURRENT · R77"))
+          PY
           grep -q "LIVE R77" dist/r77/index.html
           grep -q "LIVE R77" dist/r77.html
           test -s dist/r57/index.html
-          test -s dist/r57.html\n          test -s dist/r74/index.html\n          test -s dist/r74.html\n      - name: Configure GitHub Pages
+          test -s dist/r57.html
+          test -s dist/r74/index.html
+          test -s dist/r74.html
+      - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
         with:
