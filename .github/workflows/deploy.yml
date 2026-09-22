@@ -198,7 +198,7 @@ jobs:
             await page.waitForTimeout(8000);
             const canvas=page.locator('canvas');
             if(await canvas.count()!==1) throw new Error('WebGL canvas missing');
-            const box=await canvas.boundingBox();
+            const box=await canvas.evaluate(el=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height}});
             if(!box||box.width<300||box.height<600) throw new Error('Canvas invalid');
             const body=await page.locator('body').innerText();
             if(!body.includes('BUILD R102')) throw new Error('Wrong build rendered');
