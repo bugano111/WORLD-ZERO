@@ -23,7 +23,7 @@ export function WorldZeroGame(){
   const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0x68705a,roughness:.94});
   const loadTex=(url:string,kind:"map"|"normalMap"|"roughnessMap")=>tex.load(url,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(28,28);if(kind==="map")t.colorSpace=THREE.SRGBColorSpace;(groundMat as any)[kind]=t;groundMat.needsUpdate=true});
   /* R102: remove the orange leaf-photo albedo that dominated every previous build. */loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_nor_gl_1k.jpg`,"normalMap");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_rough_1k.jpg`,"roughnessMap");
-  const pos=g.attributes.position;const cols=[];const cc=new THREE.Color();for(let i=0;i<pos.count;i++){const y=pos.getZ(i);cc.set(y>13?0x6d7167:y<0?0x304a32:0x4b5d3f);cols.push(cc.r,cc.g,cc.b)}g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
+  const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
   // R104: alpine valley composition visible from spawn: reflective lake + layered mountain skyline.
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x4b8798,roughness:.16,metalness:.04,transparent:true,opacity:.88,clearcoat:.7,clearcoatRoughness:.18});
   const lake=new THREE.Mesh(new THREE.CircleGeometry(92,64),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-12.5,-142);scene.add(lake);
@@ -50,8 +50,8 @@ export function WorldZeroGame(){
   mountainBand(-445,-18,2.8,mountainMat,true);
   const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,180),new THREE.MeshBasicMaterial({color:0xc8d0cc,transparent:true,opacity:.055,depthWrite:false}));haze.position.set(0,42,-350);scene.add(haze);
   // cheap layered clouds for mobile golden-hour depth
-  const cloudMat=new THREE.MeshBasicMaterial({color:0xe7ecea,transparent:true,opacity:.20,depthWrite:false});
-  for(let i=0;i<11;i++){const cloud=new THREE.Mesh(new THREE.PlaneGeometry(38+(i%4)*18,5+(i%3)*2),cloudMat);cloud.position.set(-230+i*46,62+(i%4)*9,-300-(i%3)*35);scene.add(cloud);}
+  const cloudMat=new THREE.MeshBasicMaterial({color:0xe8ece8,transparent:true,opacity:.12,depthWrite:false});
+  for(let i=0;i<9;i++){const cloud=new THREE.Mesh(new THREE.CircleGeometry(12+(i%4)*5,24),cloudMat);cloud.scale.set(2.8+(i%3)*.5,.38+(i%2)*.12,1);cloud.position.set(-210+i*52,72+(i%4)*8,-320-(i%3)*38);scene.add(cloud);}
   // R114: overlook rocks now use the real mossy-rock glTF instead of primitive dodecahedrons.
   const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,14),new THREE.MeshBasicMaterial({color:0xffd49a}));sunDisc.position.set(-125,42,-260);scene.add(sunDisc);
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
@@ -92,10 +92,10 @@ export function WorldZeroGame(){
     human.add(humanModel);
     const pack=new THREE.Group();
     const packMat=new THREE.MeshStandardMaterial({color:0x202a25,roughness:.86});
-    const bag=new THREE.Mesh(new THREE.BoxGeometry(.46,.62,.20,2,3,2),packMat);bag.position.set(0,1.18,.18);bag.rotation.x=-.08;pack.add(bag);
-    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.10,.10,.48,10),packMat);roll.rotation.z=Math.PI/2;roll.position.set(0,1.52,.18);pack.add(roll);
+    const bag=new THREE.Mesh(new THREE.BoxGeometry(.40,.54,.16,2,3,2),packMat);bag.position.set(0,1.15,-.16);bag.rotation.x=-.08;pack.add(bag);
+    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.10,.10,.48,10),packMat);roll.rotation.z=Math.PI/2;roll.position.set(0,1.45,-.16);pack.add(roll);
     const strapMat=new THREE.MeshStandardMaterial({color:0x111713,roughness:1});
-    for(const sx of [-.17,.17]){const s=new THREE.Mesh(new THREE.BoxGeometry(.035,.58,.035),strapMat);s.position.set(sx,1.18,-.02);pack.add(s);}
+    for(const sx of [-.17,.17]){const s=new THREE.Mesh(new THREE.BoxGeometry(.035,.58,.035),strapMat);s.position.set(sx,1.16,-.08);pack.add(s);}
     human.add(pack);
     setReady(true); setStatus("REALISM 102 · DEN 1 · REAL FOREST");
     // R75 stability: preserve the model's own materials; no runtime material guessing.
@@ -119,7 +119,7 @@ export function WorldZeroGame(){
   const kd=(e:KeyboardEvent)=>key(e,1),ku=(e:KeyboardEvent)=>key(e,0);addEventListener("keydown",kd);addEventListener("keyup",ku);
   let raf=0;const loop=(now:number)=>{const dt=Math.min(.025,(now-last)/1000);last=now;const j=input.current;yaw+=j.look*dt*1.8;const f=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),r=new THREE.Vector3(f.z,0,-f.x);
    human.position.addScaledVector(f,-j.y*dt*6);human.position.addScaledVector(r,-j.x*dt*6);human.position.y=H(human.position.x,human.position.z);const moving=Math.abs(j.x)+Math.abs(j.y)>.05;humanMixer?.update(dt);setHumanAction(moving?walkAction:idleAction);human.rotation.y=yaw;if(Math.hypot(j.x,j.y)>.05)human.rotation.y=Math.atan2(-j.x,-j.y)+yaw;
-   human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-5.6);cam.y+=2.75;camera.position.lerp(cam,1-Math.exp(-dt*8));const target=human.position.clone().add(new THREE.Vector3(0,1.15,0)).addScaledVector(f,95);camera.lookAt(target);}
+   human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-6.6);cam.y+=3.05;camera.position.lerp(cam,1-Math.exp(-dt*8));const target=human.position.clone().add(new THREE.Vector3(0,1.15,0)).addScaledVector(f,95);camera.lookAt(target);}
    const t=clock.getElapsedTime();sun.position.x=-45+Math.sin(t*.015)*18;sun.position.z=-25+Math.cos(t*.015)*18;
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
    try{renderer.render(scene,camera)}catch(e){console.error("R102 render",e);setStatus("R102 · CHYBA RENDERU");setReady(true);return}raf=requestAnimationFrame(loop)};
