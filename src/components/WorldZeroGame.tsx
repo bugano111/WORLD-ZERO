@@ -17,7 +17,7 @@ export function WorldZeroGame(){
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xd9e7e4,0x182318,1.02));
   const sun=new THREE.DirectionalLight(0xffbd72,6.0);sun.position.set(-120,38,-80);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
-  const H=(x:number,z:number)=>{const ridge=Math.max(0,-z-70)*.16;const valley=-Math.exp(-((x-90)*(x-90))/15000-((z+150)*(z+150))/24000)*28;return Math.sin(x*.014)*4+Math.cos(z*.017)*3+Math.sin((x+z)*.006)*8+ridge+valley};
+  const H=(x:number,z:number)=>{const overlook=10*Math.exp(-(x*x)/5200-(z*z)/2600);const valley=-34*Math.exp(-((x-55)*(x-55))/18000-((z+145)*(z+145))/13000);const farRise=Math.max(0,-z-235)*.07;return 5+overlook+Math.sin(x*.013)*3.2+Math.cos(z*.015)*2.4+Math.sin((x+z)*.006)*5.5+valley+farRise};
   const g=new THREE.PlaneGeometry(700,700,100,100);g.rotateX(-Math.PI/2);const pa=g.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i);pa.setY(i,H(x,z))}g.computeVertexNormals();
   const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0x68705a,roughness:.94});
@@ -26,8 +26,8 @@ export function WorldZeroGame(){
   const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
   // R104: alpine valley composition visible from spawn: reflective lake + layered mountain skyline.
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x4b8798,roughness:.16,metalness:.04,transparent:true,opacity:.88,clearcoat:.7,clearcoatRoughness:.18});
-  const lake=new THREE.Mesh(new THREE.PlaneGeometry(260,92),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-5.8,-142);scene.add(lake);
-  const lake2=new THREE.Mesh(new THREE.PlaneGeometry(120,38),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-3.5,-188);scene.add(lake2);
+  const lake=new THREE.Mesh(new THREE.PlaneGeometry(260,92),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-12.5,-142);scene.add(lake);
+  const lake2=new THREE.Mesh(new THREE.PlaneGeometry(120,38),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-10.5,-188);scene.add(lake2);
   const mountainMat=new THREE.MeshStandardMaterial({color:0x59615f,roughness:.98,flatShading:true});
   const snowMat=new THREE.MeshStandardMaterial({color:0xe8edf0,roughness:.92,flatShading:true});
   for(let i=0;i<15;i++){const x=-310+i*44;const h=58+((i*37)%71);const z=-365-Math.abs(i-7)*5;
@@ -62,7 +62,7 @@ export function WorldZeroGame(){
   for(let i=0;i<18;i++){const a=i*2.399,r=6+(i%9)*4.2,x=Math.cos(a)*r,z=Math.sin(a)*r;
     const log=new THREE.Mesh(new THREE.CylinderGeometry(.055,.075,.65,10),woodMat);log.rotation.z=Math.PI/2;log.rotation.y=a;log.position.set(x,H(x,z)+.18,z);log.castShadow=true;scene.add(log);collectibleWood.push(log)}
   // R61: real skinned human GLB with embedded Idle/Walk/Run animations.
-  const human=new THREE.Group(); human.position.set(0,H(0,0),0); scene.add(human);
+  const human=new THREE.Group(); human.position.set(0,H(0,0)+.05,0); scene.add(human);
   let humanModel:THREE.Object3D|null=null,humanMixer:THREE.AnimationMixer|null=null;
   let idleAction:THREE.AnimationAction|null=null,walkAction:THREE.AnimationAction|null=null,runAction:THREE.AnimationAction|null=null,currentAction:THREE.AnimationAction|null=null;
   const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.18).play();if(currentAction)currentAction.fadeOut(.18);currentAction=next};
