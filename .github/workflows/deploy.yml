@@ -101,7 +101,7 @@ jobs:
       - name: Fetch real animated human
         run: |
           mkdir -p public/real-assets/models
-          curl -fL --retry 3 "https://readyplayerme.github.io/visage/male.glb" -o public/real-assets/models/human.glb
+          curl -fL --retry 3 "https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus%20Visemes" -o public/real-assets/models/human.glb
           test -s public/real-assets/models/human.glb
       - run: npm run build
       - name: Typecheck runtime identifiers
