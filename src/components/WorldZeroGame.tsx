@@ -23,11 +23,11 @@ export function WorldZeroGame(){
   const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0x68705a,roughness:.94});
   const loadTex=(url:string,kind:"map"|"normalMap"|"roughnessMap")=>tex.load(url,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(28,28);if(kind==="map")t.colorSpace=THREE.SRGBColorSpace;(groundMat as any)[kind]=t;groundMat.needsUpdate=true});
   /* R102: remove the orange leaf-photo albedo that dominated every previous build. */loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_nor_gl_1k.jpg`,"normalMap");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_rough_1k.jpg`,"roughnessMap");
-  const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
+  const pos=g.attributes.position;const cols=[];const cc=new THREE.Color();for(let i=0;i<pos.count;i++){const y=pos.getZ(i);cc.set(y>13?0x6d7167:y<0?0x304a32:0x4b5d3f);cols.push(cc.r,cc.g,cc.b)}g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
   // R104: alpine valley composition visible from spawn: reflective lake + layered mountain skyline.
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x4b8798,roughness:.16,metalness:.04,transparent:true,opacity:.88,clearcoat:.7,clearcoatRoughness:.18});
-  const lake=new THREE.Mesh(new THREE.PlaneGeometry(300,118),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-12.5,-142);scene.add(lake);
-  const lake2=new THREE.Mesh(new THREE.PlaneGeometry(120,38),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-10.5,-188);scene.add(lake2);
+  const lake=new THREE.Mesh(new THREE.CircleGeometry(92,64),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-12.5,-142);scene.add(lake);
+  const lake2=new THREE.Mesh(new THREE.CircleGeometry(42,48),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-10.5,-188);scene.add(lake2);
   const mountainMat=new THREE.MeshStandardMaterial({color:0x59615f,roughness:.98,flatShading:true});
   const snowMat=new THREE.MeshStandardMaterial({color:0xe8edf0,roughness:.92,flatShading:true});
   // R113: continuous irregular alpine ridges instead of obvious cone primitives.
