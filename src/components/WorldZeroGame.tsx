@@ -54,8 +54,8 @@ export function WorldZeroGame(){
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<22;i++){const a=-1.35+i*.125,r=48+(i%6)*3.0,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)+.05,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
 
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z),z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,mobile?95:320,105,320,24);
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?28:130,90,235,1.20);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,mobile?70:260,145,340,18);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?18:95,125,260,1.05);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf`,mobile?6:35,80,115,.42);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/tree_stump_01.gltf`,mobile?3:10,75,145,.72);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,mobile?12:45,70,220,.58);
