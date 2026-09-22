@@ -21,6 +21,10 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Install browser for visual smoke test
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
       - name: Fetch real CC0 PBR ground
         run: |
           mkdir -p public/real-assets
@@ -135,44 +139,78 @@ jobs:
         run: |
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
-          grep -R "BUILD R101" dist/assets
+          grep -R "BUILD R102" dist/assets
       - name: Stamp current deployment
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R101 · CURRENT</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R102 · CURRENT</div></body>')
           p.write_text(s)
           PY
       - name: Create isolated current-game URL
         run: |
-          mkdir -p dist/r101
-          cp dist/index.html dist/r101/index.html
+          mkdir -p dist/r102
+          cp dist/index.html dist/r102/index.html
           python - <<'PY'
           from pathlib import Path
-          p=Path("dist/r101/index.html")
+          p=Path("dist/r102/index.html")
           s=p.read_text()
           s=s.replace('src="./assets/', 'src="../assets/').replace('href="./assets/', 'href="../assets/')
           s=s.replace('src="/WORLD-ZERO/assets/', 'src="../assets/').replace('href="/WORLD-ZERO/assets/', 'href="../assets/')
-          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R101 · CURRENT DEPLOY</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R102 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
-          Path("dist/r101.html").write_text(s)
+          Path("dist/r102.html").write_text(s)
           # Keep legacy R57 PLAY entry alive, but serve the current working game.
           legacy=Path("dist/r57"); legacy.mkdir(exist_ok=True)
-          Path("dist/r57/index.html").write_text(s.replace("LIVE R101","LIVE CURRENT · R77"))
-          Path("dist/r57.html").write_text(s.replace("LIVE R101","LIVE CURRENT · R77"))
+          Path("dist/r57/index.html").write_text(s.replace("LIVE R102","LIVE CURRENT · R102"))
+          Path("dist/r57.html").write_text(s.replace("LIVE R102","LIVE CURRENT · R102"))
           # Keep R74 PLAY entry alive and point it at the current verified build.
           r74=Path("dist/r74"); r74.mkdir(exist_ok=True)
-          Path("dist/r74/index.html").write_text(s.replace("LIVE R101","LIVE CURRENT · R77"))
-          Path("dist/r74.html").write_text(s.replace("LIVE R101","LIVE CURRENT · R77"))
+          Path("dist/r74/index.html").write_text(s.replace("LIVE R102","LIVE CURRENT · R102"))
+          Path("dist/r74.html").write_text(s.replace("LIVE R102","LIVE CURRENT · R102"))
           PY
-          grep -q "LIVE R101" dist/r101/index.html
-          grep -q "LIVE R101" dist/r101.html
+          grep -q "LIVE R102" dist/r102/index.html
+          grep -q "LIVE R102" dist/r102.html
           test -s dist/r57/index.html
           test -s dist/r57.html
           test -s dist/r74/index.html
           test -s dist/r74.html
+      - name: Visual smoke test of built game
+        run: |
+          python3 -m http.server 4173 --directory dist >/tmp/wz-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          sleep 2
+          node - <<'JS'
+          const { chromium } = require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:430,height:932},deviceScaleFactor:1});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e)));
+            page.on('console',m=>{if(m.type()==='error') errors.push(m.text())});
+            await page.goto('http://127.0.0.1:4173/r102/',{waitUntil:'networkidle',timeout:90000});
+            await page.waitForTimeout(8000);
+            const canvas=page.locator('canvas');
+            if(await canvas.count()!==1) throw new Error('WebGL canvas missing');
+            const box=await canvas.boundingBox();
+            if(!box||box.width<300||box.height<600) throw new Error('Canvas invalid');
+            const body=await page.locator('body').innerText();
+            if(!body.includes('BUILD R102')) throw new Error('Wrong build rendered');
+            await page.screenshot({path:'wz-r102-mobile.png',fullPage:true});
+            console.log('visual screenshot created',box,'errors',errors);
+            if(errors.some(e=>/webgl|render|failed to load|404/i.test(e))) throw new Error(errors.join('\n'));
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - name: Upload visual proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: wz-r102-visual-proof
+          path: wz-r102-mobile.png
+          retention-days: 7
       - name: Configure GitHub Pages
         if: github.event_name == 'push'
         uses: actions/configure-pages@v5
@@ -188,4 +226,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# deployment trigger: R101-real-human
+# deployment trigger: R102-real-human
