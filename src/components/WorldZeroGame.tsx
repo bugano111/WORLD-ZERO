@@ -40,11 +40,7 @@ export function WorldZeroGame(){
   const snowRidgeMat=snowMat.clone();(snowRidgeMat as THREE.MeshStandardMaterial).transparent=true;(snowRidgeMat as THREE.MeshStandardMaterial).opacity=.92;
   ridge(-431,43,31,2.8,snowRidgeMat);
   const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,220),new THREE.MeshBasicMaterial({color:0xb8c8c9,transparent:true,opacity:.12,depthWrite:false}));haze.position.set(0,55,-330);scene.add(haze);
-  // R106: rocky alpine overlook around spawn, framing the valley instead of a flat empty foreground.
-  const overlookMat=new THREE.MeshStandardMaterial({color:0x62655d,roughness:.96,flatShading:true});
-  for(let i=0;i<28;i++){const a=-1.45+i*.105,r=7+(i%6)*1.55,x=Math.sin(a)*r,z=-Math.cos(a)*r-2;
-    const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.65+(i%5)*.23,0),overlookMat);rock.scale.set(1.4+(i%3)*.45,.55+(i%4)*.22,1+(i%2)*.4);rock.rotation.set(i*.31,i*.73,i*.17);rock.position.set(x,H(x,z)+.28,z);rock.castShadow=true;rock.receiveShadow=true;scene.add(rock);
-  }
+  // R114: overlook rocks now use the real mossy-rock glTF instead of primitive dodecahedrons.
   const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(4.2,16,12),new THREE.MeshBasicMaterial({color:0xffd69a}));sunDisc.position.set(-105,48,-260);scene.add(sunDisc);
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
   const mossMat=new THREE.MeshStandardMaterial({color:0x334b2a,roughness:1});
@@ -55,6 +51,8 @@ export function WorldZeroGame(){
   }
   if(!mobile)new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;},undefined,e=>console.warn("HDR",e));
   const gltf=new GLTFLoader();
+  gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<22;i++){const a=-1.35+i*.125,r=8+(i%6)*1.8,x=Math.sin(a)*r,z=-Math.cos(a)*r-3;const o=res.scene.clone(true);o.position.set(x,H(x,z)+.05,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.75+(i%5)*.18);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
+
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z),z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,mobile?190:500,34,320,34);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?65:240,28,235,1.45);
