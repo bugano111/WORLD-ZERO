@@ -10,14 +10,14 @@ export function WorldZeroGame(){
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x91a9b8);scene.fog=new THREE.FogExp2(0xa8aaa0,.0026);
+  scene.background=new THREE.Color(0x87a7bf);scene.fog=new THREE.FogExp2(0x9eaaa7,.0016);
   const camera=new THREE.PerspectiveCamera(60,1,.1,1600);
-  let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"default"});}catch(err){console.error(err);setStatus("R94 · WEBGL NELZE SPUSTIT");setReady(true);return;}
+  let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"default"});}catch(err){console.error(err);setStatus("R95 · WEBGL NELZE SPUSTIT");setReady(true);return;}
   const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=!mobile;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xcfe2df,0x182318,.88));
-  const sun=new THREE.DirectionalLight(0xffc982,4.5);sun.position.set(-90,42,-55);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
-  const H=(x:number,z:number)=>Math.sin(x*.018)*5.2+Math.cos(z*.021)*4.4+Math.sin((x+z)*.008)*7.5+Math.sin(Math.hypot(x,z)*.014)*3.5+Math.max(0,(Math.hypot(x-145,z+120)-80))*.055;
+  const sun=new THREE.DirectionalLight(0xffc77d,5.2);sun.position.set(-120,38,-80);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
+  const H=(x:number,z:number)=>Math.sin(x*.018)*5.2+Math.cos(z*.021)*4.4+Math.sin((x+z)*.008)*7.5+Math.sin(Math.hypot(x,z)*.014)*3.5+Math.max(0,Math.abs(x+135)-55)*.11+Math.max(0,-z-95)*.10;
   const g=new THREE.PlaneGeometry(700,700,100,100);g.rotateX(-Math.PI/2);const pa=g.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i);pa.setY(i,H(x,z))}g.computeVertexNormals();
   const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1});
@@ -58,7 +58,7 @@ export function WorldZeroGame(){
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     const scale=1.92/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
     human.add(humanModel);
-    setReady(true); setStatus("REALISM 94 · DEN 1 · REAL FOREST");
+    setReady(true); setStatus("REALISM 95 · DEN 1 · REAL FOREST");
     // R75 stability: preserve the model's own materials; no runtime material guessing.
     humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;}});
     // R74: use only the source human mesh. Do not bolt primitive spheres/cylinders onto a body.
@@ -67,9 +67,9 @@ export function WorldZeroGame(){
     const by=(n:string)=>g.animations.find(x=>x.name.toLowerCase().includes(n));
     idleAction=by("idle")?humanMixer.clipAction(by("idle")!):null; walkAction=by("walk")?humanMixer.clipAction(by("walk")!):null; runAction=by("run")?humanMixer.clipAction(by("run")!):walkAction;
     currentAction=idleAction; idleAction?.play();}
-  },undefined,e=>{console.error("R61 human load failed",e);setStatus("R94 · CHYBA MODELU POSTAVY");setReady(true)});
+  },undefined,e=>{console.error("R61 human load failed",e);setStatus("R95 · CHYBA MODELU POSTAVY");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
-  const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 94 · SVĚT SPUŠTĚN")},6500);
+  const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 95 · SVĚT SPUŠTĚN")},6500);
   (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
   const clock=new THREE.Clock();
   let yaw=0,last=performance.now();
@@ -83,14 +83,14 @@ export function WorldZeroGame(){
    human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-4.9);cam.y+=2.55;camera.position.lerp(cam,1-Math.exp(-dt*8));camera.lookAt(human.position.x,human.position.y+1.5,human.position.z);}
    const t=clock.getElapsedTime();sun.position.x=-45+Math.sin(t*.015)*18;sun.position.z=-25+Math.cos(t*.015)*18;
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
-   try{renderer.render(scene,camera)}catch(e){console.error("R94 render",e);setStatus("R94 · CHYBA RENDERU");setReady(true);return}raf=requestAnimationFrame(loop)};
+   try{renderer.render(scene,camera)}catch(e){console.error("R95 render",e);setStatus("R95 · CHYBA RENDERU");setReady(true);return}raf=requestAnimationFrame(loop)};
   const resize=()=>{const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);setStatus("REALISM 88 · DEN 1 · REAL FOREST");requestAnimationFrame(loop);
   return()=>{cancelAnimationFrame(raf);removeEventListener("resize",resize);removeEventListener("keydown",kd);removeEventListener("keyup",ku);delete (window as any).__wzCollect;clearTimeout(bootGuard);renderer.dispose();el.replaceChildren()}
  },[]);
  const joy=(e:React.PointerEvent<HTMLDivElement>)=>{const r=e.currentTarget.getBoundingClientRect();input.current.x=Math.max(-1,Math.min(1,(e.clientX-r.left-r.width/2)/(r.width*.35)));input.current.y=Math.max(-1,Math.min(1,(e.clientY-r.top-r.height/2)/(r.height*.35)))};
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
   <div ref={host} style={{position:"absolute",inset:0}}/>{!ready&&<div style={{position:"absolute",inset:0,zIndex:50,display:"grid",placeItems:"center",background:"#101813",color:"white",fontFamily:"system-ui",fontWeight:800,fontSize:20}}>WORLD ZERO<br/><span style={{fontSize:13,fontWeight:500}}>Načítám svět a postavu…</span></div>}
-  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:26,letterSpacing:1}}>WORLD ZERO</b><div style={{fontSize:12,letterSpacing:.6}}>{status} · LIVING PLANET · BUILD R94</div><div style={{fontSize:13,marginTop:5}}>🪵 Dřevo {wood} · 🪨 Kámen {stone} · 🌿 Vláknina {fiber}</div><div style={{fontSize:12,marginTop:6,background:"#0008",padding:"6px 8px",borderRadius:8}}>ÚKOL: Nasbírej 5 dřeva · {wood}/5</div></div>
+  <div style={{position:"absolute",top:"max(12px,env(safe-area-inset-top))",left:12,color:"white",fontFamily:"system-ui",textShadow:"0 2px 8px #000"}}><b style={{fontSize:26,letterSpacing:1}}>WORLD ZERO</b><div style={{fontSize:12,letterSpacing:.6}}>{status} · LIVING PLANET · BUILD R95</div><div style={{fontSize:13,marginTop:5}}>🪵 Dřevo {wood} · 🪨 Kámen {stone} · 🌿 Vláknina {fiber}</div><div style={{fontSize:12,marginTop:6,background:"#0008",padding:"6px 8px",borderRadius:8}}>ÚKOL: Nasbírej 5 dřeva · {wood}/5</div></div>
   <button onPointerDown={()=>{const p=(window as any).__wzCollect?.();if(p===false){setStatus("PŘIBLIŽ SE K PADLÉMU DŘEVU");return}setWood(v=>v+1);if(wood>=4)setStatus("ÚKOL SPLNĚN · ODEMČENO: PRIMITIVNÍ TÁBOR");else setStatus("SEBRÁNO DŘEVO · POKRAČUJ V PRŮZKUMU")}} style={{position:"absolute",right:22,bottom:115,width:82,height:82,borderRadius:"50%",border:"2px solid #fff9",background:"#1d2b20dd",color:"white",fontWeight:800}}>SBÍRAT</button>
   <div onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);joy(e)}} onPointerMove={e=>e.currentTarget.hasPointerCapture(e.pointerId)&&joy(e)} onPointerUp={e=>{input.current.x=input.current.y=0;e.currentTarget.releasePointerCapture(e.pointerId)}} style={{position:"absolute",left:22,bottom:"max(24px,env(safe-area-inset-bottom))",width:120,height:120,borderRadius:"50%",border:"2px solid #ffffff88",background:"#ffffff18"}}/>
   <button onPointerDown={()=>{const n=!firstPerson;setFirstPerson(n);firstPersonRef.current=n}} style={{position:"absolute",right:22,top:"max(18px,env(safe-area-inset-top))",zIndex:20,border:"1px solid #fff8",borderRadius:10,padding:"9px 12px",background:"#101813cc",color:"white",fontWeight:800}}>{firstPerson?"1. OSOBA":"3. OSOBA"}</button><div style={{position:"absolute",right:22,bottom:"max(25px,env(safe-area-inset-bottom))",display:"flex",gap:10}}><button onPointerDown={()=>input.current.look=-1} onPointerUp={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>‹</button><button onPointerDown={()=>input.current.look=1} onPointerUp={()=>input.current.look=0} style={{width:58,height:58,borderRadius:"50%",fontSize:28}}>›</button></div>
