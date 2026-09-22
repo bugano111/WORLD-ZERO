@@ -36,9 +36,9 @@ export function WorldZeroGame(){
     for(let i=0;i<seg;i++){const x0=-390+i*780/seg,x1=-390+(i+1)*780/seg;const peak=(x:number)=>baseY+22+34*Math.abs(Math.sin(x*.018+phase))+18*Math.abs(Math.sin(x*.043+phase*.7))+9*Math.sin(x*.071+phase);const y0=peak(x0),y1=peak(x1);v.push(x0,baseY,z,x1,baseY,z,x1,y1,z-depth,x0,baseY,z,x1,y1,z-depth,x0,y0,z-depth)}
     geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3));geo.computeVertexNormals();scene.add(new THREE.Mesh(geo,mat));
   };
-  ridge(-338,-10,18,.3,mountainMat);ridge(-385,-4,24,1.7,mountainMat);ridge(-430,4,30,2.8,mountainMat);
+  ridge(-338,-24,18,.3,mountainMat);ridge(-385,-18,24,1.7,mountainMat);ridge(-430,-10,30,2.8,mountainMat);
   const snowRidgeMat=snowMat.clone();(snowRidgeMat as THREE.MeshStandardMaterial).transparent=true;(snowRidgeMat as THREE.MeshStandardMaterial).opacity=.92;
-  ridge(-431,43,31,2.8,snowRidgeMat);
+  ridge(-431,18,31,2.8,snowRidgeMat);
   const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,220),new THREE.MeshBasicMaterial({color:0xb8c8c9,transparent:true,opacity:.12,depthWrite:false}));haze.position.set(0,55,-330);scene.add(haze);
   // R114: overlook rocks now use the real mossy-rock glTF instead of primitive dodecahedrons.
   const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(4.2,16,12),new THREE.MeshBasicMaterial({color:0xffd69a}));sunDisc.position.set(-105,48,-260);scene.add(sunDisc);
@@ -76,7 +76,7 @@ export function WorldZeroGame(){
     // R70: keep the rigged human intact. The R69 overlay geometry produced the boxy broken body seen on iPhone.
     // No rigid clothing primitives are attached to the skeleton.
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-    const scale=1.90/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale); humanModel.rotation.y=Math.PI;
+    const scale=1.90/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale); humanModel.rotation.y=0;
     human.add(humanModel);
     setReady(true); setStatus("REALISM 102 · DEN 1 · REAL FOREST");
     // R75 stability: preserve the model's own materials; no runtime material guessing.
@@ -100,7 +100,7 @@ export function WorldZeroGame(){
   const kd=(e:KeyboardEvent)=>key(e,1),ku=(e:KeyboardEvent)=>key(e,0);addEventListener("keydown",kd);addEventListener("keyup",ku);
   let raf=0;const loop=(now:number)=>{const dt=Math.min(.025,(now-last)/1000);last=now;const j=input.current;yaw+=j.look*dt*1.8;const f=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),r=new THREE.Vector3(f.z,0,-f.x);
    human.position.addScaledVector(f,-j.y*dt*6);human.position.addScaledVector(r,-j.x*dt*6);human.position.y=H(human.position.x,human.position.z);const moving=Math.abs(j.x)+Math.abs(j.y)>.05;humanMixer?.update(dt);setHumanAction(moving?walkAction:idleAction);human.rotation.y=yaw;if(Math.hypot(j.x,j.y)>.05)human.rotation.y=Math.atan2(-j.x,-j.y)+yaw;
-   human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-7.4);cam.y+=3.6;camera.position.lerp(cam,1-Math.exp(-dt*8));camera.lookAt(human.position.x,human.position.y+1.45,human.position.z-16);}
+   human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-7.4);cam.y+=3.6;camera.position.lerp(cam,1-Math.exp(-dt*8));camera.lookAt(human.position.x,human.position.y+1.45,human.position.z-34);}
    const t=clock.getElapsedTime();sun.position.x=-45+Math.sin(t*.015)*18;sun.position.z=-25+Math.cos(t*.015)*18;
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
    try{renderer.render(scene,camera)}catch(e){console.error("R102 render",e);setStatus("R102 · CHYBA RENDERU");setReady(true);return}raf=requestAnimationFrame(loop)};
