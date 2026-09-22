@@ -10,7 +10,7 @@ export function WorldZeroGame(){
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x7899b0);scene.fog=new THREE.FogExp2(0x8fa09f,.0009);
+  scene.background=new THREE.Color(0x8eabb9);scene.fog=new THREE.FogExp2(0xa9b8b5,.00135);
   const camera=new THREE.PerspectiveCamera(60,1,.1,1600);
   let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"default",preserveDrawingBuffer:true});}catch(err){console.error(err);setStatus("R102 · WEBGL NELZE SPUSTIT");setReady(true);return;}
   const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=!mobile;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -24,6 +24,17 @@ export function WorldZeroGame(){
   const loadTex=(url:string,kind:"map"|"normalMap"|"roughnessMap")=>tex.load(url,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(28,28);if(kind==="map")t.colorSpace=THREE.SRGBColorSpace;(groundMat as any)[kind]=t;groundMat.needsUpdate=true});
   /* R102: remove the orange leaf-photo albedo that dominated every previous build. */loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_nor_gl_1k.jpg`,"normalMap");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_rough_1k.jpg`,"roughnessMap");
   const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
+  // R104: alpine valley composition visible from spawn: reflective lake + layered mountain skyline.
+  const waterMat=new THREE.MeshPhysicalMaterial({color:0x4b8798,roughness:.16,metalness:.04,transparent:true,opacity:.88,clearcoat:.7,clearcoatRoughness:.18});
+  const lake=new THREE.Mesh(new THREE.PlaneGeometry(260,92),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-5.8,-142);scene.add(lake);
+  const lake2=new THREE.Mesh(new THREE.PlaneGeometry(120,38),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-3.5,-188);scene.add(lake2);
+  const mountainMat=new THREE.MeshStandardMaterial({color:0x59615f,roughness:.98,flatShading:true});
+  const snowMat=new THREE.MeshStandardMaterial({color:0xe8edf0,roughness:.92,flatShading:true});
+  for(let i=0;i<15;i++){const x=-310+i*44;const h=58+((i*37)%71);const z=-365-Math.abs(i-7)*5;
+    const m=new THREE.Mesh(new THREE.ConeGeometry(54+(i%3)*14,h,7),mountainMat);m.position.set(x,h*.5-8,z);m.rotation.y=i*.71;scene.add(m);
+    if(h>82){const s=new THREE.Mesh(new THREE.ConeGeometry(18+(i%3)*4,h*.28,7),snowMat);s.position.set(x,h-8-h*.14,z);s.rotation.y=i*.71;scene.add(s);}
+  }
+  const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,220),new THREE.MeshBasicMaterial({color:0xb8c8c9,transparent:true,opacity:.12,depthWrite:false}));haze.position.set(0,55,-330);scene.add(haze);
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
   const mossMat=new THREE.MeshStandardMaterial({color:0x334b2a,roughness:1});
   const fernMat=new THREE.MeshStandardMaterial({color:0x244326,roughness:.95,side:THREE.DoubleSide});
