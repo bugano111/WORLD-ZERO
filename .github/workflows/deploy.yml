@@ -207,6 +207,10 @@ jobs:
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});
           JS
+      - name: Publish visual proof into Pages
+        run: |
+          mkdir -p dist/proof
+          cp wz-r102-mobile.png dist/proof/latest-mobile.png
       - name: Upload visual proof
         uses: actions/upload-artifact@v4
         with:
