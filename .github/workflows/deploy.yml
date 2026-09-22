@@ -101,7 +101,7 @@ jobs:
       - name: Fetch real animated human
         run: |
           mkdir -p public/real-assets/models
-          curl -fL --retry 3 "https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb?morphTargets=ARKit,Oculus%20Visemes" -o public/real-assets/models/human.glb
+          curl -fL --retry 3 "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/gltf/Soldier.glb" -o public/real-assets/models/human.glb
           test -s public/real-assets/models/human.glb
       - run: npm run build
       - name: Typecheck runtime identifiers
@@ -135,40 +135,40 @@ jobs:
         run: |
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
-          grep -R "BUILD R79" dist/assets
+          grep -R "BUILD R80" dist/assets
       - name: Stamp current deployment
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path("dist/index.html")
           s=p.read_text()
-          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R79 · CURRENT</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;left:8px;bottom:8px;z-index:999999;background:#b00020;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">WORLD ZERO · BUILD R80 · CURRENT</div></body>')
           p.write_text(s)
           PY
       - name: Create isolated current-game URL
         run: |
-          mkdir -p dist/r79
-          cp dist/index.html dist/r79/index.html
+          mkdir -p dist/r80
+          cp dist/index.html dist/r80/index.html
           python - <<'PY'
           from pathlib import Path
-          p=Path("dist/r79/index.html")
+          p=Path("dist/r80/index.html")
           s=p.read_text()
           s=s.replace('src="./assets/', 'src="../assets/').replace('href="./assets/', 'href="../assets/')
           s=s.replace('src="/WORLD-ZERO/assets/', 'src="../assets/').replace('href="/WORLD-ZERO/assets/', 'href="../assets/')
-          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R79 · CURRENT DEPLOY</div></body>')
+          s=s.replace("</body>",'<div style="position:fixed;right:8px;top:8px;z-index:999999;background:#005c2b;color:white;padding:8px 10px;border-radius:8px;font:800 12px system-ui">LIVE R80 · CURRENT DEPLOY</div></body>')
           p.write_text(s)
-          Path("dist/r79.html").write_text(s)
+          Path("dist/r80.html").write_text(s)
           # Keep legacy R57 PLAY entry alive, but serve the current working game.
           legacy=Path("dist/r57"); legacy.mkdir(exist_ok=True)
-          Path("dist/r57/index.html").write_text(s.replace("LIVE R79","LIVE CURRENT · R77"))
-          Path("dist/r57.html").write_text(s.replace("LIVE R79","LIVE CURRENT · R77"))
+          Path("dist/r57/index.html").write_text(s.replace("LIVE R80","LIVE CURRENT · R77"))
+          Path("dist/r57.html").write_text(s.replace("LIVE R80","LIVE CURRENT · R77"))
           # Keep R74 PLAY entry alive and point it at the current verified build.
           r74=Path("dist/r74"); r74.mkdir(exist_ok=True)
-          Path("dist/r74/index.html").write_text(s.replace("LIVE R79","LIVE CURRENT · R77"))
-          Path("dist/r74.html").write_text(s.replace("LIVE R79","LIVE CURRENT · R77"))
+          Path("dist/r74/index.html").write_text(s.replace("LIVE R80","LIVE CURRENT · R77"))
+          Path("dist/r74.html").write_text(s.replace("LIVE R80","LIVE CURRENT · R77"))
           PY
-          grep -q "LIVE R79" dist/r79/index.html
-          grep -q "LIVE R79" dist/r79.html
+          grep -q "LIVE R80" dist/r80/index.html
+          grep -q "LIVE R80" dist/r80.html
           test -s dist/r57/index.html
           test -s dist/r57.html
           test -s dist/r74/index.html
@@ -188,4 +188,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# deployment trigger: R79-real-human
+# deployment trigger: R80-real-human
