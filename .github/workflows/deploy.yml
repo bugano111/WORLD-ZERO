@@ -199,7 +199,9 @@ jobs:
             const canvasCount=await page.evaluate(()=>document.querySelectorAll('canvas').length);
             if(canvasCount!==1) throw new Error('WebGL canvas missing');
             const box={width:430,height:932};
-            await page.screenshot({path:'wz-r102-mobile.png',fullPage:false,timeout:15000});
+            const png=await page.evaluate(()=>{const c=document.querySelector('canvas'); return c&&c.toDataURL('image/png').split(',')[1]});
+            if(!png) throw new Error('Canvas capture failed');
+            require('fs').writeFileSync('wz-r102-mobile.png',Buffer.from(png,'base64'));
             console.log('visual screenshot created',box,'errors',errors);
             if(errors.some(e=>/webgl|render|failed to load|404/i.test(e))) throw new Error(errors.join('\n'));
             await browser.close();
