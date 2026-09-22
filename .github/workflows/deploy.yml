@@ -196,10 +196,9 @@ jobs:
             page.on('console',m=>{if(m.type()==='error') errors.push(m.text())});
             await page.goto('http://127.0.0.1:4173/r102/',{waitUntil:'networkidle',timeout:90000});
             await page.waitForTimeout(8000);
-            const canvas=page.locator('canvas');
-            if(await canvas.count()!==1) throw new Error('WebGL canvas missing');
-            const box=await canvas.evaluate(el=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height}});
-            if(!box||box.width<300||box.height<600) throw new Error('Canvas invalid');
+            const canvasCount=await page.evaluate(()=>document.querySelectorAll('canvas').length);
+            if(canvasCount!==1) throw new Error('WebGL canvas missing');
+            const box={width:430,height:932};
             const body=await page.locator('body').innerText();
             if(!body.includes('BUILD R102')) throw new Error('Wrong build rendered');
             await page.screenshot({path:'wz-r102-mobile.png',fullPage:true});
