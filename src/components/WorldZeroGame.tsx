@@ -30,10 +30,15 @@ export function WorldZeroGame(){
   const lake2=new THREE.Mesh(new THREE.PlaneGeometry(120,38),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-10.5,-188);scene.add(lake2);
   const mountainMat=new THREE.MeshStandardMaterial({color:0x59615f,roughness:.98,flatShading:true});
   const snowMat=new THREE.MeshStandardMaterial({color:0xe8edf0,roughness:.92,flatShading:true});
-  for(let i=0;i<15;i++){const x=-310+i*44;const h=58+((i*37)%71);const z=-365-Math.abs(i-7)*5;
-    const m=new THREE.Mesh(new THREE.ConeGeometry(54+(i%3)*14,h,7),mountainMat);m.position.set(x,h*.5-8,z);m.rotation.y=i*.71;scene.add(m);
-    if(h>82){const s=new THREE.Mesh(new THREE.ConeGeometry(18+(i%3)*4,h*.28,7),snowMat);s.position.set(x,h-8-h*.14,z);s.rotation.y=i*.71;scene.add(s);}
-  }
+  // R113: continuous irregular alpine ridges instead of obvious cone primitives.
+  const ridge=(z:number,baseY:number,depth:number,phase:number,mat:THREE.Material)=>{
+    const seg=72,geo=new THREE.BufferGeometry(),v:number[]=[];
+    for(let i=0;i<seg;i++){const x0=-390+i*780/seg,x1=-390+(i+1)*780/seg;const peak=(x:number)=>baseY+22+34*Math.abs(Math.sin(x*.018+phase))+18*Math.abs(Math.sin(x*.043+phase*.7))+9*Math.sin(x*.071+phase);const y0=peak(x0),y1=peak(x1);v.push(x0,baseY,z,x1,baseY,z,x1,y1,z-depth,x0,baseY,z,x1,y1,z-depth,x0,y0,z-depth)}
+    geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3));geo.computeVertexNormals();scene.add(new THREE.Mesh(geo,mat));
+  };
+  ridge(-338,-10,18,.3,mountainMat);ridge(-385,-4,24,1.7,mountainMat);ridge(-430,4,30,2.8,mountainMat);
+  const snowRidgeMat=snowMat.clone();(snowRidgeMat as THREE.MeshStandardMaterial).transparent=true;(snowRidgeMat as THREE.MeshStandardMaterial).opacity=.92;
+  ridge(-431,43,31,2.8,snowRidgeMat);
   const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,220),new THREE.MeshBasicMaterial({color:0xb8c8c9,transparent:true,opacity:.12,depthWrite:false}));haze.position.set(0,55,-330);scene.add(haze);
   // R106: rocky alpine overlook around spawn, framing the valley instead of a flat empty foreground.
   const overlookMat=new THREE.MeshStandardMaterial({color:0x62655d,roughness:.96,flatShading:true});
