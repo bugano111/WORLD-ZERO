@@ -179,6 +179,8 @@ jobs:
           test -s dist/r74.html
       - name: Visual smoke test of built game
         run: |
+          mkdir -p dist/WORLD-ZERO
+          cp -a dist/real-assets dist/WORLD-ZERO/real-assets
           python3 -m http.server 4173 --directory dist >/tmp/wz-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
