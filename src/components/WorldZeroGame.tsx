@@ -58,6 +58,7 @@ export function WorldZeroGame(){
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     const scale=1.78/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);
     human.add(humanModel);
+    setReady(true); setStatus("REALISM 78 · DEN 1 · REAL FOREST");
     // R75 stability: preserve the model's own materials; no runtime material guessing.
     humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;}});
     // R74: use only the source human mesh. Do not bolt primitive spheres/cylinders onto a body.
@@ -66,7 +67,9 @@ export function WorldZeroGame(){
     const by=(n:string)=>g.animations.find(x=>x.name.toLowerCase().includes(n));
     idleAction=humanMixer.clipAction(by("idle")||g.animations[0]); walkAction=humanMixer.clipAction(by("walk")||g.animations[0]); runAction=humanMixer.clipAction(by("run")||by("walk")||g.animations[0]);
     currentAction=idleAction; idleAction.play();}
-  },undefined,e=>{console.error("R61 human load failed",e);setStatus("R77 · CHYBA MODELU POSTAVY")});
+  },undefined,e=>{console.error("R61 human load failed",e);setStatus("R78 · CHYBA MODELU POSTAVY");setReady(true)});
+  // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
+  const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 78 · SVĚT SPUŠTĚN")},6500);
   (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
   const clock=new THREE.Clock();
   let yaw=0,last=performance.now();
@@ -82,7 +85,7 @@ export function WorldZeroGame(){
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
    try{renderer.render(scene,camera)}catch(e){console.error("R77 render",e);setStatus("R77 · CHYBA RENDERU");setReady(true);return}raf=requestAnimationFrame(loop)};
   const resize=()=>{const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};resize();addEventListener("resize",resize);setStatus("REALISM 77 · DEN 1 · REAL FOREST");requestAnimationFrame(loop);
-  return()=>{cancelAnimationFrame(raf);removeEventListener("resize",resize);removeEventListener("keydown",kd);removeEventListener("keyup",ku);delete (window as any).__wzCollect;renderer.dispose();el.replaceChildren()}
+  return()=>{cancelAnimationFrame(raf);removeEventListener("resize",resize);removeEventListener("keydown",kd);removeEventListener("keyup",ku);delete (window as any).__wzCollect;clearTimeout(bootGuard);renderer.dispose();el.replaceChildren()}
  },[]);
  const joy=(e:React.PointerEvent<HTMLDivElement>)=>{const r=e.currentTarget.getBoundingClientRect();input.current.x=Math.max(-1,Math.min(1,(e.clientX-r.left-r.width/2)/(r.width*.35)));input.current.y=Math.max(-1,Math.min(1,(e.clientY-r.top-r.height/2)/(r.height*.35)))};
  return <main style={{position:"fixed",inset:0,overflow:"hidden",background:"#000",touchAction:"none"}}>
