@@ -10,7 +10,7 @@ export function WorldZeroGame(){
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x8eabb9);scene.fog=new THREE.FogExp2(0xa9b8b5,.00135);
+  scene.background=new THREE.Color(0x9eb9c5);scene.fog=new THREE.FogExp2(0xb6c2bc,.00115);
   const camera=new THREE.PerspectiveCamera(60,1,.1,1600);
   let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"default",preserveDrawingBuffer:true});}catch(err){console.error(err);setStatus("R102 · WEBGL NELZE SPUSTIT");setReady(true);return;}
   const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=!mobile;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -35,6 +35,12 @@ export function WorldZeroGame(){
     if(h>82){const s=new THREE.Mesh(new THREE.ConeGeometry(18+(i%3)*4,h*.28,7),snowMat);s.position.set(x,h-8-h*.14,z);s.rotation.y=i*.71;scene.add(s);}
   }
   const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,220),new THREE.MeshBasicMaterial({color:0xb8c8c9,transparent:true,opacity:.12,depthWrite:false}));haze.position.set(0,55,-330);scene.add(haze);
+  // R106: rocky alpine overlook around spawn, framing the valley instead of a flat empty foreground.
+  const overlookMat=new THREE.MeshStandardMaterial({color:0x62655d,roughness:.96,flatShading:true});
+  for(let i=0;i<28;i++){const a=-1.45+i*.105,r=7+(i%6)*1.55,x=Math.sin(a)*r,z=-Math.cos(a)*r-2;
+    const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.65+(i%5)*.23,0),overlookMat);rock.scale.set(1.4+(i%3)*.45,.55+(i%4)*.22,1+(i%2)*.4);rock.rotation.set(i*.31,i*.73,i*.17);rock.position.set(x,H(x,z)+.28,z);rock.castShadow=!mobile;rock.receiveShadow=true;scene.add(rock);
+  }
+  const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(4.2,16,12),new THREE.MeshBasicMaterial({color:0xffd69a}));sunDisc.position.set(-105,48,-260);scene.add(sunDisc);
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
   const mossMat=new THREE.MeshStandardMaterial({color:0x334b2a,roughness:1});
   const fernMat=new THREE.MeshStandardMaterial({color:0x244326,roughness:.95,side:THREE.DoubleSide});
