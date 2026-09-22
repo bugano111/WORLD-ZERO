@@ -139,7 +139,7 @@ jobs:
         run: |
           test -f dist/index.html
           grep -R "LIVING PLANET" dist/assets
-          grep -R "BUILD R102" dist/assets
+          grep -R "BUILD R101" dist/assets
       - name: Stamp current deployment
         run: |
           python - <<'PY'
