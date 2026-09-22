@@ -10,13 +10,13 @@ export function WorldZeroGame(){
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x91a9b2);scene.fog=new THREE.FogExp2(0x9fb4b6,.00082);
+  scene.background=new THREE.Color(0x7897a6);scene.fog=new THREE.FogExp2(0x9fb4b6,.00082);
   const camera=new THREE.PerspectiveCamera(60,1,.1,1600);
   let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"default",preserveDrawingBuffer:true});}catch(err){console.error(err);setStatus("R102 · WEBGL NELZE SPUSTIT");setReady(true);return;}
-  const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
-  scene.add(new THREE.HemisphereLight(0xd9e7e4,0x182318,.72));
-  const sun=new THREE.DirectionalLight(0xffbd72,2.25);sun.position.set(-120,38,-80);sun.castShadow=true;sun.shadow.mapSize.set(mobile?512:1024,mobile?512:1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
+  scene.add(new THREE.HemisphereLight(0xc9dce2,0x172318,.82));
+  const sun=new THREE.DirectionalLight(0xffad68,2.8);sun.position.set(-120,38,-80);sun.castShadow=true;sun.shadow.mapSize.set(mobile?512:1024,mobile?512:1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
   const H=(x:number,z:number)=>{const overlook=10*Math.exp(-(x*x)/5200-(z*z)/2600);const valley=-58*Math.exp(-((x-35)*(x-35))/24000-((z+155)*(z+155))/17000);const farRise=Math.max(0,-z-235)*.07;return 5+overlook+Math.sin(x*.013)*3.2+Math.cos(z*.015)*2.4+Math.sin((x+z)*.006)*5.5+valley+farRise};
   const g=new THREE.PlaneGeometry(700,700,100,100);g.rotateX(-Math.PI/2);const pa=g.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i);pa.setY(i,H(x,z))}g.computeVertexNormals();
@@ -28,18 +28,30 @@ export function WorldZeroGame(){
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x4b8798,roughness:.16,metalness:.04,transparent:true,opacity:.88,clearcoat:.7,clearcoatRoughness:.18});
   const lake=new THREE.Mesh(new THREE.CircleGeometry(92,64),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-12.5,-142);scene.add(lake);
   const lake2=new THREE.Mesh(new THREE.CircleGeometry(42,48),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-10.5,-188);scene.add(lake2);
-  const mountainMat=new THREE.MeshStandardMaterial({color:0x59615f,roughness:.98,flatShading:true});
-  const snowMat=new THREE.MeshStandardMaterial({color:0xe8edf0,roughness:.92,flatShading:true});
-  // R113: continuous irregular alpine ridges instead of obvious cone primitives.
-  const ridge=(z:number,baseY:number,depth:number,phase:number,mat:THREE.Material)=>{
-    const seg=72,geo=new THREE.BufferGeometry(),v:number[]=[];
-    for(let i=0;i<seg;i++){const x0=-390+i*780/seg,x1=-390+(i+1)*780/seg;const peak=(x:number)=>baseY+22+34*Math.abs(Math.sin(x*.018+phase))+18*Math.abs(Math.sin(x*.043+phase*.7))+9*Math.sin(x*.071+phase);const y0=peak(x0),y1=peak(x1);v.push(x0,baseY,z,x1,baseY,z,x1,y1,z-depth,x0,baseY,z,x1,y1,z-depth,x0,y0,z-depth)}
-    geo.setAttribute("position",new THREE.Float32BufferAttribute(v,3));geo.computeVertexNormals();scene.add(new THREE.Mesh(geo,mat));
+  const mountainMat=new THREE.MeshStandardMaterial({color:0x59666a,roughness:.96,flatShading:false});
+  const farMountainMat=new THREE.MeshStandardMaterial({color:0x74858b,roughness:1,flatShading:false});
+  const snowMat=new THREE.MeshStandardMaterial({color:0xe7eceb,roughness:.88,flatShading:false});
+  const mountainBand=(z:number,baseY:number,phase:number,mat:THREE.Material,snow=false)=>{
+    const seg=96, base:number[]=[], cap:number[]=[];
+    const peak=(x:number)=>baseY+18+30*Math.abs(Math.sin(x*.012+phase))+22*Math.abs(Math.sin(x*.027+phase*.63))+8*Math.sin(x*.061+phase);
+    for(let i=0;i<seg;i++){
+      const x0=-430+i*860/seg,x1=-430+(i+1)*860/seg,y0=peak(x0),y1=peak(x1),zb=z-28;
+      base.push(x0,baseY,z,x1,baseY,z,x1,y1,zb,x0,baseY,z,x1,y1,zb,x0,y0,zb);
+      if(snow){
+        const s0=Math.max(baseY+23,y0-12),s1=Math.max(baseY+23,y1-12);
+        cap.push(x0,s0,zb-.05,x1,s1,zb-.05,x1,y1,zb-.08,x0,s0,zb-.05,x1,y1,zb-.08,x0,y0,zb-.08);
+      }
+    }
+    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(base,3));geo.computeVertexNormals();scene.add(new THREE.Mesh(geo,mat));
+    if(snow&&cap.length){const sg=new THREE.BufferGeometry();sg.setAttribute("position",new THREE.Float32BufferAttribute(cap,3));sg.computeVertexNormals();scene.add(new THREE.Mesh(sg,snowMat));}
   };
-  ridge(-338,-24,18,.3,mountainMat);ridge(-385,-18,24,1.7,mountainMat);ridge(-430,-10,30,2.8,mountainMat);
-  const snowRidgeMat=snowMat.clone();(snowRidgeMat as THREE.MeshStandardMaterial).transparent=true;(snowRidgeMat as THREE.MeshStandardMaterial).opacity=.92;
-  ridge(-431,18,31,2.8,snowRidgeMat);
-  const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,220),new THREE.MeshBasicMaterial({color:0xb8c8c9,transparent:true,opacity:.12,depthWrite:false}));haze.position.set(0,55,-330);scene.add(haze);
+  mountainBand(-330,-30,.3,mountainMat,false);
+  mountainBand(-385,-24,1.7,farMountainMat,true);
+  mountainBand(-445,-18,2.8,mountainMat,true);
+  const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,180),new THREE.MeshBasicMaterial({color:0xc8d0cc,transparent:true,opacity:.055,depthWrite:false}));haze.position.set(0,42,-350);scene.add(haze);
+  // cheap layered clouds for mobile golden-hour depth
+  const cloudMat=new THREE.MeshBasicMaterial({color:0xe7ecea,transparent:true,opacity:.20,depthWrite:false});
+  for(let i=0;i<11;i++){const cloud=new THREE.Mesh(new THREE.PlaneGeometry(38+(i%4)*18,5+(i%3)*2),cloudMat);cloud.position.set(-230+i*46,62+(i%4)*9,-300-(i%3)*35);scene.add(cloud);}
   // R114: overlook rocks now use the real mossy-rock glTF instead of primitive dodecahedrons.
   const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,14),new THREE.MeshBasicMaterial({color:0xffd49a}));sunDisc.position.set(-125,42,-260);scene.add(sunDisc);
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
@@ -51,12 +63,12 @@ export function WorldZeroGame(){
   }
   if(!mobile)new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;},undefined,e=>console.warn("HDR",e));
   const gltf=new GLTFLoader();
-  gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<22;i++){const a=-1.35+i*.125,r=48+(i%6)*3.0,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)+.05,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
+  gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<30;i++){const a=-1.48+i*.102,r=18+(i%7)*4.1,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)+.05,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
 
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z),z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,mobile?80:300,115,330,12);
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?22:100,95,260,.82);
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf`,mobile?6:35,80,115,.42);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,mobile?150:520,48,345,7.2);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?46:160,24,230,.72);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf`,mobile?28:90,8,95,.38);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/tree_stump_01.gltf`,mobile?3:10,75,145,.72);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,mobile?12:45,70,220,.58);
   // R111: keep the spawn overlook clear so the camera cannot start inside vegetation.\n  // R59: no primitive fallback geometry; the forest is built only from real glTF assets.
@@ -76,8 +88,15 @@ export function WorldZeroGame(){
     // R70: keep the rigged human intact. The R69 overlay geometry produced the boxy broken body seen on iPhone.
     // No rigid clothing primitives are attached to the skeleton.
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-    const scale=1.90/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale); humanModel.rotation.y=0;
+    const scale=1.84/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale); humanModel.rotation.y=0;
     human.add(humanModel);
+    const pack=new THREE.Group();
+    const packMat=new THREE.MeshStandardMaterial({color:0x202a25,roughness:.86});
+    const bag=new THREE.Mesh(new THREE.BoxGeometry(.46,.62,.20,2,3,2),packMat);bag.position.set(0,1.18,.18);bag.rotation.x=-.08;pack.add(bag);
+    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.10,.10,.48,10),packMat);roll.rotation.z=Math.PI/2;roll.position.set(0,1.52,.18);pack.add(roll);
+    const strapMat=new THREE.MeshStandardMaterial({color:0x111713,roughness:1});
+    for(const sx of [-.17,.17]){const s=new THREE.Mesh(new THREE.BoxGeometry(.035,.58,.035),strapMat);s.position.set(sx,1.18,-.02);pack.add(s);}
+    human.add(pack);
     setReady(true); setStatus("REALISM 102 · DEN 1 · REAL FOREST");
     // R75 stability: preserve the model's own materials; no runtime material guessing.
     humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;}});
@@ -100,7 +119,7 @@ export function WorldZeroGame(){
   const kd=(e:KeyboardEvent)=>key(e,1),ku=(e:KeyboardEvent)=>key(e,0);addEventListener("keydown",kd);addEventListener("keyup",ku);
   let raf=0;const loop=(now:number)=>{const dt=Math.min(.025,(now-last)/1000);last=now;const j=input.current;yaw+=j.look*dt*1.8;const f=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),r=new THREE.Vector3(f.z,0,-f.x);
    human.position.addScaledVector(f,-j.y*dt*6);human.position.addScaledVector(r,-j.x*dt*6);human.position.y=H(human.position.x,human.position.z);const moving=Math.abs(j.x)+Math.abs(j.y)>.05;humanMixer?.update(dt);setHumanAction(moving?walkAction:idleAction);human.rotation.y=yaw;if(Math.hypot(j.x,j.y)>.05)human.rotation.y=Math.atan2(-j.x,-j.y)+yaw;
-   human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-7.4);cam.y+=3.6;camera.position.lerp(cam,1-Math.exp(-dt*8));const target=human.position.clone().add(new THREE.Vector3(0,1.15,0)).addScaledVector(f,72);camera.lookAt(target);}
+   human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-5.6);cam.y+=2.75;camera.position.lerp(cam,1-Math.exp(-dt*8));const target=human.position.clone().add(new THREE.Vector3(0,1.15,0)).addScaledVector(f,95);camera.lookAt(target);}
    const t=clock.getElapsedTime();sun.position.x=-45+Math.sin(t*.015)*18;sun.position.z=-25+Math.cos(t*.015)*18;
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
    try{renderer.render(scene,camera)}catch(e){console.error("R102 render",e);setStatus("R102 · CHYBA RENDERU");setReady(true);return}raf=requestAnimationFrame(loop)};
