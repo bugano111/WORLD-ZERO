@@ -51,11 +51,14 @@ export function WorldZeroGame(){
   if(!mobile)new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;},undefined,e=>console.warn("HDR",e));
   const gltf=new GLTFLoader();
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z),z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,mobile?260:520,8,320,30);
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?95:260,4,235,1.25);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,mobile?330:650,8,320,34);
+  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?150:340,4,235,1.45);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf`,mobile?28:110,4,115,.52);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/tree_stump_01.gltf`,mobile?10:18,10,145,.88);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,mobile?42:100,5,220,.85);
+  // R108: foreground vegetation framing for depth; denser near-camera shrubs and weeds on the overlook.
+  gltf.load(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,res=>{for(let i=0;i<34;i++){const o=res.scene.clone(true),x=-14+(i%9)*3.4,z=-4-Math.floor(i/9)*4.2;o.position.set(x,H(x,z),z);o.rotation.y=i*.83;o.scale.setScalar(1.15+(i%5)*.18);scene.add(o)}});
+  gltf.load(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf`,res=>{for(let i=0;i<46;i++){const o=res.scene.clone(true),x=-16+(i%12)*2.8,z=2-Math.floor(i/12)*3.5;o.position.set(x,H(x,z)+.02,z);o.rotation.y=i*1.17;o.scale.setScalar(.55+(i%4)*.14);scene.add(o)}});
   // R59: no primitive fallback geometry; the forest is built only from real glTF assets.
   const collectibleWood:THREE.Mesh[]=[];
   const woodMat=new THREE.MeshStandardMaterial({color:0x5b3821,roughness:1});
