@@ -25,9 +25,9 @@ export function WorldZeroGame(){
   const pos=g.attributes.position as THREE.BufferAttribute,cols:number[]=[];for(let i=0;i<pos.count;i++){const y=pos.getZ(i),x=pos.getX(i),z=-pos.getY(i),rock=Math.max(0,Math.min(1,(Math.abs(Math.sin(x*.031)+Math.cos(z*.027))-.55)*1.7));const cc=new THREE.Color().setRGB(.20+.18*rock,.27+.13*(1-rock),.18+.10*(1-rock));cols.push(cc.r,cc.g,cc.b)}g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
    const rockMat=new THREE.MeshStandardMaterial({color:0x56564d,roughness:.93});for(let i=0;i<34;i++){const a=i*2.399,r=5+(i%13)*2.1,x=Math.cos(a)*r,z=Math.sin(a)*r*.62-7;const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.7+(i%5)*.34,0),rockMat);rock.scale.set(1.4+(i%3)*.4,.55+(i%4)*.22,1+(i%5)*.24);rock.position.set(x,H(x,z)+.25,z);rock.rotation.set(i*.31,i*.67,i*.19);rock.castShadow=rock.receiveShadow=true;scene.add(rock)}
   // R104: alpine valley composition visible from spawn: reflective lake + layered mountain skyline.
-  const waterMat=new THREE.MeshPhysicalMaterial({color:0x1d5368,roughness:.10,metalness:.08,transparent:true,opacity:.94,clearcoat:.7,clearcoatRoughness:.18});
+  const waterMat=new THREE.MeshPhysicalMaterial({color:0x235f73,roughness:.055,metalness:.12,transparent:true,opacity:.91,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.35});
   const lakeShape=new THREE.Shape();for(let i=0;i<72;i++){const a=i/72*Math.PI*2,r=78+13*Math.sin(a*3)+8*Math.sin(a*7+.8),x=Math.cos(a)*r*1.45,y=Math.sin(a)*r*.62;i?lakeShape.lineTo(x,y):lakeShape.moveTo(x,y)}const lake=new THREE.Mesh(new THREE.ShapeGeometry(lakeShape,10),waterMat);lake.rotation.x=-Math.PI/2;lake.position.set(42,-13,-157);scene.add(lake);
-  const river=new THREE.Mesh(new THREE.PlaneGeometry(38,210,1,12),waterMat);river.rotation.x=-Math.PI/2;river.rotation.z=-.27;river.position.set(-48,-12.6,-198);scene.add(river);
+  const riverShape=new THREE.Shape();const riverPts=[[-16,96],[-8,62],[-17,30],[-7,2],[-12,-34],[-4,-74],[13,-92],[9,-55],[17,-21],[8,11],[18,44],[10,78]];riverPts.forEach((p,i)=>i?riverShape.lineTo(p[0],p[1]):riverShape.moveTo(p[0],p[1]));riverShape.closePath();const river=new THREE.Mesh(new THREE.ShapeGeometry(riverShape),waterMat);river.rotation.x=-Math.PI/2;river.rotation.z=-.19;river.position.set(-42,-12.7,-205);scene.add(river);
   const mountainMat=new THREE.MeshStandardMaterial({color:0x35464b,roughness:.97});
  const farMountainMat=new THREE.MeshStandardMaterial({color:0x526872,roughness:1});
  const snowMat=new THREE.MeshStandardMaterial({color:0xe8eeee,roughness:.82});
@@ -48,12 +48,13 @@ export function WorldZeroGame(){
  for(let i=0;i<7;i++){const cloud=new THREE.Group();for(let k=0;k<5;k++){const puff=new THREE.Mesh(new THREE.SphereGeometry(9+(k%3)*5,12,7),cloudMat);puff.scale.set(2.1,.42,1);puff.position.set((k-2)*13,(k%2)*3,(k%3)*-3);cloud.add(puff)}cloud.position.set(-220+i*72,78+(i%3)*11,-300-(i%3)*44);scene.add(cloud)}
  const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,14),new THREE.MeshBasicMaterial({color:0xffd49a}));sunDisc.position.set(-125,42,-260);scene.add(sunDisc);const glowMat=new THREE.SpriteMaterial({color:0xffbd78,transparent:true,opacity:.22,depthWrite:false,blending:THREE.AdditiveBlending});const glow=new THREE.Sprite(glowMat);glow.scale.set(54,54,1);glow.position.copy(sunDisc.position);scene.add(glow);
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
-  const mossMat=new THREE.MeshStandardMaterial({color:0x334b2a,roughness:1});
-  const fernMat=new THREE.MeshStandardMaterial({color:0x244326,roughness:.95,side:THREE.DoubleSide});
-  for(let i=0;i<(mobile?70:140);i++){const a=i*2.399963,r=3+((i*71)%100)/100*145,x=Math.cos(a)*r,z=Math.sin(a)*r;
+  const mossMat=new THREE.MeshStandardMaterial({color:0x3f5831,roughness:1});
+  const fernMat=new THREE.MeshStandardMaterial({color:0x2e512d,roughness:.95,side:THREE.DoubleSide});
+  for(let i=0;i<(mobile?110:220);i++){const a=i*2.399963,r=3+((i*71)%100)/100*145,x=Math.cos(a)*r,z=Math.sin(a)*r;
     const patch=new THREE.Mesh(new THREE.CircleGeometry(.16+(i%5)*.055,6),mossMat);patch.rotation.x=-Math.PI/2;patch.position.set(x,H(x,z)+.018,z);scene.add(patch);
     if(i%3===0){const fern=new THREE.Group();for(let k=0;k<6;k++){const leaf=new THREE.Mesh(new THREE.PlaneGeometry(.08,.5),fernMat);leaf.position.y=.18;leaf.rotation.z=(k-2.5)*.24;leaf.rotation.y=k*1.047;fern.add(leaf)}fern.position.set(x,H(x,z)+.02,z);fern.scale.setScalar(.55+(i%4)*.12);scene.add(fern)}
   }
+  const grassMat=new THREE.MeshStandardMaterial({color:0x5b7040,roughness:1,side:THREE.DoubleSide});for(let i=0;i<(mobile?140:320);i++){const a=i*2.399963,r=4+((i*61)%100)/100*72,x=Math.cos(a)*r,z=Math.sin(a)*r*.72;const blade=new THREE.Mesh(new THREE.PlaneGeometry(.08,.38+(i%5)*.08),grassMat);blade.position.set(x,H(x,z)+.18,z);blade.rotation.y=a*2.3;blade.rotation.z=(i%3-1)*.09;scene.add(blade)}
   new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;scene.environmentIntensity=mobile?.42:.62;},undefined,e=>console.warn("HDR",e));
   const gltf=new GLTFLoader();
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<30;i++){const a=-1.48+i*.102,r=18+(i%7)*4.1,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)+.05,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
