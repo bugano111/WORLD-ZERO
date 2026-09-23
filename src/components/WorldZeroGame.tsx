@@ -12,13 +12,13 @@ export function WorldZeroGame(){
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x7895a4);scene.fog=new THREE.FogExp2(0xb6c0bd,.00034);
+  scene.background=new THREE.Color(0x7895a4);scene.fog=new THREE.FogExp2(0xb6c0bd,.00072);
   const sky=new Sky();sky.scale.setScalar(1000);scene.add(sky);const su=sky.material.uniforms;su.turbidity.value=7.2;su.rayleigh.value=1.65;su.mieCoefficient.value=.0045;su.mieDirectionalG.value=.79;const skySun=new THREE.Vector3();skySun.setFromSphericalCoords(1,THREE.MathUtils.degToRad(76),THREE.MathUtils.degToRad(242));su.sunPosition.value.copy(skySun);
   const camera=new THREE.PerspectiveCamera(58,1,.1,1600);
   let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"default",preserveDrawingBuffer:true});}catch(err){console.error(err);setStatus("R102 · WEBGL NELZE SPUSTIT");setReady(true);return;}
-  const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.76;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
-  scene.add(new THREE.HemisphereLight(0xb9c7c2,0x151711,.48));
-  const sun=new THREE.DirectionalLight(0xffc58b,1.85);sun.position.set(-145,52,-70);sun.castShadow=true;sun.shadow.mapSize.set(mobile?384:1024,mobile?384:1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
+  const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
+  scene.add(new THREE.HemisphereLight(0xdde8e4,0x263026,1.05));
+  const sun=new THREE.DirectionalLight(0xffd2a0,3.0);sun.position.set(-145,52,-70);sun.castShadow=true;sun.shadow.mapSize.set(mobile?384:1024,mobile?384:1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
   const H=(x:number,z:number)=>{const r=Math.hypot(x,z),plateau=16*Math.exp(-(x*x)/4200-(z*z)/2300),valley=-45*Math.exp(-((x-12)*(x-12))/26000-((z+160)*(z+160))/14500),ridgeA=15*Math.pow(Math.max(0,1-Math.abs(x+155)/190),1.8)*Math.max(0,Math.min(1,(-z-150)/150)),ridgeB=19*Math.pow(Math.max(0,1-Math.abs(x-170)/205),1.65)*Math.max(0,Math.min(1,(-z-175)/155)),basin=-10*Math.exp(-((x-38)*(x-38))/10500-((z+175)*(z+175))/4800),macro=3.1*Math.sin(x*.012+Math.sin(z*.008)*1.7)+2.1*Math.cos((x-z)*.018),erosion=(Math.abs(Math.sin(x*.031+z*.017))*1.7+Math.abs(Math.sin(x*.067-z*.029))*.7),cliff=-15*Math.max(0,Math.min(1,(-z-34)/64))*Math.exp(-(x*x)/16500),far=Math.max(0,-z-255)*.055;return 6+plateau+valley+ridgeA+ridgeB+basin+macro+erosion+cliff+far+r*.0015};
   const g=new THREE.PlaneGeometry(700,700,mobile?96:160,mobile?96:160);g.rotateX(-Math.PI/2);const pa=g.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i);pa.setY(i,H(x,z))}g.computeVertexNormals();
@@ -82,7 +82,7 @@ export function WorldZeroGame(){
     const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);humanModel.rotation.y=0;human.add(humanModel);
     const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.18,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.set(0,.008,0);contact.scale.set(1,.48,1);human.add(contact);
     const clips=(model as any).animations||[];if(clips.length){humanMixer=new THREE.AnimationMixer(humanModel);const by=(n:string)=>clips.find((x:THREE.AnimationClip)=>x.name.toLowerCase().includes(n));const idleClip=by("idle"),walkClip=by("walk"),runClip=by("run");idleAction=idleClip?humanMixer.clipAction(idleClip):null;walkAction=walkClip?humanMixer.clipAction(walkClip):null;runAction=runClip?humanMixer.clipAction(runClip):null;[idleAction,walkAction,runAction].forEach(a=>{if(a){a.enabled=true;a.setLoop(THREE.LoopRepeat,Infinity)}});currentAction=idleAction;idleAction?.play()}
-    setReady(true);setStatus("R159 · M1 · REAL HUMAN");
+    setReady(true);setStatus("R162 · M1 · LIGHTING REBUILD");
   },undefined,e=>{console.error("R159 M1 load failed",e);setStatus("R159 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
