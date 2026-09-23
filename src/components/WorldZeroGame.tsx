@@ -27,32 +27,25 @@ export function WorldZeroGame(){
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x1d5368,roughness:.10,metalness:.08,transparent:true,opacity:.94,clearcoat:.7,clearcoatRoughness:.18});
   const lake=new THREE.Mesh(new THREE.CircleGeometry(92,64),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-12.5,-142);scene.add(lake);
   const lake2=new THREE.Mesh(new THREE.CircleGeometry(42,48),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-10.5,-188);scene.add(lake2);
-  const mountainMat=new THREE.MeshStandardMaterial({color:0x39484b,roughness:.98,flatShading:false});
-  const farMountainMat=new THREE.MeshStandardMaterial({color:0x566b72,roughness:1,flatShading:false});
-  const snowMat=new THREE.MeshStandardMaterial({color:0xe7eceb,roughness:.88,flatShading:false});
-  const mountainBand=(z:number,baseY:number,phase:number,mat:THREE.Material,snow=false)=>{
-    const seg=96, base:number[]=[], cap:number[]=[];
-    const peak=(x:number)=>baseY+18+30*Math.abs(Math.sin(x*.012+phase))+22*Math.abs(Math.sin(x*.027+phase*.63))+8*Math.sin(x*.061+phase);
-    for(let i=0;i<seg;i++){
-      const x0=-430+i*860/seg,x1=-430+(i+1)*860/seg,y0=peak(x0),y1=peak(x1),zb=z-28;
-      base.push(x0,baseY,z,x1,baseY,z,x1,y1,zb,x0,baseY,z,x1,y1,zb,x0,y0,zb);
-      if(snow){
-        const s0=Math.max(baseY+23,y0-12),s1=Math.max(baseY+23,y1-12);
-        cap.push(x0,s0,zb-.05,x1,s1,zb-.05,x1,y1,zb-.08,x0,s0,zb-.05,x1,y1,zb-.08,x0,y0,zb-.08);
-      }
-    }
-    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(base,3));geo.computeVertexNormals();scene.add(new THREE.Mesh(geo,mat));
-    if(snow&&cap.length){const sg=new THREE.BufferGeometry();sg.setAttribute("position",new THREE.Float32BufferAttribute(cap,3));sg.computeVertexNormals();scene.add(new THREE.Mesh(sg,snowMat));}
-  };
-  mountainBand(-330,-30,.3,mountainMat,false);
-  mountainBand(-385,-24,1.7,farMountainMat,true);
-  mountainBand(-445,-18,2.8,mountainMat,true);
-  const haze=new THREE.Mesh(new THREE.PlaneGeometry(760,180),new THREE.MeshBasicMaterial({color:0xc8d0cc,transparent:true,opacity:.055,depthWrite:false}));haze.position.set(0,42,-350);scene.add(haze);
-  // cheap layered clouds for mobile golden-hour depth
-  const cloudMat=new THREE.MeshBasicMaterial({color:0xe8ece8,transparent:true,opacity:.12,depthWrite:false});
-  for(let i=0;i<9;i++){const cloud=new THREE.Mesh(new THREE.CircleGeometry(12+(i%4)*5,24),cloudMat);cloud.scale.set(2.8+(i%3)*.5,.38+(i%2)*.12,1);cloud.position.set(-210+i*52,72+(i%4)*8,-320-(i%3)*38);scene.add(cloud);}
-  // R114: overlook rocks now use the real mossy-rock glTF instead of primitive dodecahedrons.
-  const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,14),new THREE.MeshBasicMaterial({color:0xffd49a}));sunDisc.position.set(-125,42,-260);scene.add(sunDisc);
+  const mountainMat=new THREE.MeshStandardMaterial({color:0x35464b,roughness:.97});
+ const farMountainMat=new THREE.MeshStandardMaterial({color:0x526872,roughness:1});
+ const snowMat=new THREE.MeshStandardMaterial({color:0xe8eeee,roughness:.82});
+ const mountainRange=(z:number,baseY:number,phase:number,mat:THREE.Material,snowLine:number)=>{
+   const geo=new THREE.PlaneGeometry(900,170,150,24);geo.rotateX(0);
+   const p=geo.attributes.position as THREE.BufferAttribute;
+   for(let i=0;i<p.count;i++){const x=p.getX(i),ly=p.getY(i),ridge=baseY+36+42*Math.abs(Math.sin(x*.0105+phase))+28*Math.abs(Math.sin(x*.022+phase*.7))+12*Math.sin(x*.049+phase);const v=(ly+85)/170;p.setY(i,baseY-34+v*(ridge-(baseY-34)));p.setZ(i,z-(1-v)*42-8*Math.sin(x*.018+phase));}
+   geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,mat);scene.add(mesh);
+   const cap=new THREE.BufferGeometry(),verts:number[]=[];
+   for(let j=0;j<150;j++){const x0=-450+j*6,x1=x0+6;const peak=(x:number)=>baseY+36+42*Math.abs(Math.sin(x*.0105+phase))+28*Math.abs(Math.sin(x*.022+phase*.7))+12*Math.sin(x*.049+phase);const y0=peak(x0),y1=peak(x1),s0=Math.max(snowLine,y0-15),s1=Math.max(snowLine,y1-15);if(y0>snowLine||y1>snowLine)verts.push(x0,s0,z-1,x1,s1,z-1,x1,y1,z-3,x0,s0,z-1,x1,y1,z-3,x0,y0,z-3);}
+   cap.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));cap.computeVertexNormals();scene.add(new THREE.Mesh(cap,snowMat));
+ };
+ mountainRange(-335,-42,.25,mountainMat,16);
+ mountainRange(-410,-35,1.55,farMountainMat,19);
+ mountainRange(-485,-29,2.75,mountainMat,23);
+ const haze=new THREE.Mesh(new THREE.PlaneGeometry(900,210),new THREE.MeshBasicMaterial({color:0xbcc9ca,transparent:true,opacity:.035,depthWrite:false}));haze.position.set(0,44,-360);scene.add(haze);
+ const cloudMat=new THREE.MeshBasicMaterial({color:0xf2f0e9,transparent:true,opacity:.16,depthWrite:false});
+ for(let i=0;i<7;i++){const cloud=new THREE.Group();for(let k=0;k<5;k++){const puff=new THREE.Mesh(new THREE.SphereGeometry(9+(k%3)*5,12,7),cloudMat);puff.scale.set(2.1,.42,1);puff.position.set((k-2)*13,(k%2)*3,(k%3)*-3);cloud.add(puff)}cloud.position.set(-220+i*72,78+(i%3)*11,-300-(i%3)*44);scene.add(cloud)}
+ const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,14),new THREE.MeshBasicMaterial({color:0xffd49a}));sunDisc.position.set(-125,42,-260);scene.add(sunDisc);
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
   const mossMat=new THREE.MeshStandardMaterial({color:0x334b2a,roughness:1});
   const fernMat=new THREE.MeshStandardMaterial({color:0x244326,roughness:.95,side:THREE.DoubleSide});
