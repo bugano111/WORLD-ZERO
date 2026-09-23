@@ -22,8 +22,8 @@ export function WorldZeroGame(){
   const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0x42513a,roughness:.96,metalness:0,vertexColors:true});
   const loadTex=(url:string,kind:"map"|"normalMap"|"roughnessMap")=>tex.load(url,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(28,28);if(kind==="map")t.colorSpace=THREE.SRGBColorSpace;(groundMat as any)[kind]=t;groundMat.needsUpdate=true});
   /* R102: remove the orange leaf-photo albedo that dominated every previous build. */loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_nor_gl_1k.jpg`,"normalMap");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_rough_1k.jpg`,"roughnessMap");
-  const pos=g.attributes.position as THREE.BufferAttribute,cols:number[]=[];for(let i=0;i<pos.count;i++){const y=pos.getZ(i),x=pos.getX(i),z=-pos.getY(i),rock=Math.max(0,Math.min(1,(Math.abs(Math.sin(x*.031)+Math.cos(z*.027))-.55)*1.7));const cc=new THREE.Color().setRGB(.20+.18*rock,.27+.13*(1-rock),.18+.10*(1-rock));cols.push(cc.r,cc.g,cc.b)}g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
-   const rockMat=new THREE.MeshStandardMaterial({color:0x56564d,roughness:.93});for(let i=0;i<34;i++){const a=i*2.399,r=5+(i%13)*2.1,x=Math.cos(a)*r,z=Math.sin(a)*r*.62-7;const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.7+(i%5)*.34,0),rockMat);rock.scale.set(1.4+(i%3)*.4,.55+(i%4)*.22,1+(i%5)*.24);rock.position.set(x,H(x,z)+.25,z);rock.rotation.set(i*.31,i*.67,i*.19);rock.castShadow=rock.receiveShadow=true;scene.add(rock)}
+  const pos=g.attributes.position as THREE.BufferAttribute,cols:number[]=[];for(let i=0;i<pos.count;i++){const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i),slope=Math.max(0,Math.min(1,Math.abs(Math.sin(x*.027)*Math.cos(z*.031))*.9)),alt=Math.max(0,Math.min(1,(y+15)/65)),rock=Math.max(slope,alt*.38),cc=new THREE.Color().setRGB(.13+.23*rock,.22+.12*(1-rock),.12+.10*(1-rock));cols.push(cc.r,cc.g,cc.b)}g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
+   // Foreground boulders now come from the authored moss-rock GLTF scatter below; primitive polyhedra removed.
   // R104: alpine valley composition visible from spawn: reflective lake + layered mountain skyline.
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x235f73,roughness:.055,metalness:.12,transparent:true,opacity:.91,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.35});
   const lakeShape=new THREE.Shape();for(let i=0;i<72;i++){const a=i/72*Math.PI*2,r=78+13*Math.sin(a*3)+8*Math.sin(a*7+.8),x=Math.cos(a)*r*1.45,y=Math.sin(a)*r*.62;i?lakeShape.lineTo(x,y):lakeShape.moveTo(x,y)}const lake=new THREE.Mesh(new THREE.ShapeGeometry(lakeShape,10),waterMat);lake.rotation.x=-Math.PI/2;lake.position.set(42,-13,-157);scene.add(lake);
@@ -75,13 +75,7 @@ export function WorldZeroGame(){
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     const scale=1.84/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale); humanModel.rotation.y=0;
     human.add(humanModel);
-    const pack=new THREE.Group();
-    const packMat=new THREE.MeshStandardMaterial({color:0x202a25,roughness:.86});
-    const bag=new THREE.Mesh(new THREE.BoxGeometry(.43,.62,.22,3,4,2),packMat);bag.position.set(0,1.18,-.18);bag.rotation.x=-.08;pack.add(bag);const flap=new THREE.Mesh(new THREE.BoxGeometry(.39,.19,.24),packMat);flap.position.set(0,1.43,-.19);flap.rotation.x=.18;pack.add(flap);for(const sx of [-.22,.22]){const pocket=new THREE.Mesh(new THREE.BoxGeometry(.11,.28,.16),packMat);pocket.position.set(sx,1.12,-.17);pack.add(pocket)}
-    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.44,10),packMat);roll.rotation.z=Math.PI/2;roll.position.set(0,1.54,-.17);pack.add(roll);
-    const strapMat=new THREE.MeshStandardMaterial({color:0x111713,roughness:1});
-    for(const sx of [-.17,.17]){const s=new THREE.Mesh(new THREE.BoxGeometry(.035,.58,.035),strapMat);s.position.set(sx,1.16,-.08);pack.add(s);}
-    human.add(pack);
+    // R143: remove the large black primitive backpack that obscured the character in the real proof render.
     setReady(true); setStatus("REALISM 102 · DEN 1 · REAL FOREST");
     // R75 stability: preserve the model's own materials; no runtime material guessing.
     humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;}});
