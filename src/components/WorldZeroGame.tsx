@@ -53,6 +53,10 @@ export function WorldZeroGame(){
   const fbxManager=new THREE.LoadingManager();
   fbxManager.setURLModifier((url)=>/\.(png|jpe?g|tga|bmp|dds)$/i.test(url)?"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL7WQAAAABJRU5ErkJggg==":url);
   const fbx=new FBXLoader(fbxManager);
+  const m1TexLoader=new THREE.TextureLoader();
+  const m1Body=m1TexLoader.load(`${import.meta.env.BASE_URL}real-assets/rocketbox/m006_body_color.tga`);
+  const m1Head=m1TexLoader.load(`${import.meta.env.BASE_URL}real-assets/rocketbox/m006_head_color.tga`);
+  [m1Body,m1Head].forEach(t=>{t.colorSpace=THREE.SRGBColorSpace;t.flipY=true});
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<30;i++){const a=-1.48+i*.102,r=18+(i%7)*4.1,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)-.04,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
 
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z)-.035,z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
@@ -77,7 +81,7 @@ export function WorldZeroGame(){
   // R159: M1 is now the actual player model. Rocketbox is rigged and MIT licensed.
   fbx.load(`${import.meta.env.BASE_URL}real-assets/rocketbox/M1.fbx`,model=>{
     humanModel=model;
-    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{if("roughness" in m){m.roughness=.72;m.metalness=0}m.needsUpdate=true})}}});
+    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{const n=((o.name||"")+" "+(m.name||"")).toLowerCase();if("roughness" in m){m.roughness=.72;m.metalness=0}if("map" in m)m.map=/head|face/.test(n)?m1Head:m1Body;m.color?.set(0xffffff);m.needsUpdate=true})}}});
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);humanModel.rotation.y=0;human.add(humanModel);
     const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.18,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.set(0,.008,0);contact.scale.set(1,.48,1);human.add(contact);
@@ -91,7 +95,7 @@ export function WorldZeroGame(){
       else if(kind==="walk")walkAction=action;else runAction=action;
     },undefined,e=>console.error("R164 motion load failed",kind,e));
     loadMotion("M1_idle.fbx","idle");loadMotion("M1_walk.fbx","walk");loadMotion("M1_run.fbx","run");
-    setReady(true);setStatus("R162 · M1 · LIGHTING REBUILD");
+    setReady(true);setStatus("R167 · M1 · TEXTURED HUMAN");
   },undefined,e=>{console.error("R159 M1 load failed",e);setStatus("R159 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
