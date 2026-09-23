@@ -54,15 +54,15 @@ export function WorldZeroGame(){
     const patch=new THREE.Mesh(new THREE.CircleGeometry(.16+(i%5)*.055,6),mossMat);patch.rotation.x=-Math.PI/2;patch.position.set(x,H(x,z)+.018,z);scene.add(patch);
     if(i%3===0){const fern=new THREE.Group();for(let k=0;k<6;k++){const leaf=new THREE.Mesh(new THREE.PlaneGeometry(.08,.5),fernMat);leaf.position.y=.18;leaf.rotation.z=(k-2.5)*.24;leaf.rotation.y=k*1.047;fern.add(leaf)}fern.position.set(x,H(x,z)+.02,z);fern.scale.setScalar(.55+(i%4)*.12);scene.add(fern)}
   }
-  if(!mobile)new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;},undefined,e=>console.warn("HDR",e));
+  new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;scene.environmentIntensity=mobile?.42:.62;},undefined,e=>console.warn("HDR",e));
   const gltf=new GLTFLoader();
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<30;i++){const a=-1.48+i*.102,r=18+(i%7)*4.1,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)+.05,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
 
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z),z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
   const trunkMat=new THREE.MeshStandardMaterial({color:0x3a281c,roughness:1});
   const needleMats=[0x173522,0x21452b,0x294e30].map(color=>new THREE.MeshStandardMaterial({color,roughness:.96}));
-  const maturePine=(x:number,z:number,h:number,variant:number)=>{const grp=new THREE.Group();grp.position.set(x,H(x,z),z);const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.16*h/10,.28*h/10,h*.72,7),trunkMat);trunk.position.y=h*.36;grp.add(trunk);const mat=needleMats[variant%needleMats.length];for(let k=0;k<5;k++){const t=k/4,rad=h*(.24-t*.115),crown=new THREE.Mesh(new THREE.ConeGeometry(rad,h*.31,9),mat);crown.position.y=h*(.47+k*.115);crown.rotation.y=variant*.71+k*.37;grp.add(crown)}grp.rotation.y=variant*.73;scene.add(grp)};
-  for(let i=0;i<(mobile?180:420);i++){const a=i*2.399963+(i%7)*.09,r=26+((i*53)%101)/100*320;let x=Math.cos(a)*r,z=Math.sin(a)*r;if(z<-70&&Math.abs(x)<58)x+=(x<0?-1:1)*(62+(i%9)*3);maturePine(x,z,8.5+(i%11)*.72,i)}
+  const maturePine=(x:number,z:number,h:number,variant:number)=>{const grp=new THREE.Group();grp.position.set(x,H(x,z),z);const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12*h/10,.23*h/10,h*.76,6),trunkMat);trunk.position.y=h*.38;grp.add(trunk);const mat=needleMats[variant%needleMats.length];for(let k=0;k<7;k++){const t=k/6,rad=h*(.225-t*.14),crown=new THREE.Mesh(new THREE.ConeGeometry(rad,h*(.22-t*.035),8),mat);crown.position.y=h*(.39+k*.095);crown.rotation.y=variant*.71+k*.63;grp.add(crown)}grp.rotation.y=variant*.73;scene.add(grp)};
+  for(let i=0;i<(mobile?230:520);i++){const a=i*2.399963+(i%7)*.09,r=24+((i*53)%101)/100*335;let x=Math.cos(a)*r,z=Math.sin(a)*r;if(z<-72&&Math.abs(x)<52)x+=(x<0?-1:1)*(58+(i%9)*3);maturePine(x,z,9.5+(i%13)*.74,i)}
 
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?120:320,10,250,.78);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf`,mobile?28:90,8,95,.38);
@@ -89,8 +89,8 @@ export function WorldZeroGame(){
     human.add(humanModel);
     const pack=new THREE.Group();
     const packMat=new THREE.MeshStandardMaterial({color:0x202a25,roughness:.86});
-    const bag=new THREE.Mesh(new THREE.CapsuleGeometry(.19,.34,6,10),packMat);bag.scale.set(1.05,1.25,.62);bag.position.set(0,1.17,-.13);bag.rotation.x=-.10;pack.add(bag);
-    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.38,12),packMat);roll.rotation.z=Math.PI/2;roll.position.set(0,1.48,-.13);pack.add(roll);
+    const bag=new THREE.Mesh(new THREE.BoxGeometry(.43,.62,.22,3,4,2),packMat);bag.position.set(0,1.18,-.18);bag.rotation.x=-.08;pack.add(bag);const flap=new THREE.Mesh(new THREE.BoxGeometry(.39,.19,.24),packMat);flap.position.set(0,1.43,-.19);flap.rotation.x=.18;pack.add(flap);for(const sx of [-.22,.22]){const pocket=new THREE.Mesh(new THREE.BoxGeometry(.11,.28,.16),packMat);pocket.position.set(sx,1.12,-.17);pack.add(pocket)}
+    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.44,10),packMat);roll.rotation.z=Math.PI/2;roll.position.set(0,1.54,-.17);pack.add(roll);
     const strapMat=new THREE.MeshStandardMaterial({color:0x111713,roughness:1});
     for(const sx of [-.17,.17]){const s=new THREE.Mesh(new THREE.BoxGeometry(.035,.58,.035),strapMat);s.position.set(sx,1.16,-.08);pack.add(s);}
     human.add(pack);
