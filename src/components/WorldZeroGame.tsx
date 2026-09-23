@@ -28,24 +28,12 @@ export function WorldZeroGame(){
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x235f73,roughness:.055,metalness:.12,transparent:true,opacity:.91,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1.35});
   const lakeShape=new THREE.Shape();for(let i=0;i<72;i++){const a=i/72*Math.PI*2,r=78+13*Math.sin(a*3)+8*Math.sin(a*7+.8),x=Math.cos(a)*r*1.45,y=Math.sin(a)*r*.62;i?lakeShape.lineTo(x,y):lakeShape.moveTo(x,y)}const lake=new THREE.Mesh(new THREE.ShapeGeometry(lakeShape,10),waterMat);lake.rotation.x=-Math.PI/2;lake.position.set(42,-13,-157);scene.add(lake);
   const riverShape=new THREE.Shape();const riverPts=[[-16,96],[-8,62],[-17,30],[-7,2],[-12,-34],[-4,-74],[13,-92],[9,-55],[17,-21],[8,11],[18,44],[10,78]];riverPts.forEach((p,i)=>i?riverShape.lineTo(p[0],p[1]):riverShape.moveTo(p[0],p[1]));riverShape.closePath();const river=new THREE.Mesh(new THREE.ShapeGeometry(riverShape),waterMat);river.rotation.x=-Math.PI/2;river.rotation.z=-.19;river.position.set(-42,-12.7,-205);scene.add(river);
-  const mountainMat=new THREE.MeshStandardMaterial({color:0x35464b,roughness:.97});
- const farMountainMat=new THREE.MeshStandardMaterial({color:0x526872,roughness:1});
- const snowMat=new THREE.MeshStandardMaterial({color:0xe8eeee,roughness:.82});
- const mountainRange=(z:number,baseY:number,phase:number,mat:THREE.Material,snowLine:number)=>{
-   const geo=new THREE.PlaneGeometry(900,170,150,24);geo.rotateX(0);
-   const p=geo.attributes.position as THREE.BufferAttribute;
-   for(let i=0;i<p.count;i++){const x=p.getX(i),ly=p.getY(i),ridge=baseY+36+42*Math.abs(Math.sin(x*.0105+phase))+28*Math.abs(Math.sin(x*.022+phase*.7))+12*Math.sin(x*.049+phase);const v=(ly+85)/170;p.setY(i,baseY-34+v*(ridge-(baseY-34)));p.setZ(i,z-(1-v)*42-8*Math.sin(x*.018+phase));}
-   geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,mat);scene.add(mesh);
-   const cap=new THREE.BufferGeometry(),verts:number[]=[];
-   for(let j=0;j<150;j++){const x0=-450+j*6,x1=x0+6;const peak=(x:number)=>baseY+36+42*Math.abs(Math.sin(x*.0105+phase))+28*Math.abs(Math.sin(x*.022+phase*.7))+12*Math.sin(x*.049+phase);const y0=peak(x0),y1=peak(x1),s0=Math.max(snowLine,y0-15),s1=Math.max(snowLine,y1-15);if(y0>snowLine||y1>snowLine)verts.push(x0,s0,z-1,x1,s1,z-1,x1,y1,z-3,x0,s0,z-1,x1,y1,z-3,x0,y0,z-3);}
-   cap.setAttribute("position",new THREE.Float32BufferAttribute(verts,3));cap.computeVertexNormals();scene.add(new THREE.Mesh(cap,snowMat));
- };
- mountainRange(-335,-42,.25,mountainMat,16);
- mountainRange(-410,-35,1.55,farMountainMat,19);
- mountainRange(-485,-29,2.75,mountainMat,23);
- const haze=new THREE.Mesh(new THREE.PlaneGeometry(900,210),new THREE.MeshBasicMaterial({color:0xbcc9ca,transparent:true,opacity:.035,depthWrite:false}));haze.position.set(0,44,-360);scene.add(haze);
- const cloudMat=new THREE.MeshBasicMaterial({color:0xf2f0e9,transparent:true,opacity:.16,depthWrite:false});
- for(let i=0;i<7;i++){const cloud=new THREE.Group();for(let k=0;k<5;k++){const puff=new THREE.Mesh(new THREE.SphereGeometry(9+(k%3)*5,12,7),cloudMat);puff.scale.set(2.1,.42,1);puff.position.set((k-2)*13,(k%2)*3,(k%3)*-3);cloud.add(puff)}cloud.position.set(-220+i*72,78+(i%3)*11,-300-(i%3)*44);scene.add(cloud)}
+  const mountainMat=new THREE.MeshStandardMaterial({color:0x43514f,roughness:.94,vertexColors:true});
+ const snowMat=new THREE.MeshStandardMaterial({color:0xe8ece9,roughness:.8});
+ const buildMassif=(cx:number,cz:number,w:number,d:number,h:number,seed:number)=>{const geo=new THREE.PlaneGeometry(w,d,48,32);geo.rotateX(-Math.PI/2);const p=geo.attributes.position as THREE.BufferAttribute,colors:number[]=[];for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),nx=x/(w*.5),nz=z/(d*.5),fall=Math.max(0,1-nx*nx-nz*nz),noise=Math.sin(x*.071+seed)*Math.cos(z*.058-seed)+.45*Math.sin((x+z)*.137+seed),y=-22+Math.pow(fall,1.35)*h+noise*8*fall;p.setY(i,y);const t=Math.max(0,Math.min(1,(y-20)/55)),cc=new THREE.Color().setRGB(.25+.45*t,.30+.43*t,.29+.42*t);colors.push(cc.r,cc.g,cc.b)}geo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();const m=new THREE.Mesh(geo,mountainMat);m.position.set(cx,0,cz);m.castShadow=m.receiveShadow=true;scene.add(m);const snowGeo=geo.clone(),sp=snowGeo.attributes.position as THREE.BufferAttribute;for(let i=0;i<sp.count;i++)if(sp.getY(i)<38)sp.setY(i,-200);snowGeo.computeVertexNormals();const snow=new THREE.Mesh(snowGeo,snowMat);snow.position.set(cx,1.1,cz);scene.add(snow)};
+ buildMassif(-180,-385,330,210,118,.4);buildMassif(95,-420,390,235,142,1.7);buildMassif(310,-455,310,210,105,2.9);
+ const hazeMat=new THREE.MeshBasicMaterial({color:0xc9d0cd,transparent:true,opacity:.055,depthWrite:false});for(let i=0;i<3;i++){const hz=new THREE.Mesh(new THREE.PlaneGeometry(850,120),hazeMat);hz.position.set(0,18+i*17,-300-i*65);scene.add(hz)}
+ const cloudMat=new THREE.MeshStandardMaterial({color:0xf3f0e8,transparent:true,opacity:.17,roughness:1,depthWrite:false});for(let i=0;i<8;i++){const cloud=new THREE.Group();for(let k=0;k<9;k++){const puff=new THREE.Mesh(new THREE.IcosahedronGeometry(8+(k%4)*3,2),cloudMat);puff.scale.set(1.9+(k%3)*.25,.55+(k%2)*.18,1);puff.position.set((k-4)*9+(k%2)*4,Math.sin(k*1.7)*4,(k%3)*-4);cloud.add(puff)}cloud.position.set(-250+i*75,82+(i%3)*14,-315-(i%4)*38);scene.add(cloud)}
  const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,14),new THREE.MeshBasicMaterial({color:0xffd49a}));sunDisc.position.set(-125,42,-260);scene.add(sunDisc);const glowMat=new THREE.SpriteMaterial({color:0xffbd78,transparent:true,opacity:.22,depthWrite:false,blending:THREE.AdditiveBlending});const glow=new THREE.Sprite(glowMat);glow.scale.set(54,54,1);glow.position.copy(sunDisc.position);scene.add(glow);
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
   const mossMat=new THREE.MeshStandardMaterial({color:0x3f5831,roughness:1});
