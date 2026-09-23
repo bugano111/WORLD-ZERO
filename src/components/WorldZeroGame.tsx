@@ -65,7 +65,11 @@ export function WorldZeroGame(){
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<30;i++){const a=-1.48+i*.102,r=18+(i%7)*4.1,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)+.05,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
 
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z),z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
-  scatterModel(`${import.meta.env.BASE_URL}real-assets/models/pine_sapling_small.gltf`,mobile?360:1000,18,345,7.0);
+  const trunkMat=new THREE.MeshStandardMaterial({color:0x3a281c,roughness:1});
+  const needleMats=[0x173522,0x21452b,0x294e30].map(color=>new THREE.MeshStandardMaterial({color,roughness:.96}));
+  const maturePine=(x:number,z:number,h:number,variant:number)=>{const grp=new THREE.Group();grp.position.set(x,H(x,z),z);const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.16*h/10,.28*h/10,h*.72,7),trunkMat);trunk.position.y=h*.36;grp.add(trunk);const mat=needleMats[variant%needleMats.length];for(let k=0;k<5;k++){const t=k/4,rad=h*(.24-t*.115),crown=new THREE.Mesh(new THREE.ConeGeometry(rad,h*.31,9),mat);crown.position.y=h*(.47+k*.115);crown.rotation.y=variant*.71+k*.37;grp.add(crown)}grp.rotation.y=variant*.73;scene.add(grp)};
+  for(let i=0;i<(mobile?180:420);i++){const a=i*2.399963+(i%7)*.09,r=26+((i*53)%101)/100*320;let x=Math.cos(a)*r,z=Math.sin(a)*r;if(z<-70&&Math.abs(x)<58)x+=(x<0?-1:1)*(62+(i%9)*3);maturePine(x,z,8.5+(i%11)*.72,i)}
+
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/shrub_02.gltf`,mobile?120:320,10,250,.78);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/weed_plant_02.gltf`,mobile?28:90,8,95,.38);
   scatterModel(`${import.meta.env.BASE_URL}real-assets/models/tree_stump_01.gltf`,mobile?3:10,75,145,.72);
