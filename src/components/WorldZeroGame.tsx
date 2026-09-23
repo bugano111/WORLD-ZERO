@@ -80,7 +80,7 @@ export function WorldZeroGame(){
     // R154: human grounding/contact shadow. Anchors feet to terrain and removes the floating mannequin read.
     const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.20,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.set(0,.008,0);contact.scale.set(1,.48,1);human.add(contact);
     // R154: expedition backpack attached to the character root; it moves with the body instead of floating.
-    const pack=new THREE.Group(),packMat=new THREE.MeshStandardMaterial({color:0x252923,roughness:.96}),webMat=new THREE.MeshStandardMaterial({color:0x171a17,roughness:1});const bag=new THREE.Mesh(new THREE.CapsuleGeometry(.27,.52,6,12),packMat);bag.scale.set(1,.95,.55);bag.position.set(0,1.12,.22);bag.rotation.x=.08;bag.castShadow=true;pack.add(bag);const roll=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.48,12),new THREE.MeshStandardMaterial({color:0x34372f,roughness:1}));roll.rotation.z=Math.PI/2;roll.position.set(0,1.48,.23);roll.castShadow=true;pack.add(roll);[-1,1].forEach(s=>{const strap=new THREE.Mesh(new THREE.CapsuleGeometry(.025,.7,4,8),webMat);strap.position.set(s*.19,1.18,.08);strap.rotation.x=.08;pack.add(strap)});const belt=new THREE.Mesh(new THREE.BoxGeometry(.62,.045,.045),webMat);belt.position.set(0,.91,.18);pack.add(belt);pack.traverse((o:any)=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});human.add(pack);
+    // R157: primitive backpack removed. Realism pass uses only authored character geometry; no capsule/box props.\n    
     // R144: tame the source character silhouette for the third-person benchmark framing.
     humanModel.traverse((o:any)=>{if(o.isMesh&&o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{if(m.color){const n=(o.name||"").toLowerCase();if(n.includes("shirt")||n.includes("top"))m.color.set(0x20282a);else if(n.includes("pant")||n.includes("trouser"))m.color.set(0x202326);}})}});
     // R143: remove the large black primitive backpack that obscured the character in the real proof render.
@@ -91,7 +91,7 @@ export function WorldZeroGame(){
     // The next character replacement must be a complete, correctly rigged human asset.
     if(g.animations.length){humanMixer=new THREE.AnimationMixer(humanModel);
     const by=(n:string)=>g.animations.find(x=>x.name.toLowerCase().includes(n));
-    const clips=g.animations;idleAction=by("idle")?humanMixer.clipAction(by("idle")!):(clips[0]?humanMixer.clipAction(clips[0]):null); walkAction=by("walk")?humanMixer.clipAction(by("walk")!):(clips.find(x=>x!==clips[0])?humanMixer.clipAction(clips.find(x=>x!==clips[0])!):idleAction); runAction=by("run")?humanMixer.clipAction(by("run")!):walkAction;
+    const clips=g.animations;const idleClip=by("idle"),walkClip=by("walk"),runClip=by("run");idleAction=idleClip?humanMixer.clipAction(idleClip):null;walkAction=walkClip?humanMixer.clipAction(walkClip):null;runAction=runClip?humanMixer.clipAction(runClip):null;
     [idleAction,walkAction,runAction].forEach(a=>{if(a){a.enabled=true;a.setLoop(THREE.LoopRepeat,Infinity);a.clampWhenFinished=false}});currentAction=idleAction;idleAction?.reset().play();}
   },undefined,e=>{console.error("R61 human load failed",e);setStatus("R102 · CHYBA MODELU POSTAVY");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
