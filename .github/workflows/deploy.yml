@@ -120,6 +120,12 @@ jobs:
           test -s public/real-assets/rocketbox/M1_idle.fbx
           test -s public/real-assets/rocketbox/M1_walk.fbx
           test -s public/real-assets/rocketbox/M1_run.fbx
+          # R167: complete M1 authored skin/clothing/head texture set.
+          base="https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_04/Textures"
+          for tex in m006_body_color.tga m006_body_normal.tga m006_body_specular.tga m006_head_color.tga m006_head_normal.tga m006_head_specular.tga m006_opacity_color.tga; do
+            curl -fL --retry 3 "$base/$tex" -o "public/real-assets/rocketbox/$tex"
+            test -s "public/real-assets/rocketbox/$tex"
+          done
           # Rocketbox FBX materials reference companion textures. Copy them so the browser loader does not 404.
           for who in Male_Adult_04 Female_Adult_04; do
             mkdir -p "public/real-assets/rocketbox/$who"
