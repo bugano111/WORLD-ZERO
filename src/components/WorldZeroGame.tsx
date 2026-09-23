@@ -19,14 +19,15 @@ export function WorldZeroGame(){
   const H=(x:number,z:number)=>{const overlook=10*Math.exp(-(x*x)/5200-(z*z)/2600);const valley=-58*Math.exp(-((x-35)*(x-35))/24000-((z+155)*(z+155))/17000);const farRise=Math.max(0,-z-235)*.07;return 5+overlook+Math.sin(x*.013)*3.2+Math.cos(z*.015)*2.4+Math.sin((x+z)*.006)*5.5+valley+farRise};
   const g=new THREE.PlaneGeometry(700,700,100,100);g.rotateX(-Math.PI/2);const pa=g.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i);pa.setY(i,H(x,z))}g.computeVertexNormals();
-  const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0x34462f,roughness:.98,metalness:0});
+  const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0x42513a,roughness:.96,metalness:0,vertexColors:true});
   const loadTex=(url:string,kind:"map"|"normalMap"|"roughnessMap")=>tex.load(url,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(28,28);if(kind==="map")t.colorSpace=THREE.SRGBColorSpace;(groundMat as any)[kind]=t;groundMat.needsUpdate=true});
   /* R102: remove the orange leaf-photo albedo that dominated every previous build. */loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_nor_gl_1k.jpg`,"normalMap");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_rough_1k.jpg`,"roughnessMap");
-  const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
+  const pos=g.attributes.position as THREE.BufferAttribute,cols:number[]=[];for(let i=0;i<pos.count;i++){const y=pos.getZ(i),x=pos.getX(i),z=-pos.getY(i),rock=Math.max(0,Math.min(1,(Math.abs(Math.sin(x*.031)+Math.cos(z*.027))-.55)*1.7));const cc=new THREE.Color().setRGB(.20+.18*rock,.27+.13*(1-rock),.18+.10*(1-rock));cols.push(cc.r,cc.g,cc.b)}g.setAttribute("color",new THREE.Float32BufferAttribute(cols,3));const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
+   const rockMat=new THREE.MeshStandardMaterial({color:0x56564d,roughness:.93});for(let i=0;i<34;i++){const a=i*2.399,r=5+(i%13)*2.1,x=Math.cos(a)*r,z=Math.sin(a)*r*.62-7;const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.7+(i%5)*.34,0),rockMat);rock.scale.set(1.4+(i%3)*.4,.55+(i%4)*.22,1+(i%5)*.24);rock.position.set(x,H(x,z)+.25,z);rock.rotation.set(i*.31,i*.67,i*.19);rock.castShadow=rock.receiveShadow=true;scene.add(rock)}
   // R104: alpine valley composition visible from spawn: reflective lake + layered mountain skyline.
   const waterMat=new THREE.MeshPhysicalMaterial({color:0x1d5368,roughness:.10,metalness:.08,transparent:true,opacity:.94,clearcoat:.7,clearcoatRoughness:.18});
-  const lake=new THREE.Mesh(new THREE.CircleGeometry(92,64),waterMat);lake.rotation.x=-Math.PI/2;lake.rotation.z=-.08;lake.position.set(58,-12.5,-142);scene.add(lake);
-  const lake2=new THREE.Mesh(new THREE.CircleGeometry(42,48),waterMat);lake2.rotation.x=-Math.PI/2;lake2.rotation.z=.18;lake2.position.set(-72,-10.5,-188);scene.add(lake2);
+  const lakeShape=new THREE.Shape();for(let i=0;i<72;i++){const a=i/72*Math.PI*2,r=78+13*Math.sin(a*3)+8*Math.sin(a*7+.8),x=Math.cos(a)*r*1.45,y=Math.sin(a)*r*.62;i?lakeShape.lineTo(x,y):lakeShape.moveTo(x,y)}const lake=new THREE.Mesh(new THREE.ShapeGeometry(lakeShape,10),waterMat);lake.rotation.x=-Math.PI/2;lake.position.set(42,-13,-157);scene.add(lake);
+  const river=new THREE.Mesh(new THREE.PlaneGeometry(38,210,1,12),waterMat);river.rotation.x=-Math.PI/2;river.rotation.z=-.27;river.position.set(-48,-12.6,-198);scene.add(river);
   const mountainMat=new THREE.MeshStandardMaterial({color:0x35464b,roughness:.97});
  const farMountainMat=new THREE.MeshStandardMaterial({color:0x526872,roughness:1});
  const snowMat=new THREE.MeshStandardMaterial({color:0xe8eeee,roughness:.82});
