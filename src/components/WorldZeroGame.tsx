@@ -79,6 +79,8 @@ export function WorldZeroGame(){
     human.add(humanModel);
     // R154: human grounding/contact shadow. Anchors feet to terrain and removes the floating mannequin read.
     const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.20,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.set(0,.008,0);contact.scale.set(1,.48,1);human.add(contact);
+    // R154: expedition backpack attached to the character root; it moves with the body instead of floating.
+    const pack=new THREE.Group(),packMat=new THREE.MeshStandardMaterial({color:0x252923,roughness:.92});const bag=new THREE.Mesh(new THREE.CapsuleGeometry(.27,.52,5,10),packMat);bag.scale.set(1,.95,.55);bag.position.set(0,1.12,.22);bag.rotation.x=.08;bag.castShadow=true;pack.add(bag);const roll=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.48,10),new THREE.MeshStandardMaterial({color:0x34372f,roughness:1}));roll.rotation.z=Math.PI/2;roll.position.set(0,1.48,.23);roll.castShadow=true;pack.add(roll);human.add(pack);
     // R144: tame the source character silhouette for the third-person benchmark framing.
     humanModel.traverse((o:any)=>{if(o.isMesh&&o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{if(m.color){const n=(o.name||"").toLowerCase();if(n.includes("shirt")||n.includes("top"))m.color.set(0x20282a);else if(n.includes("pant")||n.includes("trouser"))m.color.set(0x202326);}})}});
     // R143: remove the large black primitive backpack that obscured the character in the real proof render.
