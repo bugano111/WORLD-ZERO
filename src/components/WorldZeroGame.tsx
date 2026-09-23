@@ -67,7 +67,7 @@ export function WorldZeroGame(){
   const human=new THREE.Group(); human.position.set(0,H(0,0)+.005,0); scene.add(human);
   let humanModel:THREE.Object3D|null=null,humanMixer:THREE.AnimationMixer|null=null;
   let idleAction:THREE.AnimationAction|null=null,walkAction:THREE.AnimationAction|null=null,runAction:THREE.AnimationAction|null=null,currentAction:THREE.AnimationAction|null=null;
-  const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.18).play();if(currentAction)currentAction.fadeOut(.18);currentAction=next};
+  const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.16).play();if(currentAction)currentAction.fadeOut(.16);currentAction=next};
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/human.glb`,g=>{
     humanModel=g.scene;
     // R73: preserve the complete model and its original embedded materials/textures.
@@ -87,8 +87,8 @@ export function WorldZeroGame(){
     // The next character replacement must be a complete, correctly rigged human asset.
     if(g.animations.length){humanMixer=new THREE.AnimationMixer(humanModel);
     const by=(n:string)=>g.animations.find(x=>x.name.toLowerCase().includes(n));
-    idleAction=by("idle")?humanMixer.clipAction(by("idle")!):null; walkAction=by("walk")?humanMixer.clipAction(by("walk")!):null; runAction=by("run")?humanMixer.clipAction(by("run")!):walkAction;
-    currentAction=idleAction; idleAction?.play();}
+    const clips=g.animations;idleAction=by("idle")?humanMixer.clipAction(by("idle")!):(clips[0]?humanMixer.clipAction(clips[0]):null); walkAction=by("walk")?humanMixer.clipAction(by("walk")!):(clips.find(x=>x!==clips[0])?humanMixer.clipAction(clips.find(x=>x!==clips[0])!):idleAction); runAction=by("run")?humanMixer.clipAction(by("run")!):walkAction;
+    [idleAction,walkAction,runAction].forEach(a=>{if(a){a.enabled=true;a.setLoop(THREE.LoopRepeat,Infinity);a.clampWhenFinished=false}});currentAction=idleAction;idleAction?.reset().play();}
   },undefined,e=>{console.error("R61 human load failed",e);setStatus("R102 · CHYBA MODELU POSTAVY");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
@@ -101,7 +101,7 @@ export function WorldZeroGame(){
   const key=(e:KeyboardEvent,v:number)=>{if(e.code==="KeyW"||e.code==="ArrowUp")input.current.y=-v;if(e.code==="KeyS"||e.code==="ArrowDown")input.current.y=v;if(e.code==="KeyA")input.current.x=v;if(e.code==="KeyD")input.current.x=-v;if(e.code==="ArrowLeft")input.current.look=-v;if(e.code==="ArrowRight")input.current.look=v};
   const kd=(e:KeyboardEvent)=>key(e,1),ku=(e:KeyboardEvent)=>key(e,0);addEventListener("keydown",kd);addEventListener("keyup",ku);
   let raf=0;const loop=(now:number)=>{const dt=Math.min(.025,(now-last)/1000);last=now;const j=input.current;yaw+=j.look*dt*1.8;const f=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),r=new THREE.Vector3(f.z,0,-f.x);
-   human.position.addScaledVector(f,-j.y*dt*6);human.position.addScaledVector(r,-j.x*dt*6);human.position.y=H(human.position.x,human.position.z);const moving=Math.abs(j.x)+Math.abs(j.y)>.05;humanMixer?.update(dt);setHumanAction(moving?walkAction:idleAction);human.rotation.y=yaw;if(Math.hypot(j.x,j.y)>.05)human.rotation.y=Math.atan2(-j.x,-j.y)+yaw;
+   const speed=Math.min(1,Math.hypot(j.x,j.y));human.position.addScaledVector(f,-j.y*dt*6);human.position.addScaledVector(r,-j.x*dt*6);human.position.y=H(human.position.x,human.position.z);const moving=speed>.05;setHumanAction(moving?walkAction:idleAction);if(walkAction)walkAction.timeScale=.78+speed*.55;humanMixer?.update(dt);human.rotation.y=yaw;if(Math.hypot(j.x,j.y)>.05)human.rotation.y=Math.atan2(-j.x,-j.y)+yaw;
    human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-6.6);cam.y+=3.05;camera.position.lerp(cam,1-Math.exp(-dt*8));const target=human.position.clone().add(new THREE.Vector3(0,.8,0)).addScaledVector(f,150);camera.lookAt(target);}
    const t=clock.getElapsedTime();sun.position.x=-45+Math.sin(t*.015)*18;sun.position.z=-25+Math.cos(t*.015)*18;
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
