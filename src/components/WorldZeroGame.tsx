@@ -1,6 +1,7 @@
 import React,{useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
+import {FBXLoader} from "three/examples/jsm/loaders/FBXLoader.js";
 import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader.js";
 import {Sky} from "three/examples/jsm/objects/Sky.js";
 
@@ -46,7 +47,7 @@ export function WorldZeroGame(){
   }
   const grassMat=new THREE.MeshStandardMaterial({color:0x455d34,roughness:1,side:THREE.DoubleSide});for(let i=0;i<(mobile?90:320);i++){const a=i*2.399963,r=4+((i*61)%100)/100*72,x=Math.cos(a)*r,z=Math.sin(a)*r*.72;const blade=new THREE.Mesh(new THREE.PlaneGeometry(.08,.38+(i%5)*.08),grassMat);blade.position.set(x,H(x,z)+.12,z);blade.rotation.y=a*2.3;blade.rotation.z=(i%3-1)*.09;scene.add(blade)}
   new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;scene.environmentIntensity=mobile?.42:.62;},undefined,e=>console.warn("HDR",e));
-  const gltf=new GLTFLoader();
+  const gltf=new GLTFLoader(),fbx=new FBXLoader();
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<30;i++){const a=-1.48+i*.102,r=18+(i%7)*4.1,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)-.04,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
 
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z)-.035,z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
@@ -68,39 +69,22 @@ export function WorldZeroGame(){
   let humanModel:THREE.Object3D|null=null,humanMixer:THREE.AnimationMixer|null=null;let gaitPhase=0,prevHumanY=human.position.y,verticalVel=0;
   let idleAction:THREE.AnimationAction|null=null,walkAction:THREE.AnimationAction|null=null,runAction:THREE.AnimationAction|null=null,currentAction:THREE.AnimationAction|null=null;
   const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.16).play();if(currentAction)currentAction.fadeOut(.16);currentAction=next};
-  gltf.load(`${import.meta.env.BASE_URL}real-assets/models/human.glb`,g=>{
-    humanModel=g.scene;
-    // R73: preserve the complete model and its original embedded materials/textures.
-    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-    // R70: keep the rigged human intact. The R69 overlay geometry produced the boxy broken body seen on iPhone.
-    // No rigid clothing primitives are attached to the skeleton.
+  // R159: M1 is now the actual player model. Rocketbox is rigged and MIT licensed.
+  fbx.load(`${import.meta.env.BASE_URL}real-assets/rocketbox/M1.fbx`,model=>{
+    humanModel=model;
+    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{if("roughness" in m){m.roughness=.72;m.metalness=0}m.needsUpdate=true})}}});
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-    const scale=1.84/Math.max(.01,size.y); humanModel.scale.setScalar(scale); humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale); humanModel.rotation.y=0;
-    human.add(humanModel);
-    // R154: human grounding/contact shadow. Anchors feet to terrain and removes the floating mannequin read.
-    const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.20,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.set(0,.008,0);contact.scale.set(1,.48,1);human.add(contact);
-    // R154: expedition backpack attached to the character root; it moves with the body instead of floating.
-    // R157: primitive backpack removed. Realism pass uses only authored character geometry; no capsule/box props.\n    
-    // R144: tame the source character silhouette for the third-person benchmark framing.
-    humanModel.traverse((o:any)=>{if(o.isMesh&&o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{if(m.color){const n=(o.name||"").toLowerCase();if(n.includes("shirt")||n.includes("top"))m.color.set(0x20282a);else if(n.includes("pant")||n.includes("trouser"))m.color.set(0x202326);}})}});
-    // R143: remove the large black primitive backpack that obscured the character in the real proof render.
-    setReady(true); setStatus("REALISM 102 · DEN 1 · REAL FOREST");
-    // R156: physically grounded character shading while preserving authored textures.\n    humanModel.traverse((o:any)=>{if(o.isMesh&&o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{const n=((o.name||"")+" "+(m.name||"")).toLowerCase();if("roughness" in m){if(/skin|body|face|head|hand|arm|leg/.test(n)){m.roughness=.56;m.metalness=0;}else if(/hair|brow|lash/.test(n)){m.roughness=.72;m.metalness=0;m.alphaTest=Math.max(m.alphaTest||0,.25);}else{m.roughness=.88;m.metalness=0;}}m.envMapIntensity=/skin|face|head/.test(n)?.42:.25;m.needsUpdate=true;});}});\n    // R75 stability: preserve the model's own materials; no runtime material guessing.
-    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;}});
-    // R74: use only the source human mesh. Do not bolt primitive spheres/cylinders onto a body.
-    // The next character replacement must be a complete, correctly rigged human asset.
-    if(g.animations.length){humanMixer=new THREE.AnimationMixer(humanModel);
-    const by=(n:string)=>g.animations.find(x=>x.name.toLowerCase().includes(n));
-    const clips=g.animations;const idleClip=by("idle"),walkClip=by("walk"),runClip=by("run");idleAction=idleClip?humanMixer.clipAction(idleClip):null;walkAction=walkClip?humanMixer.clipAction(walkClip):null;runAction=runClip?humanMixer.clipAction(runClip):null;
-    [idleAction,walkAction,runAction].forEach(a=>{if(a){a.enabled=true;a.setLoop(THREE.LoopRepeat,Infinity);a.clampWhenFinished=false}});currentAction=idleAction;idleAction?.reset().play();}
-  },undefined,e=>{console.error("R61 human load failed",e);setStatus("R102 · CHYBA MODELU POSTAVY");setReady(true)});
+    const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);humanModel.rotation.y=0;human.add(humanModel);
+    const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.18,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.set(0,.008,0);contact.scale.set(1,.48,1);human.add(contact);
+    const clips=(model as any).animations||[];if(clips.length){humanMixer=new THREE.AnimationMixer(humanModel);const by=(n:string)=>clips.find((x:THREE.AnimationClip)=>x.name.toLowerCase().includes(n));const idleClip=by("idle"),walkClip=by("walk"),runClip=by("run");idleAction=idleClip?humanMixer.clipAction(idleClip):null;walkAction=walkClip?humanMixer.clipAction(walkClip):null;runAction=runClip?humanMixer.clipAction(runClip):null;[idleAction,walkAction,runAction].forEach(a=>{if(a){a.enabled=true;a.setLoop(THREE.LoopRepeat,Infinity)}});currentAction=idleAction;idleAction?.play()}
+    setReady(true);setStatus("R159 · M1 · REAL HUMAN");
+  },undefined,e=>{console.error("R159 M1 load failed",e);setStatus("R159 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
   (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
   let windPhase=0;const windStrength=.55;const clock=new THREE.Clock();
   let yaw=Math.PI,last=performance.now();
-  const birds:THREE.Mesh[]=[];const birdMat=new THREE.MeshBasicMaterial({color:0x171717});
-  for(let i=0;i<9;i++){const b=new THREE.Mesh(new THREE.ConeGeometry(.12,.42,3),birdMat);b.rotation.x=Math.PI/2;scene.add(b);birds.push(b)}
+  const birds:THREE.Mesh[]=[]; // R159: removed toy cone birds; wildlife returns only as authored assets.
   const windPlants:THREE.Object3D[]=[];scene.traverse(o=>{if(o!==ground&&o!==human&&o.position.y<4)windPlants.push(o)});
   const key=(e:KeyboardEvent,v:number)=>{if(e.code==="KeyW"||e.code==="ArrowUp")input.current.y=-v;if(e.code==="KeyS"||e.code==="ArrowDown")input.current.y=v;if(e.code==="KeyA")input.current.x=v;if(e.code==="KeyD")input.current.x=-v;if(e.code==="ArrowLeft")input.current.look=-v;if(e.code==="ArrowRight")input.current.look=v};
   const kd=(e:KeyboardEvent)=>key(e,1),ku=(e:KeyboardEvent)=>key(e,0);addEventListener("keydown",kd);addEventListener("keyup",ku);
