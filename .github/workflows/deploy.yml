@@ -107,6 +107,13 @@ jobs:
           mkdir -p public/real-assets/models
           curl -fL --retry 3 "https://raw.githubusercontent.com/joeholloway445-maker/Periliminal.Space/main/godot/assets/models/metahuman_player.glb" -o public/real-assets/models/human.glb
           test -s public/real-assets/models/human.glb
+      - name: Fetch R158 realistic human candidates
+        run: |
+          mkdir -p public/real-assets/rocketbox
+          curl -fL --retry 3 "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_04/Export/Male_Adult_04.fbx" -o public/real-assets/rocketbox/M1.fbx
+          curl -fL --retry 3 "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_04/Export/Female_Adult_04.fbx" -o public/real-assets/rocketbox/Z1.fbx
+          test -s public/real-assets/rocketbox/M1.fbx
+          test -s public/real-assets/rocketbox/Z1.fbx
       - run: npm run build
       - name: Typecheck runtime identifiers
         run: npx tsc --noEmit
