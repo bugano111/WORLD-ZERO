@@ -47,7 +47,12 @@ export function WorldZeroGame(){
   }
   const grassMat=new THREE.MeshStandardMaterial({color:0x455d34,roughness:1,side:THREE.DoubleSide});for(let i=0;i<(mobile?90:320);i++){const a=i*2.399963,r=4+((i*61)%100)/100*72,x=Math.cos(a)*r,z=Math.sin(a)*r*.72;const blade=new THREE.Mesh(new THREE.PlaneGeometry(.08,.38+(i%5)*.08),grassMat);blade.position.set(x,H(x,z)+.12,z);blade.rotation.y=a*2.3;blade.rotation.z=(i%3-1)*.09;scene.add(blade)}
   new RGBELoader().load(`${import.meta.env.BASE_URL}real-assets/mossy_forest_panorama.hdr`,hdr=>{hdr.mapping=THREE.EquirectangularReflectionMapping;scene.environment=hdr;scene.environmentIntensity=mobile?.42:.62;},undefined,e=>console.warn("HDR",e));
-  const gltf=new GLTFLoader(),fbx=new FBXLoader();
+  const gltf=new GLTFLoader();
+  // R161: Rocketbox FBX embeds geometry/rig but references legacy texture filenames.
+  // Ignore those missing legacy texture requests; apply physically based materials below.
+  const fbxManager=new THREE.LoadingManager();
+  fbxManager.setURLModifier((url)=>/\.(png|jpe?g|tga|bmp|dds)$/i.test(url)?"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL7WQAAAABJRU5ErkJggg==":url);
+  const fbx=new FBXLoader(fbxManager);
   gltf.load(`${import.meta.env.BASE_URL}real-assets/models/rock_moss_set_01.gltf`,res=>{for(let i=0;i<30;i++){const a=-1.48+i*.102,r=18+(i%7)*4.1,x=Math.sin(a)*r,z=-Math.cos(a)*r-26;const o=res.scene.clone(true);o.position.set(x,H(x,z)-.04,z);o.rotation.set(0,i*.79,0);o.scale.setScalar(.28+(i%5)*.07);o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
 
   const scatterModel=(url:string,count:number,minR:number,maxR:number,scale:number)=>gltf.load(url,res=>{for(let i=0;i<count;i++){const o=res.scene.clone(true),a=i*2.399963+count*.17,r=minR+((i*47)%101)/100*(maxR-minR),x=Math.cos(a)*r,z=Math.sin(a)*r;o.position.set(x,H(x,z)-.035,z);o.rotation.y=(a*1.7+(i%11)*.37)%(Math.PI*2);const v=.62+((i*37)%17)/20;o.scale.set(scale*v*(.88+(i%3)*.08),scale*v*(.82+(i%5)*.07),scale*v*(.9+(i%4)*.06));o.traverse(v=>{if((v as THREE.Mesh).isMesh){(v as THREE.Mesh).castShadow=true;(v as THREE.Mesh).receiveShadow=true}});scene.add(o)}});
