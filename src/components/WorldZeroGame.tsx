@@ -2,6 +2,7 @@ import React,{useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader.js";
 import {RGBELoader} from "three/examples/jsm/loaders/RGBELoader.js";
+import {Sky} from "three/examples/jsm/objects/Sky.js";
 
 type Input={x:number;y:number;look:number};
 export function WorldZeroGame(){
@@ -10,12 +11,13 @@ export function WorldZeroGame(){
  useEffect(()=>{
   if(!host.current)return;
   const el=host.current,scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x7895a4);scene.fog=new THREE.FogExp2(0xa9b9b8,.00046);
+  scene.background=new THREE.Color(0x7895a4);scene.fog=new THREE.FogExp2(0xb6c0bd,.00034);
+  const sky=new Sky();sky.scale.setScalar(1000);scene.add(sky);const su=sky.material.uniforms;su.turbidity.value=7.2;su.rayleigh.value=1.65;su.mieCoefficient.value=.0045;su.mieDirectionalG.value=.79;const skySun=new THREE.Vector3();skySun.setFromSphericalCoords(1,THREE.MathUtils.degToRad(76),THREE.MathUtils.degToRad(242));su.sunPosition.value.copy(skySun);
   const camera=new THREE.PerspectiveCamera(58,1,.1,1600);
   let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"default",preserveDrawingBuffer:true});}catch(err){console.error(err);setStatus("R102 · WEBGL NELZE SPUSTIT");setReady(true);return;}
   const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.86;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xb8c9c5,0x10180f,.62));
-  const sun=new THREE.DirectionalLight(0xffb06a,2.55);sun.position.set(-145,52,-70);sun.castShadow=true;sun.shadow.mapSize.set(mobile?512:1024,mobile?512:1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
+  const sun=new THREE.DirectionalLight(0xffc27d,2.25);sun.position.set(-145,52,-70);sun.castShadow=true;sun.shadow.mapSize.set(mobile?512:1024,mobile?512:1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
   const H=(x:number,z:number)=>{const r=Math.hypot(x,z),overlook=18*Math.exp(-(x*x)/3400-(z*z)/1700),cliff=z<-22&&z>-92?-(Math.min(1,(-z-22)/70))*20:0,valley=-48*Math.exp(-((x-22)*(x-22))/22000-((z+165)*(z+165))/12000),ridge=3.8*Math.sin(x*.021)+2.7*Math.cos(z*.026)+2.2*Math.sin((x-z)*.043),far=Math.max(0,-z-250)*.085;return 7+overlook+cliff+valley+ridge+far+r*.003};
   const g=new THREE.PlaneGeometry(700,700,100,100);g.rotateX(-Math.PI/2);const pa=g.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i);pa.setY(i,H(x,z))}g.computeVertexNormals();
@@ -34,7 +36,7 @@ export function WorldZeroGame(){
  buildMassif(-180,-385,330,210,118,.4);buildMassif(95,-420,390,235,142,1.7);buildMassif(310,-455,310,210,105,2.9);
  const hazeMat=new THREE.MeshBasicMaterial({color:0xc9d0cd,transparent:true,opacity:.055,depthWrite:false});for(let i=0;i<3;i++){const hz=new THREE.Mesh(new THREE.PlaneGeometry(850,120),hazeMat);hz.position.set(0,18+i*17,-300-i*65);scene.add(hz)}
  const cloudMat=new THREE.MeshStandardMaterial({color:0xf3f0e8,transparent:true,opacity:.17,roughness:1,depthWrite:false});for(let i=0;i<8;i++){const cloud=new THREE.Group();for(let k=0;k<9;k++){const puff=new THREE.Mesh(new THREE.IcosahedronGeometry(8+(k%4)*3,2),cloudMat);puff.scale.set(1.9+(k%3)*.25,.55+(k%2)*.18,1);puff.position.set((k-4)*9+(k%2)*4,Math.sin(k*1.7)*4,(k%3)*-4);cloud.add(puff)}cloud.position.set(-250+i*75,82+(i%3)*14,-315-(i%4)*38);scene.add(cloud)}
- const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(5.4,20,14),new THREE.MeshBasicMaterial({color:0xffd49a}));sunDisc.position.set(-125,42,-260);scene.add(sunDisc);const glowMat=new THREE.SpriteMaterial({color:0xffbd78,transparent:true,opacity:.22,depthWrite:false,blending:THREE.AdditiveBlending});const glow=new THREE.Sprite(glowMat);glow.scale.set(54,54,1);glow.position.copy(sunDisc.position);scene.add(glow);
+ 
   // R68 dense mossy forest floor: layered fern-like ground cover, never billboard wallpaper.
   const mossMat=new THREE.MeshStandardMaterial({color:0x3f5831,roughness:1});
   const fernMat=new THREE.MeshStandardMaterial({color:0x2e512d,roughness:.95,side:THREE.DoubleSide});
