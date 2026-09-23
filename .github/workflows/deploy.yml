@@ -114,6 +114,12 @@ jobs:
           curl -fL --retry 3 "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_04/Export/Female_Adult_04.fbx" -o public/real-assets/rocketbox/Z1.fbx
           test -s public/real-assets/rocketbox/M1.fbx
           test -s public/real-assets/rocketbox/Z1.fbx
+          curl -fL --retry 3 "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_idle_breathe_01.max.fbx" -o public/real-assets/rocketbox/M1_idle.fbx
+          curl -fL --retry 3 "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_walk_neutral.max.fbx" -o public/real-assets/rocketbox/M1_walk.fbx
+          curl -fL --retry 3 "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_run_neutral.max.fbx" -o public/real-assets/rocketbox/M1_run.fbx
+          test -s public/real-assets/rocketbox/M1_idle.fbx
+          test -s public/real-assets/rocketbox/M1_walk.fbx
+          test -s public/real-assets/rocketbox/M1_run.fbx
           # Rocketbox FBX materials reference companion textures. Copy them so the browser loader does not 404.
           for who in Male_Adult_04 Female_Adult_04; do
             mkdir -p "public/real-assets/rocketbox/$who"
