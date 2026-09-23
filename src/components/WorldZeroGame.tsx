@@ -13,14 +13,13 @@ export function WorldZeroGame(){
   scene.background=new THREE.Color(0x668695);scene.fog=new THREE.FogExp2(0x9fb4b6,.00082);
   const camera=new THREE.PerspectiveCamera(60,1,.1,1600);
   let renderer:THREE.WebGLRenderer;try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"default",preserveDrawingBuffer:true});}catch(err){console.error(err);setStatus("R102 · WEBGL NELZE SPUSTIT");setReady(true);return;}
-  const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.68;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
+  const mobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1:1.25));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.72;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xa8c2cb,0x10180f,.48));
   const sun=new THREE.DirectionalLight(0xffa45c,1.75);sun.position.set(-120,38,-80);sun.castShadow=true;sun.shadow.mapSize.set(mobile?512:1024,mobile?512:1024);sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;scene.add(sun);
   const H=(x:number,z:number)=>{const overlook=10*Math.exp(-(x*x)/5200-(z*z)/2600);const valley=-58*Math.exp(-((x-35)*(x-35))/24000-((z+155)*(z+155))/17000);const farRise=Math.max(0,-z-235)*.07;return 5+overlook+Math.sin(x*.013)*3.2+Math.cos(z*.015)*2.4+Math.sin((x+z)*.006)*5.5+valley+farRise};
   const g=new THREE.PlaneGeometry(700,700,100,100);g.rotateX(-Math.PI/2);const pa=g.attributes.position as THREE.BufferAttribute;
   for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i);pa.setY(i,H(x,z))}g.computeVertexNormals();
-  const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0x68705a,roughness:.94});
+  const tex=new THREE.TextureLoader(), groundMat=new THREE.MeshStandardMaterial({color:0x34462f,roughness:.98,metalness:0});
   const loadTex=(url:string,kind:"map"|"normalMap"|"roughnessMap")=>tex.load(url,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(28,28);if(kind==="map")t.colorSpace=THREE.SRGBColorSpace;(groundMat as any)[kind]=t;groundMat.needsUpdate=true});
   /* R102: remove the orange leaf-photo albedo that dominated every previous build. */loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_nor_gl_1k.jpg`,"normalMap");loadTex(`${import.meta.env.BASE_URL}real-assets/forest_floor_rough_1k.jpg`,"roughnessMap");
   const ground=new THREE.Mesh(g,groundMat);ground.receiveShadow=true;scene.add(ground);
