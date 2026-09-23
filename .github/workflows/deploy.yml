@@ -114,6 +114,12 @@ jobs:
           curl -fL --retry 3 "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_04/Export/Female_Adult_04.fbx" -o public/real-assets/rocketbox/Z1.fbx
           test -s public/real-assets/rocketbox/M1.fbx
           test -s public/real-assets/rocketbox/Z1.fbx
+          # Rocketbox FBX materials reference companion textures. Copy them so the browser loader does not 404.
+          for who in Male_Adult_04 Female_Adult_04; do
+            mkdir -p "public/real-assets/rocketbox/$who"
+            base="https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/$who"
+            curl -fsSL "$base/Export/" >/dev/null || true
+          done
       - run: npm run build
       - name: Typecheck runtime identifiers
         run: npx tsc --noEmit
