@@ -120,6 +120,13 @@ jobs:
           test -s public/real-assets/rocketbox/M1_idle.fbx
           test -s public/real-assets/rocketbox/M1_walk.fbx
           test -s public/real-assets/rocketbox/M1_run.fbx
+          # R169: replace placeholder M1 with CC0 Vitruvian digital-human assets.
+          mkdir -p public/real-assets/m1
+          vbase="https://raw.githubusercontent.com/ibrews/VitruvianGodot/main/godot_project"
+          for a in vitruvian_body.glb vitruvian_head.glb vitruvian_hair_rigged.glb vit_body_bc.png vit_body_n.png vit_body_rough.png vit_fabric_n.png vit_face_bc.png vit_face_n.png vit_face_rough.png vit_hair_ao.png vit_hair_atlas.png vit_hair_diffuse.png vit_hair_normal.png vit_hair_opacity.png vit_iris.png vit_lash_atlas.png vit_mouth.png vit_sclera.png; do
+            curl -fL --retry 3 "$vbase/$a" -o "public/real-assets/m1/$a"
+            test -s "public/real-assets/m1/$a"
+          done
           # R167: complete M1 authored skin/clothing/head texture set.
           base="https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_04/Textures"
           for tex in m006_body_color.tga m006_body_normal.tga m006_body_specular.tga m006_head_color.tga m006_head_normal.tga m006_head_specular.tga m006_opacity_color.tga; do
