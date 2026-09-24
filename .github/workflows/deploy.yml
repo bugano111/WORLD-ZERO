@@ -120,6 +120,10 @@ jobs:
           test -s public/real-assets/rocketbox/M1_idle.fbx
           test -s public/real-assets/rocketbox/M1_walk.fbx
           test -s public/real-assets/rocketbox/M1_run.fbx
+          # R173 M1 FINAL: self-contained CC0 MakeHuman/MPFB character from vsim.
+          mkdir -p public/real-assets/m1-final
+          curl -fL --retry 3 "https://raw.githubusercontent.com/kunalkushwaha/vsim/main/packages/assets/library/human.glb" -o public/real-assets/m1-final/M1.glb
+          test -s public/real-assets/m1-final/M1.glb
           # R169: replace placeholder M1 with CC0 Vitruvian digital-human assets.
           mkdir -p public/real-assets/m1
           vbase="https://raw.githubusercontent.com/ibrews/VitruvianGodot/main/godot_project"
