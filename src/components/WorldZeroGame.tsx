@@ -81,19 +81,28 @@ export function WorldZeroGame(){
   // R169: M1 digital human — CC0 Vitruvian body + face + rigged hair.
   gltf.load(`${import.meta.env.BASE_URL}real-assets/m1/vitruvian_body.glb`,bodyRes=>{
     humanModel=new THREE.Group();humanModel.add(bodyRes.scene);
-    const attach=(file:string)=>gltf.load(`${import.meta.env.BASE_URL}real-assets/m1/${file}`,r=>{r.scene.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true}});humanModel!.add(r.scene)},undefined,e=>console.error("R169 M1 part",file,e));
-    attach("vitruvian_head.glb");attach("vitruvian_hair_rigged.glb");
-    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];mats.filter(Boolean).forEach((m:any)=>{if("roughness" in m)m.roughness=Math.max(.38,m.roughness??.6);if("metalness" in m)m.metalness=0;m.needsUpdate=true})}});
-    const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-    const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModelBaseY=-box.min.y*scale;humanModel.position.set(-center.x*scale,humanModelBaseY,-center.z*scale);human.add(humanModel);
-    const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.2,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.y=.008;contact.scale.set(1,.48,1);human.add(contact);
-    const clips=bodyRes.animations||[];humanMixer=new THREE.AnimationMixer(humanModel);
-    const pick=(re:RegExp)=>clips.find(x=>re.test(x.name));
-    const mk=(clip:THREE.AnimationClip|undefined)=>clip?humanMixer!.clipAction(clip):null;
-    idleAction=mk(pick(/idle|breath/i)??clips[0]);walkAction=mk(pick(/walk/i));runAction=mk(pick(/run|jog/i));
-    currentAction=idleAction;if(idleAction){idleAction.setLoop(THREE.LoopRepeat,Infinity);idleAction.play()}
-    setReady(true);setStatus("R169 · M1 · DIGITAL HUMAN");
-  },undefined,e=>{console.error("R169 M1 load failed",e);setStatus("R169 · CHYBA M1");setReady(true)});
+    // Body and head are authored as complementary Vitruvian exports. Load both before
+    // measuring/scaling the complete player so the neck/head cannot be displaced by
+    // asynchronous post-scaling attachment.
+    const addPart=(file:string,done:()=>void)=>gltf.load(`${import.meta.env.BASE_URL}real-assets/m1/${file}`,r=>{
+      r.scene.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true}});
+      humanModel!.add(r.scene);done();
+    },undefined,e=>{console.error("R170 M1 part",file,e);done()});
+    let pending=2;
+    const finishM1=()=>{ if(--pending>0)return;
+      humanModel!.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];mats.filter(Boolean).forEach((m:any)=>{if("roughness" in m)m.roughness=Math.max(.38,m.roughness??.6);if("metalness" in m)m.metalness=0;m.needsUpdate=true})}});
+      const box=new THREE.Box3().setFromObject(humanModel!),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+      const scale=1.84/Math.max(.01,size.y);humanModel!.scale.setScalar(scale);humanModelBaseY=-box.min.y*scale;humanModel!.position.set(-center.x*scale,humanModelBaseY,-center.z*scale);
+      const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.2,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.y=.008;contact.scale.set(1,.48,1);human.add(contact);
+      const clips=bodyRes.animations||[];humanMixer=new THREE.AnimationMixer(humanModel!);
+      const pick=(re:RegExp)=>clips.find(x=>re.test(x.name)); const mk=(clip:THREE.AnimationClip|undefined)=>clip?humanMixer!.clipAction(clip):null;
+      idleAction=mk(pick(/idle|breath/i)??clips[0]);walkAction=mk(pick(/walk/i));runAction=mk(pick(/run|jog/i));currentAction=idleAction;
+      if(idleAction){idleAction.setLoop(THREE.LoopRepeat,Infinity);idleAction.play()} setReady(true);setStatus("R170 · M1 · COMPLETE HUMAN");
+    };
+    addPart("vitruvian_head.glb",finishM1);addPart("vitruvian_hair_rigged.glb",finishM1);
+    human.add(humanModel);
+    return;
+  },undefined,e=>{console.error("R170 M1 load failed",e);setStatus("R170 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
   (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
