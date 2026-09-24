@@ -75,7 +75,7 @@ export function WorldZeroGame(){
     const log=new THREE.Mesh(new THREE.CylinderGeometry(.055,.075,.65,10),woodMat);log.rotation.z=Math.PI/2;log.rotation.y=a;log.position.set(x,H(x,z)+.11,z);log.castShadow=true;scene.add(log);collectibleWood.push(log)}
   // R61: real skinned human GLB with embedded Idle/Walk/Run animations.
   const human=new THREE.Group(); human.position.set(0,H(0,0)+.005,0); scene.add(human);
-  let humanModel:THREE.Object3D|null=null,humanMixer:THREE.AnimationMixer|null=null;let gaitPhase=0,prevHumanY=human.position.y,verticalVel=0;
+  let humanModel:THREE.Object3D|null=null,humanMixer:THREE.AnimationMixer|null=null;let humanModelBaseY=0,gaitPhase=0,prevHumanY=human.position.y,verticalVel=0;
   let idleAction:THREE.AnimationAction|null=null,walkAction:THREE.AnimationAction|null=null,runAction:THREE.AnimationAction|null=null,currentAction:THREE.AnimationAction|null=null;
   const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.16).play();if(currentAction)currentAction.fadeOut(.16);currentAction=next};
   // R159: M1 is now the actual player model. Rocketbox is rigged and MIT licensed.
@@ -83,19 +83,19 @@ export function WorldZeroGame(){
     humanModel=model;
     humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{const n=((o.name||"")+" "+(m.name||"")).toLowerCase();if("roughness" in m){m.roughness=.72;m.metalness=0}if("map" in m)m.map=/head|face/.test(n)?m1Head:m1Body;m.color?.set(0xffffff);m.needsUpdate=true})}}});
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-    const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModel.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);humanModel.rotation.y=0;human.add(humanModel);
+    const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModelBaseY=-box.min.y*scale;humanModel.position.set(-center.x*scale,humanModelBaseY,-center.z*scale);humanModel.rotation.y=0;human.add(humanModel);
     const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.18,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.set(0,.008,0);contact.scale.set(1,.48,1);human.add(contact);
     // R164: load Rocketbox motions authored for the same skeleton and drive M1 with them.
     humanMixer=new THREE.AnimationMixer(humanModel);
     const loadMotion=(file:string,kind:"idle"|"walk"|"run")=>fbx.load(`${import.meta.env.BASE_URL}real-assets/rocketbox/${file}`,motion=>{
-      const clip=(motion as any).animations?.[0] as THREE.AnimationClip|undefined;if(!clip)return;
+      const source=(motion as any).animations?.[0] as THREE.AnimationClip|undefined;if(!source)return;const clip=source.clone();clip.tracks=clip.tracks.filter((t:any)=>!(/position/i.test(t.name)&&/(root|reference|pelvis|hips)/i.test(t.name)));
       const action=humanMixer!.clipAction(clip);
       action.enabled=true;action.setLoop(THREE.LoopRepeat,Infinity);
       if(kind==="idle"){idleAction=action;if(!currentAction){currentAction=action;action.play()}}
       else if(kind==="walk")walkAction=action;else runAction=action;
     },undefined,e=>console.error("R164 motion load failed",kind,e));
     loadMotion("M1_idle.fbx","idle");loadMotion("M1_walk.fbx","walk");loadMotion("M1_run.fbx","run");
-    setReady(true);setStatus("R167 · M1 · TEXTURED HUMAN");
+    setReady(true);setStatus("R168 · M1 · GROUNDED RIG");
   },undefined,e=>{console.error("R159 M1 load failed",e);setStatus("R159 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
@@ -111,7 +111,7 @@ export function WorldZeroGame(){
    const floorY=H(human.position.x,human.position.z)+.008;
    if(human.position.y<floorY){human.position.y=floorY;verticalVel=0}
    else{verticalVel-=22*dt;human.position.y=Math.max(floorY,human.position.y+verticalVel*dt);if(human.position.y<=floorY+.002)verticalVel=0}
-   const moving=speed>.05;setHumanAction(moving?walkAction:idleAction);if(walkAction)walkAction.timeScale=.68+speed*.22;humanMixer?.update(dt);windPhase+=dt*.72;gaitPhase+=dt*(moving?7.2*speed:1.35);verticalVel=THREE.MathUtils.lerp(verticalVel,(human.position.y-prevHumanY)/Math.max(dt,.001),1-Math.exp(-dt*5));prevHumanY=human.position.y;if(humanModel){const breathe=Math.sin(gaitPhase*(moving?.45:1))*(moving?.004:.009),step=Math.abs(Math.sin(gaitPhase));humanModel.position.y=0;const lateral=moving?Math.sin(gaitPhase)*.014*speed:Math.sin(gaitPhase)*.002;humanModel.rotation.z=THREE.MathUtils.lerp(humanModel.rotation.z,lateral,1-Math.exp(-dt*8));humanModel.rotation.x=THREE.MathUtils.lerp(humanModel.rotation.x,(moving?.018:0)-THREE.MathUtils.clamp(verticalVel*.008,-.035,.035),1-Math.exp(-dt*6));humanModel.rotation.y=THREE.MathUtils.lerp(humanModel.rotation.y,moving?Math.sin(gaitPhase*.5)*.006:0,1-Math.exp(-dt*5));}human.rotation.y=yaw;if(Math.hypot(j.x,j.y)>.05)human.rotation.y=Math.atan2(-j.x,-j.y)+yaw;
+   const moving=speed>.05;setHumanAction(moving?walkAction:idleAction);if(walkAction)walkAction.timeScale=.68+speed*.22;humanMixer?.update(dt);windPhase+=dt*.72;gaitPhase+=dt*(moving?7.2*speed:1.35);verticalVel=THREE.MathUtils.lerp(verticalVel,(human.position.y-prevHumanY)/Math.max(dt,.001),1-Math.exp(-dt*5));prevHumanY=human.position.y;if(humanModel){const breathe=Math.sin(gaitPhase*(moving?.45:1))*(moving?.004:.009),step=Math.abs(Math.sin(gaitPhase));humanModel.position.y=humanModelBaseY;const lateral=moving?Math.sin(gaitPhase)*.014*speed:Math.sin(gaitPhase)*.002;humanModel.rotation.z=THREE.MathUtils.lerp(humanModel.rotation.z,lateral,1-Math.exp(-dt*8));humanModel.rotation.x=THREE.MathUtils.lerp(humanModel.rotation.x,(moving?.018:0)-THREE.MathUtils.clamp(verticalVel*.008,-.035,.035),1-Math.exp(-dt*6));humanModel.rotation.y=THREE.MathUtils.lerp(humanModel.rotation.y,moving?Math.sin(gaitPhase*.5)*.006:0,1-Math.exp(-dt*5));}human.rotation.y=yaw;if(Math.hypot(j.x,j.y)>.05)human.rotation.y=Math.atan2(-j.x,-j.y)+yaw;
    human.visible=!firstPersonRef.current; if(firstPersonRef.current){const eye=human.position.clone();eye.y+=1.67;camera.position.lerp(eye,1-Math.exp(-dt*12));camera.lookAt(eye.clone().addScaledVector(f,8));}else{const cam=human.position.clone().addScaledVector(f,-6.6);cam.y+=3.05;camera.position.lerp(cam,1-Math.exp(-dt*8));const target=human.position.clone().add(new THREE.Vector3(0,.8,0)).addScaledVector(f,150);camera.lookAt(target);}
    const t=clock.getElapsedTime();sun.position.x=-45+Math.sin(t*.015)*18;sun.position.z=-25+Math.cos(t*.015)*18;
    birds.forEach((b,i)=>{const a=t*.12+i*.7,r=34+i*3;b.position.set(human.position.x+Math.cos(a)*r,18+i*.8+Math.sin(t+i),human.position.z+Math.sin(a)*r);b.rotation.z=-a});
