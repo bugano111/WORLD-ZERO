@@ -78,25 +78,22 @@ export function WorldZeroGame(){
   let humanModel:THREE.Object3D|null=null,humanMixer:THREE.AnimationMixer|null=null;let humanModelBaseY=0,gaitPhase=0,prevHumanY=human.position.y,verticalVel=0;
   let idleAction:THREE.AnimationAction|null=null,walkAction:THREE.AnimationAction|null=null,runAction:THREE.AnimationAction|null=null,currentAction:THREE.AnimationAction|null=null;
   const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.16).play();if(currentAction)currentAction.fadeOut(.16);currentAction=next};
-  // R159: M1 is now the actual player model. Rocketbox is rigged and MIT licensed.
-  fbx.load(`${import.meta.env.BASE_URL}real-assets/rocketbox/M1.fbx`,model=>{
-    humanModel=model;
-    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach((m:any)=>{const n=((o.name||"")+" "+(m.name||"")).toLowerCase();if("roughness" in m){m.roughness=.72;m.metalness=0}if("map" in m)m.map=/head|face/.test(n)?m1Head:m1Body;m.color?.set(0xffffff);m.needsUpdate=true})}}});
+  // R169: M1 digital human — CC0 Vitruvian body + face + rigged hair.
+  gltf.load(`${import.meta.env.BASE_URL}real-assets/m1/vitruvian_body.glb`,bodyRes=>{
+    humanModel=new THREE.Group();humanModel.add(bodyRes.scene);
+    const attach=(file:string)=>gltf.load(`${import.meta.env.BASE_URL}real-assets/m1/${file}`,r=>{r.scene.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true}});humanModel!.add(r.scene)},undefined,e=>console.error("R169 M1 part",file,e));
+    attach("vitruvian_head.glb");attach("vitruvian_hair_rigged.glb");
+    humanModel.traverse((o:any)=>{if(o.isMesh){o.castShadow=!mobile;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];mats.filter(Boolean).forEach((m:any)=>{if("roughness" in m)m.roughness=Math.max(.38,m.roughness??.6);if("metalness" in m)m.metalness=0;m.needsUpdate=true})}});
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-    const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModelBaseY=-box.min.y*scale;humanModel.position.set(-center.x*scale,humanModelBaseY,-center.z*scale);humanModel.rotation.y=0;human.add(humanModel);
-    const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.18,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.set(0,.008,0);contact.scale.set(1,.48,1);human.add(contact);
-    // R164: load Rocketbox motions authored for the same skeleton and drive M1 with them.
-    humanMixer=new THREE.AnimationMixer(humanModel);
-    const loadMotion=(file:string,kind:"idle"|"walk"|"run")=>fbx.load(`${import.meta.env.BASE_URL}real-assets/rocketbox/${file}`,motion=>{
-      const source=(motion as any).animations?.[0] as THREE.AnimationClip|undefined;if(!source)return;const clip=source.clone();clip.tracks=clip.tracks.filter((t:any)=>!(/position/i.test(t.name)&&/(root|reference|pelvis|hips)/i.test(t.name)));
-      const action=humanMixer!.clipAction(clip);
-      action.enabled=true;action.setLoop(THREE.LoopRepeat,Infinity);
-      if(kind==="idle"){idleAction=action;if(!currentAction){currentAction=action;action.play()}}
-      else if(kind==="walk")walkAction=action;else runAction=action;
-    },undefined,e=>console.error("R164 motion load failed",kind,e));
-    loadMotion("M1_idle.fbx","idle");loadMotion("M1_walk.fbx","walk");loadMotion("M1_run.fbx","run");
-    setReady(true);setStatus("R168 · M1 · GROUNDED RIG");
-  },undefined,e=>{console.error("R159 M1 load failed",e);setStatus("R159 · CHYBA M1");setReady(true)});
+    const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModelBaseY=-box.min.y*scale;humanModel.position.set(-center.x*scale,humanModelBaseY,-center.z*scale);human.add(humanModel);
+    const contact=new THREE.Mesh(new THREE.CircleGeometry(.42,24),new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.2,depthWrite:false}));contact.rotation.x=-Math.PI/2;contact.position.y=.008;contact.scale.set(1,.48,1);human.add(contact);
+    const clips=bodyRes.animations||[];humanMixer=new THREE.AnimationMixer(humanModel);
+    const pick=(re:RegExp)=>clips.find(x=>re.test(x.name));
+    const mk=(clip:THREE.AnimationClip|undefined)=>clip?humanMixer!.clipAction(clip):null;
+    idleAction=mk(pick(/idle|breath/i)??clips[0]);walkAction=mk(pick(/walk/i));runAction=mk(pick(/run|jog/i));
+    currentAction=idleAction;if(idleAction){idleAction.setLoop(THREE.LoopRepeat,Infinity);idleAction.play()}
+    setReady(true);setStatus("R169 · M1 · DIGITAL HUMAN");
+  },undefined,e=>{console.error("R169 M1 load failed",e);setStatus("R169 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
   (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
