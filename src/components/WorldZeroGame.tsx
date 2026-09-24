@@ -97,11 +97,10 @@ export function WorldZeroGame(){
       const clips=bodyRes.animations||[];humanMixer=new THREE.AnimationMixer(humanModel!);
       const pick=(re:RegExp)=>clips.find(x=>re.test(x.name)); const mk=(clip:THREE.AnimationClip|undefined)=>clip?humanMixer!.clipAction(clip):null;
       idleAction=mk(pick(/idle|breath/i)??clips[0]);walkAction=mk(pick(/walk/i));runAction=mk(pick(/run|jog/i));currentAction=idleAction;
-      if(idleAction){idleAction.setLoop(THREE.LoopRepeat,Infinity);idleAction.play()} setReady(true);setStatus("R170 · M1 · COMPLETE HUMAN");
+      if(idleAction){idleAction.setLoop(THREE.LoopRepeat,Infinity);idleAction.play()} setReady(true);setStatus("R172 · M1 · COMPLETE HUMAN");
     };
-    addPart("vitruvian_head.glb",finishM1);addPart("vitruvian_hair_rigged.glb",finishM1);
-    human.add(humanModel);
-  },undefined,e=>{console.error("R170 M1 load failed",e);setStatus("R170 · CHYBA M1");setReady(true)});
+    // Start both async parts only after the player group is already in the live scene.\n    human.add(humanModel);\n    addPart("vitruvian_head.glb",finishM1);addPart("vitruvian_hair_rigged.glb",finishM1);
+  },undefined,e=>{console.error("R172 M1 load failed",e);setStatus("R172 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
   (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
