@@ -78,22 +78,18 @@ export function WorldZeroGame(){
   let humanModel:THREE.Object3D|null=null,humanMixer:THREE.AnimationMixer|null=null;let humanModelBaseY=0,gaitPhase=0,prevHumanY=human.position.y,verticalVel=0;
   let idleAction:THREE.AnimationAction|null=null,walkAction:THREE.AnimationAction|null=null,runAction:THREE.AnimationAction|null=null,currentAction:THREE.AnimationAction|null=null;
   const setHumanAction=(next:THREE.AnimationAction|null)=>{if(!next||next===currentAction)return;next.reset().fadeIn(.16).play();if(currentAction)currentAction.fadeOut(.16);currentAction=next};
-  // R172: M1 fail-safe player. The playable body is attached immediately; optional
-  // digital-human head/hair can enhance it but can never make the player disappear.
-  gltf.load(`${import.meta.env.BASE_URL}real-assets/m1/vitruvian_body.glb`,bodyRes=>{
-    humanModel=bodyRes.scene;
-    humanModel.traverse((o:any)=>{if(o.isMesh){o.visible=true;o.frustumCulled=false;o.castShadow=!mobile;o.receiveShadow=true}});
+  // R173 M1 FINAL — one self-contained CC0 MakeHuman/MPFB GLB.
+  gltf.load(`${import.meta.env.BASE_URL}real-assets/m1-final/M1.glb`,res=>{
+    humanModel=res.scene;humanModel.traverse((o:any)=>{if(o.isMesh){o.visible=true;o.frustumCulled=false;o.castShadow=!mobile;o.receiveShadow=true}});
     const box=new THREE.Box3().setFromObject(humanModel),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
     const scale=1.84/Math.max(.01,size.y);humanModel.scale.setScalar(scale);humanModelBaseY=-box.min.y*scale;
     humanModel.position.set(-center.x*scale,humanModelBaseY,-center.z*scale);human.add(humanModel);
-    const clips=bodyRes.animations||[];humanMixer=new THREE.AnimationMixer(humanModel);
+    const clips=res.animations||[];humanMixer=new THREE.AnimationMixer(humanModel);
     const pick=(re:RegExp)=>clips.find(x=>re.test(x.name)),mk=(clip:THREE.AnimationClip|undefined)=>clip?humanMixer!.clipAction(clip):null;
-    idleAction=mk(pick(/idle|breath/i)??clips[0]);walkAction=mk(pick(/walk/i));runAction=mk(pick(/run|jog/i));currentAction=idleAction;
-    if(idleAction){idleAction.setLoop(THREE.LoopRepeat,Infinity);idleAction.play()}
-    const enhance=(file:string)=>gltf.load(`${import.meta.env.BASE_URL}real-assets/m1/${file}`,r=>{r.scene.scale.copy(humanModel!.scale);r.scene.position.copy(humanModel!.position);r.scene.traverse((o:any)=>{if(o.isMesh){o.visible=true;o.frustumCulled=false;o.castShadow=!mobile}});human.add(r.scene)},undefined,e=>console.warn("optional M1 part",file,e));
-    enhance("vitruvian_head.glb");enhance("vitruvian_hair_rigged.glb");
-    setReady(true);setStatus("R172 · M1 · PLAYER VISIBLE");
-  },undefined,e=>{console.error("R172 M1 load failed",e);setStatus("R172 · CHYBA M1");setReady(true)});
+    idleAction=mk(pick(/idle|breath/i));walkAction=mk(pick(/walk/i)??clips[0]);runAction=mk(pick(/run|jog/i));currentAction=idleAction??walkAction;
+    if(currentAction){currentAction.setLoop(THREE.LoopRepeat,Infinity);currentAction.play()}
+    setReady(true);setStatus("R173 · M1 FINAL · MAKEHUMAN");
+  },undefined,e=>{console.error("R173 M1 FINAL load failed",e);setStatus("R173 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
   (window as any).__wzCollect=()=>{let best:THREE.Mesh|undefined,dist=3.2;for(const o of collectibleWood){if(!o.visible)continue;const d=o.position.distanceTo(human.position);if(d<dist){dist=d;best=o}}if(!best)return false;best.visible=false;return true};
