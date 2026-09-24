@@ -101,7 +101,6 @@ export function WorldZeroGame(){
     };
     addPart("vitruvian_head.glb",finishM1);addPart("vitruvian_hair_rigged.glb",finishM1);
     human.add(humanModel);
-    return;
   },undefined,e=>{console.error("R170 M1 load failed",e);setStatus("R170 · CHYBA M1");setReady(true)});
   // Never leave iPhone behind the loading curtain if a slow/broken asset stalls.
   const bootGuard=window.setTimeout(()=>{setReady(true);setStatus("REALISM 102 · SVĚT SPUŠTĚN")},6500);
